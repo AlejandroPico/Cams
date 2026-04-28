@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <title>WorldCam Minimal</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQPD0oMTKGBtNYVVjZEnRJc0N+VY8Rk=" crossorigin="" />
+  <style>
+    :root {
+      --bg: #050607;
+      --fg: #e8edf4;
+      --muted: rgba(232,237,244,.55);
+      --panel: rgba(8, 10, 13, .88);
+      --panel-2: rgba(255,255,255,.06);
+      --line: rgba(255,255,255,.09);
+      --accent: #69d2ff;
+      --accent-2: #e7ff6e;
+      --danger: #ff6b6b;
+      --ok: #87ffb0;
+      --shadow: 0 24px 80px rgba(0,0,0,.38);
+      --caption-bg: linear-gradient(0deg, rgba(0,0,0,.68), rgba(0,0,0,.0));
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --fg: #111827;
+      --muted: rgba(17,24,39,.58);
+      --panel: rgba(255,255,255,.9);
+      --panel-2: rgba(0,0,0,.055);
+      --line: rgba(0,0,0,.1);
+      --caption-bg: linear-gradient(0deg, rgba(255,255,255,.78), rgba(255,255,255,.0));
+      --shadow: 0 24px 80px rgba(20,30,45,.18);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg); color: var(--fg); font-family: var(--font); }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { border: 0; cursor: pointer; }
+
+    .app { position: fixed; inset: 0; background: var(--bg); }
+    .view { position: absolute; inset: 0; display: none; }
+    .view.active { display: block; }
+
+    /* CAMERAS */
+    #cameraGrid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      gap: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+    }
+    .slot {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: #000;
+      isolation: isolate;
+      outline: 1px solid rgba(255,255,255,.018);
+    }
+    .slot.media-loading::after {
+      content: "cargando";
+      position: absolute;
+      right: 8px;
+      bottom: 7px;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.55);
+      z-index: 6;
+    }
+    .slot.media-error::after {
+      content: attr(data-error);
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      padding: 9px 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,.78);
+      background: rgba(0,0,0,.68);
+      z-index: 7;
+    }
+    .slot img, .slot iframe, .slot video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      object-fit: cover;
+      background: #000;
+    }
+    .slot iframe { object-fit: initial; }
+    .caption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      min-height: 44px;
+      padding: 20px 9px 7px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+      background: var(--caption-bg);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 4;
+    }
+    .slot:hover .caption,
+    body.captions-on .caption,
+    .slot.selected .caption {
+      opacity: 1;
+      transform: none;
+    }
+    .cam-name {
+      font-size: 11px;
+      font-weight: 650;
+      line-height: 1.1;
+      max-width: calc(100% - 64px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 1px 8px rgba(0,0,0,.8);
+    }
+    .cam-meta {
+      font-size: 9px;
+      color: rgba(255,255,255,.6);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      text-shadow: 0 1px 8px rgba(0,0,0,.8);
+    }
+    .caption-actions { display: flex; gap: 4px; pointer-events: auto; opacity: .86; }
+    .tiny-action {
+      min-width: 24px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.46);
+      color: rgba(255,255,255,.82);
+      font-size: 10px;
+      display: inline-grid;
+      place-items: center;
+      backdrop-filter: blur(10px);
+    }
+    .tiny-action:hover { background: rgba(255,255,255,.18); }
+    .slot.selected { outline: 1px solid rgba(105,210,255,.55); outline-offset: -1px; }
+
+    /* FLOATING CHROME */
+    .hamburger {
+      position: fixed;
+      top: 9px;
+      left: 9px;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      z-index: 120;
+      background: rgba(0,0,0,.34);
+      color: rgba(255,255,255,.86);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 28px rgba(0,0,0,.23);
+    }
+    .hamburger span, .hamburger span::before, .hamburger span::after {
+      display: block;
+      width: 15px;
+      height: 1.5px;
+      border-radius: 20px;
+      background: currentColor;
+      content: "";
+    }
+    .hamburger span::before { transform: translateY(-5px); }
+    .hamburger span::after { transform: translateY(3.5px); }
+    .quickbar {
+      position: fixed;
+      top: 9px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 34px;
+      padding: 3px;
+      border-radius: 999px;
+      z-index: 80;
+      background: rgba(0,0,0,.25);
+      backdrop-filter: blur(16px);
+      opacity: .22;
+      transition: opacity .18s ease;
+    }
+    .quickbar:hover, body.menu-open .quickbar { opacity: 1; }
+    .quickbar button {
+      height: 28px;
+      min-width: 32px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: transparent;
+      color: rgba(255,255,255,.74);
+      font-size: 11px;
+      font-weight: 650;
+    }
+    .quickbar button.active { background: rgba(255,255,255,.18); color: #fff; }
+    body.light .quickbar, body.light .hamburger { background: rgba(255,255,255,.5); color: rgba(10,18,30,.86); }
+    body.light .quickbar button { color: rgba(10,18,30,.7); }
+    body.light .quickbar button.active { color: #111827; background: rgba(0,0,0,.09); }
+
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      background: rgba(0,0,0,.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    body.menu-open .backdrop { opacity: 1; pointer-events: auto; }
+    .drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: min(380px, 92vw);
+      z-index: 110;
+      transform: translateX(-104%);
+      transition: transform .2s ease;
+      background: var(--panel);
+      backdrop-filter: blur(22px) saturate(1.2);
+      box-shadow: var(--shadow);
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+    }
+    body.menu-open .drawer { transform: none; }
+    .drawer-head {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px 8px 58px;
+      border-bottom: 1px solid var(--line);
+    }
+    .micro-title { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .micro-state { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .close-btn {
+      width: 32px; height: 32px; border-radius: 999px;
+      background: var(--panel-2); color: var(--fg); font-size: 19px;
+    }
+    .drawer-scroll { overflow: auto; padding: 12px; }
+    .section { margin: 0 0 14px; }
+    .section h3 {
+      font-size: 10px;
+      letter-spacing: .16em;
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      margin: 16px 0 8px;
+    }
+    .navgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .pill, .navbtn {
+      min-height: 32px;
+      border-radius: 999px;
+      background: var(--panel-2);
+      color: var(--fg);
+      font-size: 12px;
+      font-weight: 650;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .navbtn.active, .pill.active { background: rgba(105,210,255,.17); color: var(--accent); }
+    .pill.danger { color: #ffb1b1; }
+    .row { display: flex; gap: 6px; align-items: center; }
+    .row > * { flex: 1; }
+    .field {
+      width: 100%;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel-2);
+      padding: 0 12px;
+      font-size: 12px;
+      outline: none;
+    }
+    textarea.field { height: 110px; border-radius: 14px; padding: 10px 12px; resize: vertical; line-height: 1.35; }
+    .hint { font-size: 11px; color: var(--muted); line-height: 1.45; margin: 7px 2px 0; }
+    .small-toggle { justify-content: space-between; }
+    .switch {
+      width: 38px;
+      height: 22px;
+      border-radius: 999px;
+      padding: 2px;
+      background: var(--panel-2);
+      position: relative;
+      flex: none;
+    }
+    .switch::after {
+      content: "";
+      width: 18px; height: 18px; border-radius: 50%; background: var(--fg);
+      position: absolute; top: 2px; left: 2px; transition: left .16s ease, background .16s ease;
+    }
+    .switch.on { background: rgba(105,210,255,.25); }
+    .switch.on::after { left: 18px; background: var(--accent); }
+
+    /* MAP */
+    #map { position: absolute; inset: 0; background: #05070a; }
+    .leaflet-control-attribution { font-size: 9px !important; opacity: .55; }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: rgba(8,10,13,.92); color: #fff; box-shadow: 0 14px 50px rgba(0,0,0,.38); border: 1px solid rgba(255,255,255,.12); }
+    .leaflet-popup-content { margin: 9px 10px; font-size: 12px; }
+    .popup-cam-title { font-size: 12px; font-weight: 800; margin-bottom: 4px; }
+    .popup-cam-meta { font-size: 10px; opacity: .7; margin-bottom: 8px; }
+    .popup-cam-actions { display:flex; gap:6px; }
+    .popup-cam-actions button { height: 28px; border-radius: 999px; background: rgba(105,210,255,.18); color: #bdeeff; padding: 0 10px; font-size: 11px; font-weight: 800; }
+    .cam-marker {
+      width: 26px !important;
+      height: 26px !important;
+      margin-left: -13px !important;
+      margin-top: -13px !important;
+      border-radius: 50%;
+      background: rgba(105,210,255,.17);
+      border: 1px solid rgba(105,210,255,.7);
+      box-shadow: 0 0 0 5px rgba(105,210,255,.11), 0 0 26px rgba(105,210,255,.62);
+    }
+    .cam-marker::after {
+      content: "";
+      position:absolute;
+      left: 8px; top: 8px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      box-shadow: 0 0 18px rgba(231,255,110,.9);
+    }
+    .map-topline {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 75;
+      height: 30px;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.35);
+      color: rgba(255,255,255,.76);
+      backdrop-filter: blur(16px);
+      font-size: 11px;
+    }
+    body.map-mode .map-topline { display: flex; }
+    #tileWarning {
+      position: fixed;
+      left: 56px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 75;
+      display: none;
+      padding: 9px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.56);
+      color: rgba(255,255,255,.78);
+      backdrop-filter: blur(16px);
+      font-size: 11px;
+      line-height: 1.35;
+      max-width: 620px;
+    }
+
+    /* CATALOG / CONFIG */
+    .panel-view {
+      position: absolute;
+      inset: 0;
+      overflow: auto;
+      padding: 70px 14px 14px;
+      background: var(--bg);
+    }
+    .content-wrap { max-width: 1160px; margin: 0 auto; }
+    .content-title { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; margin: 0 0 12px; }
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .cam-card {
+      background: var(--bg);
+      min-height: 124px;
+      padding: 12px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .cam-card.disabled { opacity: .45; }
+    .cam-card-title { font-size: 13px; font-weight: 800; line-height: 1.2; }
+    .cam-card-meta { font-size: 11px; color: var(--muted); line-height: 1.35; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
+    .tag { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; border-radius: 999px; background: var(--panel-2); padding: 4px 7px; color: var(--muted); }
+    .card-actions { display:flex; gap:5px; flex-wrap:wrap; }
+    .card-actions button { height: 25px; border-radius: 999px; background: var(--panel-2); padding: 0 9px; font-size: 10px; font-weight: 800; color: var(--fg); }
+    .card-actions button.danger { color: #ff9c9c; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+    .form-grid .wide { grid-column: 1 / -1; }
+    .actions-line { display:flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+    .actions-line button { flex: none; }
+    .file-input { display:none; }
+
+    @media (max-width: 760px) {
+      .quickbar { bottom: 9px; top: auto; }
+      .form-grid { grid-template-columns: 1fr; }
+      .panel-view { padding-top: 62px; }
+    }
+  </style>
+</head>
+<body class="captions-off">
+<div class="app">
+  <section id="viewCameras" class="view active" aria-label="Cámaras">
+    <div id="cameraGrid"></div>
+  </section>
+  <section id="viewMap" class="view" aria-label="Mapa">
+    <div id="map"></div>
+    <div class="map-topline"><span id="mapCount">0 cámaras</span><span>·</span><span>rueda para zoom</span></div>
+    <div id="tileWarning">El mapa base no está respondiendo. Los puntos de cámara siguen activos; puedes volver a intentar cambiando de pestaña o recargando.</div>
+  </section>
+  <section id="viewCatalog" class="view" aria-label="Catálogo">
+    <div class="panel-view"><div class="content-wrap">
+      <div class="content-title">Catálogo</div>
+      <div id="catalogGrid" class="catalog-grid"></div>
+    </div></div>
+  </section>
+  <section id="viewConfig" class="view" aria-label="Configuración">
+    <div class="panel-view"><div class="content-wrap">
+      <div class="content-title">Añadir cámara</div>
+      <div class="form-grid">
+        <input id="addName" class="field" placeholder="Nombre breve" />
+        <input id="addCountry" class="field" placeholder="País" />
+        <input id="addCity" class="field" placeholder="Ciudad / zona" />
+        <select id="addType" class="field">
+          <option value="mjpeg">MotionJPEG / MJPEG</option>
+          <option value="snapshot">Imagen refrescada</option>
+          <option value="youtube">YouTube embed</option>
+          <option value="iframe">Iframe externo</option>
+          <option value="hls">HLS .m3u8</option>
+        </select>
+        <input id="addLat" class="field" placeholder="Latitud, ej. 41.387" />
+        <input id="addLng" class="field" placeholder="Longitud, ej. 2.170" />
+        <input id="addCategory" class="field" placeholder="Categoría: ciudad, playa, montaña..." />
+        <input id="addRefresh" class="field" placeholder="Refresco imagen en segundos, ej. 20" />
+        <textarea id="addUrl" class="field wide" placeholder="URL de la cámara, iframe, YouTube o m3u8"></textarea>
+      </div>
+      <div class="actions-line">
+        <button class="pill active" id="btnAddCam">Añadir</button>
+        <button class="pill" id="btnExport">Exportar JSON</button>
+        <button class="pill" id="btnImport">Importar JSON</button>
+        <button class="pill danger" id="btnResetCatalog">Restaurar catálogo base</button>
+        <input type="file" id="importFile" class="file-input" accept="application/json,.json" />
+      </div>
+      <p class="hint">Las cámaras añadidas o eliminadas se guardan en el navegador mediante localStorage. Si abres este HTML en otro navegador u ordenador, importa el JSON exportado.</p>
+      <div class="content-title" style="margin-top:24px;">Formato JSON esperado</div>
+      <textarea class="field" readonly style="height:180px; border-radius:16px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;">[
+  {
+    "name": "Nombre",
+    "country": "España",
+    "city": "Barcelona",
+    "lat": 41.387,
+    "lng": 2.17,
+    "type": "mjpeg",
+    "category": "ciudad",
+    "url": "https://.../mjpg/video.mjpg",
+    "enabled": true
+  }
+]</textarea>
+    </div></div>
+  </section>
+</div>
+
+<button id="menuBtn" class="hamburger" title="Menú"><span></span></button>
+<div id="backdrop" class="backdrop"></div>
+<aside class="drawer" aria-label="Menú lateral">
+  <div class="drawer-head">
+    <div>
+      <div class="micro-title">WorldCam</div>
+      <div class="micro-state" id="statusLine">mosaico 4 · mundo</div>
+    </div>
+    <button id="closeMenu" class="close-btn">×</button>
+  </div>
+  <div class="drawer-scroll">
+    <div class="section">
+      <h3>Vista</h3>
+      <div class="navgrid">
+        <button class="navbtn active" data-view="cameras">Cámaras</button>
+        <button class="navbtn" data-view="map">Mapa</button>
+        <button class="navbtn" data-view="catalog">Catálogo</button>
+        <button class="navbtn" data-view="config">Config</button>
+      </div>
+    </div>
+    <div class="section">
+      <h3>Mosaico</h3>
+      <div class="row" style="flex-wrap:wrap">
+        <button class="pill gridpick" data-grid="1">1</button>
+        <button class="pill gridpick active" data-grid="4">4</button>
+        <button class="pill gridpick" data-grid="9">9</button>
+        <button class="pill gridpick" data-grid="16">16</button>
+        <button class="pill gridpick" data-grid="25">25</button>
+      </div>
+      <div class="row" style="margin-top:7px">
+        <button class="pill" id="btnPrev">←</button>
+        <button class="pill active" id="btnNext">Siguiente</button>
+        <button class="pill" id="btnShuffle">Aleatorio</button>
+      </div>
+      <div class="row" style="margin-top:7px">
+        <button class="pill" id="btnRotate">Rotación: no</button>
+        <select id="rotationSeconds" class="field" title="Segundos por rotación">
+          <option value="8">8 s</option>
+          <option value="15" selected>15 s</option>
+          <option value="30">30 s</option>
+          <option value="60">60 s</option>
+        </select>
+      </div>
+    </div>
+    <div class="section">
+      <h3>Filtros</h3>
+      <select id="countryFilter" class="field"><option value="">Mundo / aleatorio</option></select>
+      <div style="height:7px"></div>
+      <select id="categoryFilter" class="field"><option value="">Todas las categorías</option></select>
+      <div style="height:7px"></div>
+      <input id="searchFilter" class="field" placeholder="Buscar ciudad, país, cámara..." />
+      <div class="row" style="margin-top:7px">
+        <button class="pill" id="btnClearFilters">Limpiar</button>
+        <button class="pill" id="btnOnlySelected">Solo seleccionada</button>
+      </div>
+    </div>
+    <div class="section">
+      <h3>Interfaz</h3>
+      <button class="pill small-toggle" id="btnTheme"><span>Modo noche</span><span class="switch" id="themeSwitch"></span></button>
+      <div style="height:7px"></div>
+      <button class="pill small-toggle" id="btnCaptions"><span>Rótulos mínimos</span><span class="switch" id="captionSwitch"></span></button>
+      <div style="height:7px"></div>
+      <button class="pill" id="btnFullscreen">Pantalla completa</button>
+    </div>
+    <div class="section">
+      <h3>Selección</h3>
+      <div class="hint" id="selectedInfo">Ninguna cámara fijada.</div>
+      <div class="row" style="margin-top:7px">
+        <button class="pill" id="btnPin">Anclar</button>
+        <button class="pill" id="btnUnpin">Soltar</button>
+      </div>
+    </div>
+    <div class="section">
+      <h3>Estado</h3>
+      <div class="hint" id="debugInfo"></div>
+    </div>
+  </div>
+</aside>
+
+<div class="quickbar">
+  <button class="qgrid" data-grid="1">1</button>
+  <button class="qgrid active" data-grid="4">4</button>
+  <button class="qgrid" data-grid="9">9</button>
+  <button id="quickNext">↻</button>
+  <button id="quickMap">mapa</button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+<script>
+(() => {
+  'use strict';
+
+  const STORAGE_KEY = 'worldcam_minimal_v03_state';
+  const DEFAULT_CAMERAS = [
+    {
+      id: 'mjpeg-buffalo-trace', name: 'Buffalo Trace', city: 'Frankfort, Kentucky', country: 'Estados Unidos', category: 'urbano',
+      lat: 38.2009, lng: -84.8733, type: 'mjpeg', enabled: true, priority: 1,
+      url: 'https://camera.buffalotrace.com/mjpg/video.mjpg'
+    },
+    {
+      id: 'mjpeg-purdue-mall', name: 'Purdue Engineering Mall', city: 'West Lafayette, Indiana', country: 'Estados Unidos', category: 'universidad',
+      lat: 40.4279, lng: -86.9143, type: 'mjpeg', enabled: true, priority: 1,
+      url: 'https://webcam01.ecn.purdue.edu/mjpg/video.mjpg'
+    },
+    {
+      id: 'mjpeg-heidelberg-pendulum', name: 'Pendulum Cam', city: 'Heidelberg', country: 'Alemania', category: 'interior',
+      lat: 49.3988, lng: 8.6724, type: 'mjpeg', enabled: true, priority: 1,
+      url: 'http://pendelcam.kip.uni-heidelberg.de/mjpg/video.mjpg'
+    },
+    {
+      id: 'mjpeg-tampere-hacklab', name: 'Tampere Hacklab', city: 'Tampere', country: 'Finlandia', category: 'interior',
+      lat: 61.4978, lng: 23.7610, type: 'mjpeg', enabled: true, priority: 1,
+      url: 'http://tamperehacklab.tunk.org:38001/mjpg/video.mjpg'
+    },
+    {
+      id: 'mjpeg-takemoto-piano', name: 'Piano Factory', city: 'Hamamatsu', country: 'Japón', category: 'interior',
+      lat: 34.7108, lng: 137.7261, type: 'mjpeg', enabled: true, priority: 2,
+      url: 'http://takemotopiano.aa1.netvolante.jp:8190/nphMotionJpeg?Resolution=640x480&Quality=Standard'
+    },
+    {
+      id: 'mjpeg-tsumago-hills', name: 'Tsumago Hills', city: 'Tsumago', country: 'Japón', category: 'montaña',
+      lat: 35.5769, lng: 137.5952, type: 'mjpeg', enabled: true, priority: 2,
+      url: 'http://honjin1.miemasu.net/nphMotionJpeg?Resolution=640x480&Quality=Standard'
+    },
+    {
+      id: 'mjpeg-pajala', name: 'Soltorget Pajala', city: 'Pajala', country: 'Suecia', category: 'plaza',
+      lat: 67.2120, lng: 23.3660, type: 'mjpeg', enabled: true, priority: 2,
+      url: 'http://195.196.36.242/mjpg/video.mjpg'
+    },
+    {
+      id: 'mjpeg-kaiskuru', name: 'Kaiskuru Skistadion', city: 'Alta', country: 'Noruega', category: 'nieve',
+      lat: 69.9689, lng: 23.2717, type: 'mjpeg', enabled: true, priority: 2,
+      url: 'http://77.222.181.11:8080/mjpg/video.mjpg'
+    },
+    {
+      id: 'mjpeg-warrenton', name: 'Warrenton Beach', city: 'Warrenton, Oregon', country: 'Estados Unidos', category: 'costa',
+      lat: 46.1651, lng: -123.9238, type: 'mjpeg', enabled: true, priority: 2,
+      url: 'http://47.51.131.147/mjpg/video.mjpg'
+    },
+    {
+      id: 'mjpeg-hotel-lobby', name: 'Hotel Lobby', city: 'Teherán', country: 'Irán', category: 'interior',
+      lat: 35.7219, lng: 51.3347, type: 'mjpeg', enabled: true, priority: 3,
+      url: 'http://158.58.130.148/mjpg/video.mjpg'
+    },
+    {
+      id: 'snapshot-vigo-manual', name: 'Vigo · marcador preparado', city: 'Vigo', country: 'España', category: 'marcador',
+      lat: 42.2406, lng: -8.7207, type: 'snapshot', enabled: false, priority: 9, refresh: 30,
+      url: ''
+    },
+    {
+      id: 'snapshot-sevilla-manual', name: 'Sevilla · marcador preparado', city: 'Sevilla', country: 'España', category: 'marcador',
+      lat: 37.3891, lng: -5.9845, type: 'snapshot', enabled: false, priority: 9, refresh: 30,
+      url: ''
+    }
+  ];
+
+  const state = loadState();
+  let cameras = state.cameras && Array.isArray(state.cameras) ? state.cameras : structuredClone(DEFAULT_CAMERAS);
+  let currentView = state.currentView || 'cameras';
+  let gridCount = Number(state.gridCount || 4);
+  let offset = Number(state.offset || 0);
+  let selectedId = state.selectedId || null;
+  let pinnedId = state.pinnedId || null;
+  let captions = !!state.captions;
+  let isLight = !!state.isLight;
+  let rotationOn = !!state.rotationOn;
+  let rotationSeconds = Number(state.rotationSeconds || 15);
+  let rotationTimer = null;
+  let map = null;
+  let markerLayer = null;
+  let mapNeedsRefresh = true;
+  const tileErrors = { count: 0 };
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const els = {
+    body: document.body,
+    cameraGrid: $('#cameraGrid'),
+    menuBtn: $('#menuBtn'),
+    closeMenu: $('#closeMenu'),
+    backdrop: $('#backdrop'),
+    statusLine: $('#statusLine'),
+    debugInfo: $('#debugInfo'),
+    selectedInfo: $('#selectedInfo'),
+    countryFilter: $('#countryFilter'),
+    categoryFilter: $('#categoryFilter'),
+    searchFilter: $('#searchFilter'),
+    rotationSeconds: $('#rotationSeconds'),
+    btnRotate: $('#btnRotate'),
+    btnPin: $('#btnPin'),
+    btnUnpin: $('#btnUnpin'),
+    btnCaptions: $('#btnCaptions'),
+    captionSwitch: $('#captionSwitch'),
+    btnTheme: $('#btnTheme'),
+    themeSwitch: $('#themeSwitch'),
+    catalogGrid: $('#catalogGrid'),
+    mapCount: $('#mapCount'),
+    tileWarning: $('#tileWarning')
+  };
+
+  function structuredClone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw) || {};
+    } catch { return {}; }
+  }
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        cameras, currentView, gridCount, offset, selectedId, pinnedId, captions, isLight,
+        rotationOn, rotationSeconds,
+        filters: {
+          country: els.countryFilter?.value || '',
+          category: els.categoryFilter?.value || '',
+          search: els.searchFilter?.value || ''
+        }
+      }));
+    } catch (e) { console.warn('No se pudo guardar estado', e); }
+  }
+
+  function normalizeCamera(cam) {
+    return {
+      id: cam.id || ('cam-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)),
+      name: (cam.name || 'Cámara sin nombre').trim(),
+      city: (cam.city || '').trim(),
+      country: (cam.country || '').trim(),
+      category: (cam.category || 'sin categoría').trim(),
+      lat: Number(cam.lat),
+      lng: Number(cam.lng),
+      type: (cam.type || 'iframe').trim(),
+      url: (cam.url || '').trim(),
+      enabled: cam.enabled !== false,
+      refresh: Number(cam.refresh || 30),
+      priority: Number(cam.priority || 5)
+    };
+  }
+
+  cameras = cameras.map(normalizeCamera);
+
+  function filteredCameras({ includeDisabled = false } = {}) {
+    const country = els.countryFilter?.value || '';
+    const category = els.categoryFilter?.value || '';
+    const search = (els.searchFilter?.value || '').trim().toLowerCase();
+    return cameras
+      .filter(c => includeDisabled || c.enabled)
+      .filter(c => !country || c.country === country)
+      .filter(c => !category || c.category === category)
+      .filter(c => !search || [c.name, c.city, c.country, c.category, c.type].join(' ').toLowerCase().includes(search))
+      .sort((a,b) => (a.priority - b.priority) || a.country.localeCompare(b.country) || a.name.localeCompare(b.name));
+  }
+
+  function selectedCamera() {
+    return cameras.find(c => c.id === selectedId) || null;
+  }
+
+  function cameraLabel(cam) {
+    const place = [cam.city, cam.country].filter(Boolean).join(' · ');
+    return place ? `${cam.name} · ${place}` : cam.name;
+  }
+
+  function setView(view) {
+    currentView = view;
+    $$('.view').forEach(v => v.classList.remove('active'));
+    $('#view' + view[0].toUpperCase() + view.slice(1)).classList.add('active');
+    $$('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    document.body.classList.toggle('map-mode', view === 'map');
+    if (view === 'map') initMap();
+    renderStatus();
+    saveState();
+  }
+
+  function openMenu() { document.body.classList.add('menu-open'); }
+  function closeMenu() { document.body.classList.remove('menu-open'); }
+
+  function setGrid(n) {
+    gridCount = Number(n);
+    offset = Math.max(0, offset);
+    $$('.gridpick, .qgrid').forEach(b => b.classList.toggle('active', Number(b.dataset.grid) === gridCount));
+    renderCameras();
+    renderStatus();
+    saveState();
+  }
+
+  function gridDimensions(n) {
+    if (n <= 1) return [1,1];
+    if (n === 2) return [2,1];
+    if (n <= 4) return [2,2];
+    if (n <= 6) return [3,2];
+    if (n <= 9) return [3,3];
+    if (n <= 16) return [4,4];
+    return [5,5];
+  }
+
+  function visibleSlice() {
+    const list = filteredCameras();
+    if (!list.length) return [];
+    let result = [];
+    if (pinnedId) {
+      const pinned = list.find(c => c.id === pinnedId) || cameras.find(c => c.id === pinnedId);
+      if (pinned && pinned.enabled) result.push(pinned);
+    }
+    const withoutPinned = list.filter(c => c.id !== pinnedId);
+    if (gridCount === 1 && selectedId) {
+      const selected = list.find(c => c.id === selectedId) || cameras.find(c => c.id === selectedId);
+      if (selected && selected.enabled) return [selected];
+    }
+    for (let i = 0; result.length < gridCount && withoutPinned.length; i++) {
+      const idx = (offset + i) % withoutPinned.length;
+      result.push(withoutPinned[idx]);
+      if (i > withoutPinned.length + gridCount) break;
+    }
+    return result.slice(0, gridCount);
+  }
+
+  function mediaElementFor(cam, slot) {
+    const type = (cam.type || '').toLowerCase();
+    const url = cam.url || '';
+    if (!url) {
+      slot.classList.add('media-error');
+      slot.dataset.error = 'Sin URL de vídeo. Marcador preparado para añadir fuente.';
+      const empty = document.createElement('div');
+      empty.style.position = 'absolute'; empty.style.inset = '0'; empty.style.background = '#000';
+      return empty;
+    }
+    if (type === 'mjpeg' || type === 'snapshot') {
+      const img = document.createElement('img');
+      img.alt = cam.name;
+      img.decoding = 'async';
+      img.referrerPolicy = 'strict-origin-when-cross-origin';
+      let base = url;
+      const stampUrl = () => type === 'snapshot' ? addCacheBuster(base) : base;
+      img.onload = () => slot.classList.remove('media-loading', 'media-error');
+      img.onerror = () => {
+        slot.classList.remove('media-loading');
+        slot.classList.add('media-error');
+        slot.dataset.error = 'No carga esta fuente. Puede estar caída, bloquear hotlinking o usar un formato no compatible.';
+      };
+      img.src = stampUrl();
+      if (type === 'snapshot') {
+        const seconds = Math.max(5, Number(cam.refresh || 30));
+        const interval = setInterval(() => {
+          if (!slot.isConnected) { clearInterval(interval); return; }
+          img.src = stampUrl();
+        }, seconds * 1000);
+      }
+      return img;
+    }
+    if (type === 'youtube') {
+      const iframe = document.createElement('iframe');
+      iframe.title = cam.name;
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.allowFullscreen = true;
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      iframe.src = youtubeEmbedUrl(url);
+      slot.classList.remove('media-loading');
+      return iframe;
+    }
+    if (type === 'hls') {
+      const video = document.createElement('video');
+      video.muted = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.controls = false;
+      video.onloadeddata = () => slot.classList.remove('media-loading', 'media-error');
+      video.onerror = () => {
+        slot.classList.remove('media-loading');
+        slot.classList.add('media-error');
+        slot.dataset.error = 'HLS no disponible aquí. Puede faltar CORS o hls.js.';
+      };
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+      } else if (window.Hls && window.Hls.isSupported()) {
+        const hls = new Hls({ lowLatencyMode: true });
+        hls.loadSource(url);
+        hls.attachMedia(video);
+      } else {
+        slot.classList.add('media-error');
+        slot.dataset.error = 'Este navegador no puede reproducir HLS sin soporte adicional.';
+      }
+      return video;
+    }
+    const iframe = document.createElement('iframe');
+    iframe.title = cam.name;
+    iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.src = url;
+    slot.classList.remove('media-loading');
+    return iframe;
+  }
+
+  function addCacheBuster(url) {
+    const sep = url.includes('?') ? '&' : '?';
+    return url + sep + '_=' + Date.now();
+  }
+
+  function youtubeEmbedUrl(url) {
+    let value = (url || '').trim();
+    if (!value) return '';
+    if (value.includes('/embed/')) return value + (value.includes('?') ? '&' : '?') + 'autoplay=1&mute=1&playsinline=1&rel=0';
+    let id = '';
+    try {
+      const u = new URL(value);
+      if (u.hostname.includes('youtu.be')) id = u.pathname.replace('/', '');
+      if (u.searchParams.get('v')) id = u.searchParams.get('v');
+      if (u.pathname.includes('/live/')) id = u.pathname.split('/live/')[1].split(/[/?#]/)[0];
+    } catch {}
+    if (!id && /^[A-Za-z0-9_-]{8,}$/.test(value)) id = value;
+    if (!id) return value;
+    const origin = location.protocol.startsWith('http') ? encodeURIComponent(location.origin) : '';
+    return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0${origin ? '&origin=' + origin : ''}`;
+  }
+
+  function renderCameras() {
+    const list = visibleSlice();
+    const [cols, rows] = gridDimensions(gridCount);
+    els.cameraGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+    els.cameraGrid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+    els.cameraGrid.innerHTML = '';
+    if (!list.length) {
+      const empty = document.createElement('div');
+      empty.className = 'slot media-error';
+      empty.dataset.error = 'No hay cámaras activas con estos filtros. Abre el menú y limpia filtros o activa cámaras en catálogo.';
+      els.cameraGrid.appendChild(empty);
+      renderStatus();
+      return;
+    }
+    list.forEach(cam => {
+      const slot = document.createElement('article');
+      slot.className = 'slot media-loading';
+      slot.dataset.id = cam.id;
+      slot.title = cameraLabel(cam);
+      if (cam.id === selectedId) slot.classList.add('selected');
+      const timeout = setTimeout(() => {
+        if (!slot.isConnected) return;
+        if (slot.classList.contains('media-loading')) {
+          slot.classList.add('media-error');
+          slot.dataset.error = 'La fuente tarda demasiado. Puede estar caída o bloqueada.';
+        }
+      }, 12000);
+      slot.addEventListener('click', () => {
+        selectedId = cam.id;
+        $$('.slot').forEach(s => s.classList.toggle('selected', s.dataset.id === selectedId));
+        renderStatus(); saveState();
+      });
+      slot.addEventListener('dblclick', () => {
+        selectedId = cam.id;
+        setGrid(1);
+      });
+      const media = mediaElementFor(cam, slot);
+      media.addEventListener?.('load', () => clearTimeout(timeout), { once: true });
+      media.addEventListener?.('loadeddata', () => clearTimeout(timeout), { once: true });
+      slot.appendChild(media);
+      const cap = document.createElement('div');
+      cap.className = 'caption';
+      cap.innerHTML = `
+        <div style="min-width:0">
+          <div class="cam-name">${escapeHtml(cam.name)}</div>
+          <div class="cam-meta">${escapeHtml([cam.city, cam.country].filter(Boolean).join(' · ') || cam.type)}</div>
+        </div>
+        <div class="caption-actions">
+          <button class="tiny-action" data-act="one" title="Ver solo esta">1</button>
+          <button class="tiny-action" data-act="pin" title="Anclar">●</button>
+          <button class="tiny-action" data-act="open" title="Abrir fuente">↗</button>
+        </div>`;
+      cap.querySelector('[data-act="one"]').onclick = (e) => { e.stopPropagation(); selectedId = cam.id; setGrid(1); };
+      cap.querySelector('[data-act="pin"]').onclick = (e) => { e.stopPropagation(); pinnedId = cam.id; selectedId = cam.id; renderCameras(); renderStatus(); saveState(); };
+      cap.querySelector('[data-act="open"]').onclick = (e) => { e.stopPropagation(); if (cam.url) window.open(cam.url, '_blank', 'noopener,noreferrer'); };
+      slot.appendChild(cap);
+      els.cameraGrid.appendChild(slot);
+    });
+    renderStatus();
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+  }
+
+  function step(dir = 1) {
+    const list = filteredCameras().filter(c => c.id !== pinnedId);
+    if (!list.length) return;
+    offset = (offset + dir * Math.max(1, gridCount)) % list.length;
+    if (offset < 0) offset += list.length;
+    renderCameras();
+    saveState();
+  }
+
+  function shuffle() {
+    const list = filteredCameras().filter(c => c.id !== pinnedId);
+    if (!list.length) return;
+    offset = Math.floor(Math.random() * list.length);
+    renderCameras(); saveState();
+  }
+
+  function setRotation(on) {
+    rotationOn = !!on;
+    clearInterval(rotationTimer);
+    rotationTimer = null;
+    if (rotationOn) {
+      rotationTimer = setInterval(() => step(1), rotationSeconds * 1000);
+    }
+    els.btnRotate.textContent = 'Rotación: ' + (rotationOn ? 'sí' : 'no');
+    els.btnRotate.classList.toggle('active', rotationOn);
+    saveState();
+  }
+
+  function buildFilters() {
+    const prev = state.filters || {};
+    const countries = unique(cameras.map(c => c.country).filter(Boolean));
+    const cats = unique(cameras.map(c => c.category).filter(Boolean));
+    els.countryFilter.innerHTML = '<option value="">Mundo / aleatorio</option>' + countries.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    els.categoryFilter.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    els.countryFilter.value = prev.country || '';
+    els.categoryFilter.value = prev.category || '';
+    els.searchFilter.value = prev.search || '';
+  }
+  function unique(arr) { return Array.from(new Set(arr)).sort((a,b) => a.localeCompare(b)); }
+
+  function renderCatalog() {
+    const list = filteredCameras({ includeDisabled: true });
+    els.catalogGrid.innerHTML = '';
+    list.forEach(cam => {
+      const card = document.createElement('article');
+      card.className = 'cam-card' + (cam.enabled ? '' : ' disabled');
+      card.innerHTML = `
+        <div class="cam-card-title">${escapeHtml(cam.name)}</div>
+        <div class="cam-card-meta">${escapeHtml([cam.city, cam.country].filter(Boolean).join(' · ') || 'Sin ubicación')}<br>${escapeHtml(cam.url || 'Sin URL')}</div>
+        <div class="tag-row"><span class="tag">${escapeHtml(cam.type)}</span><span class="tag">${escapeHtml(cam.category || 'sin categoría')}</span><span class="tag">${cam.enabled ? 'activa' : 'oculta'}</span></div>
+        <div class="card-actions">
+          <button data-act="toggle">${cam.enabled ? 'Ocultar' : 'Activar'}</button>
+          <button data-act="view">Ver</button>
+          <button data-act="map">Mapa</button>
+          <button data-act="delete" class="danger">Quitar</button>
+        </div>`;
+      card.querySelector('[data-act="toggle"]').onclick = () => { cam.enabled = !cam.enabled; refreshAll(); };
+      card.querySelector('[data-act="view"]').onclick = () => { cam.enabled = true; selectedId = cam.id; setGrid(1); setView('cameras'); closeMenu(); refreshAll(); };
+      card.querySelector('[data-act="map"]').onclick = () => { selectedId = cam.id; setView('map'); closeMenu(); setTimeout(() => focusMapCam(cam), 250); };
+      card.querySelector('[data-act="delete"]').onclick = () => {
+        if (!confirm('¿Quitar esta cámara del catálogo local?')) return;
+        cameras = cameras.filter(c => c.id !== cam.id);
+        if (selectedId === cam.id) selectedId = null;
+        if (pinnedId === cam.id) pinnedId = null;
+        refreshAll();
+      };
+      els.catalogGrid.appendChild(card);
+    });
+  }
+
+  function addCameraFromForm() {
+    const cam = normalizeCamera({
+      name: $('#addName').value,
+      country: $('#addCountry').value,
+      city: $('#addCity').value,
+      type: $('#addType').value,
+      lat: $('#addLat').value,
+      lng: $('#addLng').value,
+      category: $('#addCategory').value,
+      refresh: $('#addRefresh').value || 30,
+      url: $('#addUrl').value,
+      enabled: true
+    });
+    if (!cam.name || !cam.url || Number.isNaN(cam.lat) || Number.isNaN(cam.lng)) {
+      alert('Faltan datos mínimos: nombre, URL, latitud y longitud.');
+      return;
+    }
+    cameras.push(cam);
+    ['addName','addCountry','addCity','addLat','addLng','addCategory','addRefresh','addUrl'].forEach(id => $('#' + id).value = '');
+    refreshAll();
+    setView('catalog');
+  }
+
+  function exportJson() {
+    const blob = new Blob([JSON.stringify(cameras, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'worldcam_catalogo.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  async function importJson(file) {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const arr = JSON.parse(text);
+      if (!Array.isArray(arr)) throw new Error('El JSON debe ser una lista.');
+      cameras = arr.map(normalizeCamera);
+      refreshAll();
+      alert('Catálogo importado.');
+    } catch (e) {
+      alert('No se pudo importar: ' + e.message);
+    }
+  }
+
+  function resetCatalog() {
+    if (!confirm('¿Restaurar el catálogo base y perder cambios locales?')) return;
+    cameras = structuredClone(DEFAULT_CAMERAS).map(normalizeCamera);
+    selectedId = null; pinnedId = null; offset = 0;
+    refreshAll();
+  }
+
+  function initMap() {
+    if (!window.L) {
+      els.tileWarning.style.display = 'block';
+      els.tileWarning.textContent = 'Leaflet no se ha cargado. Revisa la conexión a internet o usa la vista Cámaras.';
+      return;
+    }
+    if (!map) {
+      map = L.map('map', { zoomControl: false, worldCopyJump: true, preferCanvas: true, attributionControl: true }).setView([22, 0], 2);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd', maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      });
+      dark.on('tileerror', () => {
+        tileErrors.count++;
+        if (tileErrors.count > 3) els.tileWarning.style.display = 'block';
+      });
+      dark.addTo(map);
+      markerLayer = L.layerGroup().addTo(map);
+    }
+    setTimeout(() => map.invalidateSize(), 50);
+    renderMarkers();
+    if (mapNeedsRefresh) {
+      mapNeedsRefresh = false;
+      const markers = filteredCameras().filter(c => isFinite(c.lat) && isFinite(c.lng));
+      if (markers.length) {
+        const bounds = L.latLngBounds(markers.map(c => [c.lat, c.lng]));
+        map.fitBounds(bounds.pad(.25), { maxZoom: 3, animate: false });
+      }
+    }
+  }
+
+  function renderMarkers() {
+    if (!markerLayer) return;
+    markerLayer.clearLayers();
+    const list = filteredCameras().filter(c => isFinite(c.lat) && isFinite(c.lng));
+    els.mapCount.textContent = `${list.length} cámara${list.length === 1 ? '' : 's'}`;
+    list.forEach(cam => {
+      const marker = L.marker([cam.lat, cam.lng], {
+        icon: L.divIcon({ className: 'cam-marker', html: '', iconSize: [26,26], iconAnchor: [13,13] }),
+        title: cameraLabel(cam),
+        riseOnHover: true
+      });
+      marker.bindPopup(`<div class="popup-cam-title">${escapeHtml(cam.name)}</div>
+        <div class="popup-cam-meta">${escapeHtml([cam.city, cam.country].filter(Boolean).join(' · '))}<br>${escapeHtml(cam.type)} · ${escapeHtml(cam.category || '')}</div>
+        <div class="popup-cam-actions"><button data-popup-view="${cam.id}">Ver</button><button data-popup-pin="${cam.id}">Anclar</button></div>`);
+      marker.on('popupopen', () => {
+        setTimeout(() => {
+          document.querySelector(`[data-popup-view="${CSS.escape(cam.id)}"]`)?.addEventListener('click', () => {
+            selectedId = cam.id; setGrid(1); setView('cameras'); closeMenu(); renderCameras();
+          });
+          document.querySelector(`[data-popup-pin="${CSS.escape(cam.id)}"]`)?.addEventListener('click', () => {
+            selectedId = cam.id; pinnedId = cam.id; setView('cameras'); renderCameras(); closeMenu();
+          });
+        }, 0);
+      });
+      marker.on('click', () => { selectedId = cam.id; renderStatus(); saveState(); });
+      markerLayer.addLayer(marker);
+    });
+  }
+
+  function focusMapCam(cam) {
+    if (!map || !cam || !isFinite(cam.lat) || !isFinite(cam.lng)) return;
+    map.setView([cam.lat, cam.lng], 9, { animate: true });
+  }
+
+  function refreshAll() {
+    buildFilters();
+    renderCameras();
+    renderCatalog();
+    renderMarkers();
+    renderStatus();
+    saveState();
+  }
+
+  function renderStatus() {
+    const list = filteredCameras();
+    const country = els.countryFilter.value || 'mundo';
+    els.statusLine.textContent = `mosaico ${gridCount} · ${country}`;
+    const sel = selectedCamera();
+    const pinned = cameras.find(c => c.id === pinnedId) || null;
+    els.selectedInfo.textContent = pinned ? `Anclada: ${cameraLabel(pinned)}` : (sel ? `Seleccionada: ${cameraLabel(sel)}` : 'Ninguna cámara fijada.');
+    els.debugInfo.textContent = `${list.length} activas con filtros · ${cameras.length} en catálogo · fuente inicial prioriza MJPEG.`;
+    els.captionSwitch.classList.toggle('on', captions);
+    els.themeSwitch.classList.toggle('on', !isLight);
+    els.rotationSeconds.value = String(rotationSeconds);
+    $$('.gridpick, .qgrid').forEach(b => b.classList.toggle('active', Number(b.dataset.grid) === gridCount));
+  }
+
+  function applyTheme() {
+    document.body.classList.toggle('light', isLight);
+    document.body.classList.toggle('captions-on', captions);
+    document.body.classList.toggle('captions-off', !captions);
+    $('#btnTheme span:first-child').textContent = isLight ? 'Modo día' : 'Modo noche';
+    els.themeSwitch.classList.toggle('on', !isLight);
+    els.captionSwitch.classList.toggle('on', captions);
+  }
+
+  function bindEvents() {
+    els.menuBtn.onclick = openMenu;
+    els.closeMenu.onclick = closeMenu;
+    els.backdrop.onclick = closeMenu;
+    $$('.navbtn').forEach(b => b.onclick = () => { setView(b.dataset.view); });
+    $$('.gridpick, .qgrid').forEach(b => b.onclick = () => setGrid(Number(b.dataset.grid)));
+    $('#quickNext').onclick = () => step(1);
+    $('#quickMap').onclick = () => setView(currentView === 'map' ? 'cameras' : 'map');
+    $('#btnPrev').onclick = () => step(-1);
+    $('#btnNext').onclick = () => step(1);
+    $('#btnShuffle').onclick = shuffle;
+    $('#btnClearFilters').onclick = () => {
+      els.countryFilter.value = ''; els.categoryFilter.value = ''; els.searchFilter.value = ''; offset = 0; renderCameras(); renderCatalog(); renderMarkers(); renderStatus(); saveState();
+    };
+    $('#btnOnlySelected').onclick = () => {
+      const cam = selectedCamera();
+      if (!cam) return alert('Primero selecciona una cámara en el mosaico o en el mapa.');
+      selectedId = cam.id; setGrid(1); setView('cameras');
+    };
+    [els.countryFilter, els.categoryFilter, els.searchFilter].forEach(el => el.addEventListener('input', () => { offset = 0; renderCameras(); renderCatalog(); renderMarkers(); renderStatus(); saveState(); }));
+    els.rotationSeconds.onchange = () => { rotationSeconds = Number(els.rotationSeconds.value); setRotation(rotationOn); };
+    els.btnRotate.onclick = () => setRotation(!rotationOn);
+    els.btnPin.onclick = () => { if (!selectedId) return alert('Selecciona primero una cámara.'); pinnedId = selectedId; renderCameras(); renderStatus(); saveState(); };
+    els.btnUnpin.onclick = () => { pinnedId = null; renderCameras(); renderStatus(); saveState(); };
+    els.btnCaptions.onclick = () => { captions = !captions; applyTheme(); saveState(); };
+    els.btnTheme.onclick = () => { isLight = !isLight; applyTheme(); saveState(); };
+    $('#btnFullscreen').onclick = () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    };
+    $('#btnAddCam').onclick = addCameraFromForm;
+    $('#btnExport').onclick = exportJson;
+    $('#btnImport').onclick = () => $('#importFile').click();
+    $('#importFile').onchange = e => importJson(e.target.files?.[0]);
+    $('#btnResetCatalog').onclick = resetCatalog;
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeMenu();
+      if (e.key === 'ArrowRight') step(1);
+      if (e.key === 'ArrowLeft') step(-1);
+      if (e.key === 'm' || e.key === 'M') openMenu();
+      if (e.key === 'f' || e.key === 'F') $('#btnFullscreen').click();
+    });
+  }
+
+  function boot() {
+    buildFilters();
+    bindEvents();
+    applyTheme();
+    setGrid(gridCount || 4);
+    setView(currentView === 'map' || currentView === 'catalog' || currentView === 'config' ? currentView : 'cameras');
+    renderCatalog();
+    setRotation(rotationOn);
+    renderStatus();
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
