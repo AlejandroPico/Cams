@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorldCam Minimal</title>
+<style>
+:root{
+  --bg:#030305;--panel:rgba(7,9,13,.94);--panel2:rgba(16,18,24,.96);
+  --txt:#f4f6fb;--muted:#9aa4b5;--hair:rgba(255,255,255,.08);
+  --good:#39d98a;--warn:#ffd166;--bad:#ff5c7a;--accent:#7cc7ff;
+  --map-land:#28313f;--map-land-hover:#36465d;--map-line:rgba(255,255,255,.09);
+  --map-water:#06080d;--marker:#7cc7ff;--marker2:#ffffff;
+}
+html.light{
+  --bg:#f6f7f9;--panel:rgba(255,255,255,.94);--panel2:rgba(255,255,255,.96);
+  --txt:#0d1117;--muted:#586273;--hair:rgba(0,0,0,.10);
+  --map-land:#d3d9e3;--map-land-hover:#b8c4d4;--map-line:rgba(0,0,0,.12);
+  --map-water:#eef2f7;--marker:#006dff;--marker2:#0d1117;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{border:0;background:rgba(255,255,255,.08);color:var(--txt);padding:.52rem .66rem;border-radius:999px;cursor:pointer;line-height:1;transition:.15s ease}
+button:hover{background:rgba(255,255,255,.16)}
+button.ghost{background:transparent}
+button.mini{font-size:.74rem;padding:.38rem .52rem}
+button.good{background:rgba(57,217,138,.18)}
+button.warn{background:rgba(255,209,102,.18)}
+button.bad{background:rgba(255,92,122,.18)}
+input,select,textarea{background:rgba(255,255,255,.07);color:var(--txt);border:1px solid var(--hair);border-radius:12px;padding:.55rem .65rem;outline:none;width:100%}
+textarea{min-height:120px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.78rem}
+label{display:block;font-size:.75rem;color:var(--muted);margin:.7rem 0 .28rem}
+small{color:var(--muted)}
+#app{position:fixed;inset:0;background:var(--bg)}
+.view{position:absolute;inset:0;display:none}
+.view.active{display:block}
+#tileGrid{position:absolute;inset:0;display:grid;gap:0;background:#000}
+.camTile{position:relative;background:#000;overflow:hidden;min-width:0;min-height:0}
+.camTile iframe,.camTile img,.camTile video{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000;object-fit:cover}
+.camTile iframe{object-fit:fill}
+.tileOverlay{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:.6rem;padding:.35rem .45rem;background:linear-gradient(transparent,rgba(0,0,0,.55));opacity:0;transition:.15s ease;pointer-events:none}
+body.labels-on .tileOverlay,.camTile:hover .tileOverlay{opacity:1}
+.tileTitle{font-size:.68rem;color:#fff;line-height:1.15;max-width:80%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000}
+.tileStatus{font-size:.62rem;color:rgba(255,255,255,.72)}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);padding:2rem}
+.topFloating{position:fixed;top:.55rem;left:.55rem;z-index:50;display:flex;gap:.35rem;align-items:center}
+.pill{border-radius:999px;background:rgba(0,0,0,.42);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);padding:.45rem .6rem;font-size:.75rem;color:rgba(255,255,255,.78)}
+html.light .pill{background:rgba(255,255,255,.65);color:#1b2433}
+#side{position:fixed;top:0;bottom:0;left:0;width:min(390px,92vw);z-index:100;background:var(--panel);backdrop-filter:blur(22px);border-right:1px solid var(--hair);transform:translateX(-102%);transition:.22s ease;display:flex;flex-direction:column}
+#side.open{transform:translateX(0)}
+#sideHead{display:flex;align-items:center;justify-content:space-between;padding:.75rem;border-bottom:1px solid var(--hair)}
+#sideHead strong{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#sideBody{padding:.85rem;overflow:auto}
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;margin-bottom:.8rem}
+.nav button.active{background:rgba(124,199,255,.22)}
+.section{border-top:1px solid var(--hair);padding-top:.8rem;margin-top:.8rem}
+.inline{display:flex;gap:.45rem;align-items:center}
+.inline > *{flex:1}
+.toggleLine{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin:.45rem 0}
+.toggleLine span{font-size:.82rem;color:var(--muted)}
+#drawerShade{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.34);display:none}
+#drawerShade.show{display:block}
+#mapCanvas{position:absolute;inset:0;background:var(--map-water)}
+#worldMap{width:100%;height:100%;display:block}
+.country{fill:var(--map-land);stroke:var(--map-line);stroke-width:.45;vector-effect:non-scaling-stroke;cursor:default}
+.country:hover{fill:var(--map-land-hover)}
+.graticule{fill:none;stroke:var(--map-line);stroke-width:.5;vector-effect:non-scaling-stroke}
+.sphere{fill:var(--map-water)}
+.mapMarker{cursor:pointer}
+.mapMarker circle.outer{fill:var(--marker);opacity:.22}
+.mapMarker circle.inner{fill:var(--marker2);stroke:var(--marker);stroke-width:2}
+.mapMarker:hover circle.outer{opacity:.38}
+.mapLabel{font-size:10px;fill:var(--txt);paint-order:stroke;stroke:var(--bg);stroke-width:3px;pointer-events:none;opacity:.85}
+#mapHud{position:absolute;right:.65rem;bottom:.65rem;z-index:4;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.catalog{position:absolute;inset:0;overflow:auto;padding:4rem .8rem .8rem;background:var(--bg)}
+.catalogTools{position:fixed;z-index:5;top:.55rem;right:.55rem;left:3.8rem;display:flex;gap:.45rem;align-items:center;justify-content:flex-end;pointer-events:none}
+.catalogTools > *{pointer-events:auto;max-width:260px}
+.camRow{display:grid;grid-template-columns:1fr auto;gap:.7rem;align-items:center;border-bottom:1px solid var(--hair);padding:.58rem 0}
+.camMain{min-width:0}
+.camName{font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.camMeta{font-size:.68rem;color:var(--muted);margin-top:.16rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.camActions{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.dot{width:.58rem;height:.58rem;border-radius:999px;background:var(--muted);display:inline-block}
+.dot.ok{background:var(--good)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}.dot.checking{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.config{position:absolute;inset:0;overflow:auto;padding:4rem .9rem 1rem;background:var(--bg)}
+.configBox{max-width:920px;margin:0 auto;border-top:1px solid var(--hair);padding-top:1rem}
+.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:rgba(255,255,255,.06);border:1px solid var(--hair);border-radius:12px;padding:.7rem;font-size:.8rem;overflow:auto}
+.notice{font-size:.78rem;color:var(--muted);line-height:1.45;background:rgba(124,199,255,.08);border:1px solid rgba(124,199,255,.16);padding:.7rem;border-radius:14px}
+#toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);z-index:200;background:rgba(0,0,0,.76);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:.55rem .8rem;font-size:.78rem;opacity:0;pointer-events:none;transition:.18s}
+#toast.show{opacity:1}
+@media(max-width:720px){
+  .catalogTools{left:3.4rem;justify-content:flex-end}
+  .catalogTools select{display:none}
+  .camRow{grid-template-columns:1fr}
+  .camActions{justify-content:flex-start}
+}
+</style>
+</head>
+<body class="labels-on">
+<div id="app">
+  <div class="topFloating">
+    <button id="menuBtn" title="Menú">☰</button>
+    <span class="pill" id="miniState">4 cámaras</span>
+  </div>
+
+  <section id="camerasView" class="view active">
+    <div id="tileGrid"></div>
+  </section>
+
+  <section id="mapView" class="view">
+    <div id="mapCanvas">
+      <svg id="worldMap" role="img" aria-label="Mapa de cámaras"></svg>
+      <div id="mapHud">
+        <button class="mini" id="mapReset">reset mapa</button>
+        <span class="pill" id="mapCount">0 puntos</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="catalogView" class="view">
+    <div class="catalogTools">
+      <input id="catalogSearch" placeholder="buscar cámara...">
+      <button class="mini" id="checkVisibleBtn">comprobar visibles</button>
+    </div>
+    <div class="catalog" id="catalogList"></div>
+  </section>
+
+  <section id="configView" class="view">
+    <div class="config">
+      <div class="configBox">
+        <div class="notice">
+          El catálogo se guarda en este navegador con <b>localStorage</b>. Para las emisiones de YouTube, lo más estable es abrir este HTML desde un servidor local y no con <b>file://</b>. En Windows puedes abrir PowerShell en la carpeta del archivo y ejecutar:
+          <div class="code" style="margin-top:.5rem">python -m http.server 8000</div>
+          Después abre <b>http://localhost:8000/worldcam_minimal_v0_4.html</b>.
+        </div>
+
+        <div class="section">
+          <label>Añadir cámara rápida</label>
+          <div class="inline">
+            <input id="newTitle" placeholder="Nombre">
+            <input id="newCity" placeholder="Ciudad">
+          </div>
+          <div class="inline">
+            <input id="newCountry" placeholder="País">
+            <select id="newType">
+              <option value="youtube">YouTube</option>
+              <option value="iframe">iframe</option>
+              <option value="image">imagen refrescada</option>
+              <option value="mjpeg">MJPEG</option>
+              <option value="hls">HLS .m3u8</option>
+            </select>
+          </div>
+          <input id="newUrl" placeholder="URL o ID de YouTube" style="margin-top:.45rem">
+          <div class="inline" style="margin-top:.45rem">
+            <input id="newLat" placeholder="latitud">
+            <input id="newLon" placeholder="longitud">
+          </div>
+          <button id="addCamBtn" style="margin-top:.55rem">añadir</button>
+        </div>
+
+        <div class="section">
+          <label>Importar JSON</label>
+          <textarea id="jsonImport" placeholder='Pega un objeto o array. Ejemplo: {"title":"Vigo","country":"España","city":"Vigo","lat":42.24,"lon":-8.72,"type":"youtube","videoId":"..."}'></textarea>
+          <div class="inline" style="margin-top:.45rem">
+            <button id="importBtn">importar</button>
+            <button id="exportBtn">exportar catálogo</button>
+            <button class="bad" id="resetCatalogBtn">restaurar catálogo base</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="drawerShade"></div>
+<aside id="side">
+  <div id="sideHead">
+    <strong>control</strong>
+    <button class="ghost" id="closeSide">×</button>
+  </div>
+  <div id="sideBody">
+    <div class="nav">
+      <button data-view="camerasView" class="active">cámaras</button>
+      <button data-view="mapView">mapa</button>
+      <button data-view="catalogView">catálogo</button>
+      <button data-view="configView">config</button>
+    </div>
+
+    <label>País</label>
+    <select id="countryFilter"></select>
+
+    <label>Categoría</label>
+    <select id="categoryFilter"></select>
+
+    <label>Texto</label>
+    <input id="textFilter" placeholder="ciudad, playa, airport...">
+
+    <div class="section">
+      <label>Mosaico</label>
+      <select id="gridSelect">
+        <option value="1">1 cámara</option>
+        <option value="2">2 cámaras</option>
+        <option value="4" selected>4 cámaras</option>
+        <option value="6">6 cámaras</option>
+        <option value="9">9 cámaras</option>
+        <option value="16">16 cámaras</option>
+        <option value="25">25 cámaras</option>
+      </select>
+      <div class="inline" style="margin-top:.45rem">
+        <button id="prevBtn">←</button>
+        <button id="nextBtn">→</button>
+        <button id="shuffleBtn">azar</button>
+      </div>
+      <div class="toggleLine"><span>Rotación</span><button id="rotationBtn" class="mini">off</button></div>
+      <label>Intervalo</label>
+      <select id="rotationInterval">
+        <option value="15000">15 s</option>
+        <option value="30000" selected>30 s</option>
+        <option value="60000">60 s</option>
+        <option value="120000">120 s</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <div class="toggleLine"><span>Rótulos mínimos</span><button id="labelsBtn" class="mini good">on</button></div>
+      <div class="toggleLine"><span>Modo visual</span><button id="themeBtn" class="mini">noche</button></div>
+      <button id="fullscreenBtn" style="width:100%;margin-top:.4rem">pantalla completa</button>
+      <button id="openSelectedBtn" style="width:100%;margin-top:.4rem">abrir cámara seleccionada</button>
+    </div>
+
+    <div class="section">
+      <small id="sideStats"></small>
+    </div>
+  </div>
+</aside>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<script>
+const DEFAULT_CAMS = [{"title":"Times Square 4K · Nueva York","country":"Estados Unidos","city":"Nueva York","lat":40.758,"lon":-73.9855,"category":"ciudad","videoId":"rnXIjl_Rzy4","id":"cam-001","type":"youtube","active":true,"provider":"YouTube"},{"title":"NYC multicámara 24/7","country":"Estados Unidos","city":"Nueva York","lat":40.7128,"lon":-74.006,"category":"ciudad","videoId":"VGnFLdQW39A","id":"cam-002","type":"youtube","active":true,"provider":"YouTube"},{"title":"Times Square Crossroads","country":"Estados Unidos","city":"Nueva York","lat":40.7589,"lon":-73.9851,"category":"ciudad","videoId":"MxY390eP4lc","id":"cam-003","type":"youtube","active":true,"provider":"YouTube"},{"title":"Columbus Circle · Nueva York","country":"Estados Unidos","city":"Nueva York","lat":40.7681,"lon":-73.9819,"category":"ciudad","videoId":"C_KeX3jxpxw","id":"cam-004","type":"youtube","active":true,"provider":"YouTube"},{"title":"Coney Island · Belt Parkway","country":"Estados Unidos","city":"Brooklyn","lat":40.5749,"lon":-73.985,"category":"tráfico","videoId":"YPoxUdkdQyM","id":"cam-005","type":"youtube","active":true,"provider":"YouTube"},{"title":"Coney Island · Shore Parkway","country":"Estados Unidos","city":"Brooklyn","lat":40.58,"lon":-73.97,"category":"tráfico","videoId":"gO0p6Gc--jU","id":"cam-006","type":"youtube","active":true,"provider":"YouTube"},{"title":"Venice Beach · Los Angeles","country":"Estados Unidos","city":"Los Ángeles","lat":33.985,"lon":-118.4695,"category":"playa","videoId":"EO_1LWqsCNE","id":"cam-007","type":"youtube","active":true,"provider":"YouTube"},{"title":"LAX Airport · Los Angeles","country":"Estados Unidos","city":"Los Ángeles","lat":33.9416,"lon":-118.4085,"category":"aeropuerto","videoId":"UQaSS4_VAV4","id":"cam-008","type":"youtube","active":true,"provider":"YouTube"},{"title":"Las Vegas Airport 26R/26L","country":"Estados Unidos","city":"Las Vegas","lat":36.084,"lon":-115.1537,"category":"aeropuerto","videoId":"_-Qg5jD-PfA","id":"cam-009","type":"youtube","active":true,"provider":"YouTube"},{"title":"Las Vegas Airport LIVE","country":"Estados Unidos","city":"Las Vegas","lat":36.084,"lon":-115.1537,"category":"aeropuerto","videoId":"euH5-K8dzZ0","id":"cam-010","type":"youtube","active":true,"provider":"YouTube"},{"title":"MSP Airport · Minneapolis/St. Paul","country":"Estados Unidos","city":"Minneapolis","lat":44.8848,"lon":-93.2223,"category":"aeropuerto","videoId":"TY_fpVUxRrg","id":"cam-011","type":"youtube","active":true,"provider":"YouTube"},{"title":"MSP Airport · vista alternativa","country":"Estados Unidos","city":"Minneapolis","lat":44.8848,"lon":-93.2223,"category":"aeropuerto","videoId":"8yH4_jR0650","id":"cam-012","type":"youtube","active":true,"provider":"YouTube"},{"title":"Big Bear Lake · California","country":"Estados Unidos","city":"Big Bear Lake","lat":34.2439,"lon":-116.9114,"category":"montaña","videoId":"z0II9whnGnI","id":"cam-013","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mountain High · Upper Chisolm","country":"Estados Unidos","city":"Wrightwood","lat":34.3769,"lon":-117.6918,"category":"montaña","videoId":"dyjqN3NezH0","id":"cam-014","type":"youtube","active":true,"provider":"YouTube"},{"title":"Dodge Ridge Mountain Resort","country":"Estados Unidos","city":"Pinecrest","lat":38.19,"lon":-119.956,"category":"montaña","videoId":"l1gateQVYr4","id":"cam-015","type":"youtube","active":true,"provider":"YouTube"},{"title":"Goldmine Mountain · Big Bear","country":"Estados Unidos","city":"Big Bear","lat":34.25,"lon":-116.89,"category":"montaña","videoId":"Am9zczLMJYo","id":"cam-016","type":"youtube","active":true,"provider":"YouTube"},{"title":"Saint Louis Zoo · directo rotativo","country":"Estados Unidos","city":"St. Louis","lat":38.6367,"lon":-90.2948,"category":"animales","videoId":"Qka8PUZB-K4","id":"cam-017","type":"youtube","active":true,"provider":"YouTube"},{"title":"Toledo Zoo · Brown Bear","country":"Estados Unidos","city":"Toledo","lat":41.617,"lon":-83.5822,"category":"animales","videoId":"kFpe2oKZKyg","id":"cam-018","type":"youtube","active":true,"provider":"YouTube"},{"title":"Houston Zoo · Giraffe Cam","country":"Estados Unidos","city":"Houston","lat":29.7162,"lon":-95.3908,"category":"animales","videoId":"NTGekhzR2FY","id":"cam-019","type":"youtube","active":true,"provider":"YouTube"},{"title":"Flamingos · Critter Cam","country":"Estados Unidos","city":"Estados Unidos","lat":39.5,"lon":-98.35,"category":"animales","videoId":"mdISJX3yEE8","id":"cam-020","type":"youtube","active":true,"provider":"YouTube"},{"title":"Saint Louis Zoo · Penguin Webcam","country":"Estados Unidos","city":"St. Louis","lat":38.6367,"lon":-90.2948,"category":"animales","videoId":"GHpfWI8Bya4","id":"cam-021","type":"youtube","active":true,"provider":"YouTube"},{"title":"Pennsylvania Wildlife Cam 2","country":"Estados Unidos","city":"Pensilvania","lat":40.2732,"lon":-76.8867,"category":"animales","videoId":"XfNhPa26fP8","id":"cam-022","type":"youtube","active":true,"provider":"YouTube"},{"title":"North Carolina Bird Feeder","country":"Estados Unidos","city":"Statesville","lat":35.7826,"lon":-80.8873,"category":"animales","videoId":"uW7whsLBmhI","id":"cam-023","type":"youtube","active":true,"provider":"YouTube"},{"title":"New London Railcam","country":"Estados Unidos","city":"New London","lat":41.3557,"lon":-72.0995,"category":"tren","videoId":"Chsnu4QybCM","id":"cam-024","type":"youtube","active":true,"provider":"YouTube"},{"title":"Rail & Weather · MN/WI","country":"Estados Unidos","city":"Minnesota / Wisconsin","lat":45.0,"lon":-93.2,"category":"tren","videoId":"iNwILxk0yYM","id":"cam-025","type":"youtube","active":true,"provider":"YouTube"},{"title":"Woodbine Main Street Railcam","country":"Estados Unidos","city":"Woodbine","lat":41.7386,"lon":-95.7039,"category":"tren","videoId":"GsGNp7zQay8","id":"cam-026","type":"youtube","active":true,"provider":"YouTube"},{"title":"Pacific Railcam · Missouri","country":"Estados Unidos","city":"Pacific","lat":38.482,"lon":-90.7415,"category":"tren","videoId":"QTrBSWkgAVs","id":"cam-027","type":"youtube","active":true,"provider":"YouTube"},{"title":"Staples Train Cam · Minnesota","country":"Estados Unidos","city":"Staples","lat":46.3555,"lon":-94.7922,"category":"tren","videoId":"kcyCAY1JhZk","id":"cam-028","type":"youtube","active":true,"provider":"YouTube"},{"title":"Sedalia Railcam · Missouri","country":"Estados Unidos","city":"Sedalia","lat":38.7045,"lon":-93.2283,"category":"tren","videoId":"93V7K_Gr3y4","id":"cam-029","type":"youtube","active":true,"provider":"YouTube"},{"title":"West Barnstable Station","country":"Estados Unidos","city":"Barnstable","lat":41.7034,"lon":-70.3745,"category":"tren","videoId":"XP-tZ-yWGs8","id":"cam-030","type":"youtube","active":true,"provider":"YouTube"},{"title":"Fargo/Moorhead Train Cam","country":"Estados Unidos","city":"Fargo","lat":46.8772,"lon":-96.7898,"category":"tren","videoId":"A1PoDybhDQs","id":"cam-031","type":"youtube","active":true,"provider":"YouTube"},{"title":"Owosso Railcam","country":"Estados Unidos","city":"Owosso","lat":42.9978,"lon":-84.1766,"category":"tren","videoId":"E9pwzeNauUk","id":"cam-032","type":"youtube","active":true,"provider":"YouTube"},{"title":"Montreal Trudeau Airport","country":"Canadá","city":"Montreal","lat":45.4706,"lon":-73.7408,"category":"aeropuerto","videoId":"C6eSiTr3SE8","id":"cam-033","type":"youtube","active":true,"provider":"YouTube"},{"title":"Montreal Piste Nord","country":"Canadá","city":"Montreal","lat":45.4706,"lon":-73.7408,"category":"aeropuerto","videoId":"O2mbNF-uouc","id":"cam-034","type":"youtube","active":true,"provider":"YouTube"},{"title":"Calgary Downtown","country":"Canadá","city":"Calgary","lat":51.0447,"lon":-114.0719,"category":"ciudad","videoId":"1jIuUY9qTkI","id":"cam-035","type":"youtube","active":true,"provider":"YouTube"},{"title":"Grizzly Bears · Grouse Mountain","country":"Canadá","city":"Vancouver","lat":49.38,"lon":-123.081,"category":"animales","videoId":"YXji6UQ0bwY","id":"cam-036","type":"youtube","active":true,"provider":"YouTube"},{"title":"Barbados International Airport","country":"Barbados","city":"Bridgetown","lat":13.0746,"lon":-59.4925,"category":"aeropuerto","videoId":"XFmjAHqmSqA","id":"cam-037","type":"youtube","active":true,"provider":"YouTube"},{"title":"Maho Beach · Princess Juliana","country":"Sint Maarten","city":"Maho Beach","lat":18.039,"lon":-63.1185,"category":"aeropuerto","videoId":"iSeH45R-8R0","id":"cam-038","type":"youtube","active":true,"provider":"YouTube"},{"title":"SXM Airport · Maho Beach","country":"Sint Maarten","city":"Maho Beach","lat":18.039,"lon":-63.1185,"category":"aeropuerto","videoId":"2IQmpCXbOmM","id":"cam-039","type":"youtube","active":true,"provider":"YouTube"},{"title":"Simpson Bay Beach Resort","country":"Sint Maarten","city":"Simpson Bay","lat":18.0373,"lon":-63.0954,"category":"playa","videoId":"vxHKAImxUHk","id":"cam-040","type":"youtube","active":true,"provider":"YouTube"},{"title":"Great Bay Beach · Philipsburg","country":"Sint Maarten","city":"Philipsburg","lat":18.026,"lon":-63.0458,"category":"playa","videoId":"N5Mb2bjYwZo","id":"cam-041","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mambo Beach · Curaçao","country":"Curaçao","city":"Willemstad","lat":12.0969,"lon":-68.8818,"category":"playa","videoId":"-UGFqrgzCLI","id":"cam-042","type":"youtube","active":true,"provider":"YouTube"},{"title":"LionsDive · Curaçao","country":"Curaçao","city":"Willemstad","lat":12.0866,"lon":-68.894,"category":"playa","videoId":"loHbMM9JfCs","id":"cam-043","type":"youtube","active":true,"provider":"YouTube"},{"title":"Cruz Bay · St. John","country":"Islas Vírgenes EEUU","city":"Cruz Bay","lat":18.3313,"lon":-64.7938,"category":"ciudad","videoId":"xqAZJTY2q-Y","id":"cam-044","type":"youtube","active":true,"provider":"YouTube"},{"title":"Seven Mile Beach · Grand Cayman","country":"Islas Caimán","city":"Grand Cayman","lat":19.321,"lon":-81.381,"category":"playa","videoId":"PsRa6WGjbBo","id":"cam-045","type":"youtube","active":true,"provider":"YouTube"},{"title":"Caribbean Scenic Cameras","country":"Caribe","city":"varios","lat":18.2,"lon":-66.5,"category":"playa","videoId":"y0XPkjM9-P4","id":"cam-046","type":"youtube","active":true,"provider":"YouTube"},{"title":"Los Cabos · Mio Beach","country":"México","city":"Los Cabos","lat":22.8905,"lon":-109.9167,"category":"playa","videoId":"4CK0CsimBHs","id":"cam-047","type":"youtube","active":true,"provider":"YouTube"},{"title":"Medano Beach · Cabo","country":"México","city":"Cabo San Lucas","lat":22.8909,"lon":-109.9167,"category":"playa","videoId":"1KOPPamfft4","id":"cam-048","type":"youtube","active":true,"provider":"YouTube"},{"title":"Cozumel Waterfront","country":"México","city":"Cozumel","lat":20.422,"lon":-86.9223,"category":"playa","videoId":"p1xdPMicxag","id":"cam-049","type":"youtube","active":true,"provider":"YouTube"},{"title":"Cozumel 24/7","country":"México","city":"Cozumel","lat":20.422,"lon":-86.9223,"category":"playa","videoId":"6h8KChX5jco","id":"cam-050","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mazatlán Beach","country":"México","city":"Mazatlán","lat":23.2494,"lon":-106.4111,"category":"playa","videoId":"s78AsBR5tLI","id":"cam-051","type":"youtube","active":true,"provider":"YouTube"},{"title":"Cerritos Surf Cam","country":"México","city":"Cerritos","lat":23.331,"lon":-110.174,"category":"playa","videoId":"7wbbZxDTi7A","id":"cam-052","type":"youtube","active":true,"provider":"YouTube"},{"title":"Cabo del Sol Panorámica","country":"México","city":"Los Cabos","lat":22.9167,"lon":-109.8333,"category":"playa","videoId":"QAnxvSkzICY","id":"cam-053","type":"youtube","active":true,"provider":"YouTube"},{"title":"Copacabana · Rio de Janeiro","country":"Brasil","city":"Rio de Janeiro","lat":-22.9711,"lon":-43.1822,"category":"playa","videoId":"VIcJkDA4_6s","id":"cam-054","type":"youtube","active":true,"provider":"YouTube"},{"title":"Copacabana Beach HD","country":"Brasil","city":"Rio de Janeiro","lat":-22.9711,"lon":-43.1822,"category":"playa","videoId":"S5M3TbkUiKM","id":"cam-055","type":"youtube","active":true,"provider":"YouTube"},{"title":"Ipanema Beach","country":"Brasil","city":"Rio de Janeiro","lat":-22.9846,"lon":-43.2048,"category":"playa","videoId":"X6E0JYNlIFw","id":"cam-056","type":"youtube","active":true,"provider":"YouTube"},{"title":"Rio Live Cam · Copacabana","country":"Brasil","city":"Rio de Janeiro","lat":-22.9711,"lon":-43.1822,"category":"playa","videoId":"kKDSckedpig","id":"cam-057","type":"youtube","active":true,"provider":"YouTube"},{"title":"Huaraz · Andes","country":"Perú","city":"Huaraz","lat":-9.5278,"lon":-77.5278,"category":"montaña","videoId":"H_LAZ7wEJSo","id":"cam-058","type":"youtube","active":true,"provider":"YouTube"},{"title":"Sydney Harbour · panning","country":"Australia","city":"Sídney","lat":-33.8568,"lon":151.2153,"category":"ciudad","videoId":"jshwkG1ZpP8","id":"cam-059","type":"youtube","active":true,"provider":"YouTube"},{"title":"Sydney Harbour · 4K","country":"Australia","city":"Sídney","lat":-33.8568,"lon":151.2153,"category":"ciudad","videoId":"v5yrP5N1UgY","id":"cam-060","type":"youtube","active":true,"provider":"YouTube"},{"title":"Sydney Harbour · vista 24/7","country":"Australia","city":"Sídney","lat":-33.8568,"lon":151.2153,"category":"ciudad","videoId":"Epder7cp_iA","id":"cam-061","type":"youtube","active":true,"provider":"YouTube"},{"title":"Sydney Harbour · noche","country":"Australia","city":"Sídney","lat":-33.8568,"lon":151.2153,"category":"ciudad","videoId":"iVldXtZL1_I","id":"cam-062","type":"youtube","active":true,"provider":"YouTube"},{"title":"Black Swan Cam · Dawlish","country":"Reino Unido","city":"Dawlish","lat":50.5812,"lon":-3.4664,"category":"animales","videoId":"vSkzgD024XY","id":"cam-063","type":"youtube","active":true,"provider":"YouTube"},{"title":"Penguin Pool · Birdland","country":"Reino Unido","city":"Bourton-on-the-Water","lat":51.885,"lon":-1.76,"category":"animales","videoId":"NAcHzsZRsXw","id":"cam-064","type":"youtube","active":true,"provider":"YouTube"},{"title":"Weymouth Mainline Railcam","country":"Reino Unido","city":"Weymouth","lat":50.6099,"lon":-2.4546,"category":"tren","videoId":"VcrN2Z4peDk","id":"cam-065","type":"youtube","active":true,"provider":"YouTube"},{"title":"Bradford City Centre","country":"Reino Unido","city":"Bradford","lat":53.795,"lon":-1.7594,"category":"ciudad","videoId":"vLI7g1cAZJA","id":"cam-066","type":"youtube","active":true,"provider":"YouTube"},{"title":"Llangollen · River Dee","country":"Reino Unido","city":"Llangollen","lat":52.9697,"lon":-3.1717,"category":"río","videoId":"w0rznpMnXOc","id":"cam-067","type":"youtube","active":true,"provider":"YouTube"},{"title":"Abbey Road Crossing","country":"Reino Unido","city":"Londres","lat":51.532,"lon":-0.1775,"category":"ciudad","videoId":"IugGd6-3G84","id":"cam-068","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mallorca · Tora Beach Paguera","country":"España","city":"Paguera","lat":39.5378,"lon":2.4483,"category":"playa","videoId":"iJYYdspOZDk","id":"cam-069","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mallorca · Camp de Mar","country":"España","city":"Camp de Mar","lat":39.5385,"lon":2.4207,"category":"playa","videoId":"pQil5Xc372E","id":"cam-070","type":"youtube","active":true,"provider":"YouTube"},{"title":"Lanzarote · Puerto del Carmen","country":"España","city":"Puerto del Carmen","lat":28.9236,"lon":-13.665,"category":"playa","videoId":"AfD16cDYBbE","id":"cam-071","type":"youtube","active":true,"provider":"YouTube"},{"title":"Fuengirola · Los Boliches","country":"España","city":"Fuengirola","lat":36.5481,"lon":-4.6236,"category":"playa","videoId":"RV2Iu0wbgec","id":"cam-072","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mallorca · Santa Ponsa","country":"España","city":"Santa Ponsa","lat":39.515,"lon":2.4826,"category":"playa","videoId":"Pgjsoeq7iGM","id":"cam-073","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mallorca · Cala Fornells","country":"España","city":"Cala Fornells","lat":39.535,"lon":2.442,"category":"playa","videoId":"DnWzhTlKZN0","id":"cam-074","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mallorca · Playa 5 Peguera","country":"España","city":"Peguera","lat":39.5378,"lon":2.4483,"category":"playa","videoId":"cx9oNIlBmPo","id":"cam-075","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mallorca · Son Maties","country":"España","city":"Palmanova","lat":39.5193,"lon":2.5374,"category":"playa","videoId":"JGN3p2GZ45U","id":"cam-076","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mallorca · Port d'Andratx","country":"España","city":"Andratx","lat":39.5448,"lon":2.39,"category":"puerto","videoId":"RWTptrTbWpI","id":"cam-077","type":"youtube","active":true,"provider":"YouTube"},{"title":"Valencia centro","country":"España","city":"Valencia","lat":39.4699,"lon":-0.3763,"category":"ciudad","videoId":"btm-xirnPS8","id":"cam-078","type":"youtube","active":true,"provider":"YouTube"},{"title":"Valencia centro · alternativa","country":"España","city":"Valencia","lat":39.4699,"lon":-0.3763,"category":"ciudad","videoId":"Oqhkf7tj-rA","id":"cam-079","type":"youtube","active":true,"provider":"YouTube"},{"title":"Top live cams España","country":"España","city":"varios","lat":40.4168,"lon":-3.7038,"category":"multicámara","videoId":"NHRDdaH4LpU","id":"cam-080","type":"youtube","active":true,"provider":"YouTube"},{"title":"Aldeanueva de Atienza","country":"España","city":"Aldeanueva de Atienza","lat":41.214,"lon":-2.981,"category":"montaña","videoId":"64qEr2eYN-0","id":"cam-081","type":"youtube","active":true,"provider":"YouTube"},{"title":"Ponferrada · El Bierzo","country":"España","city":"Ponferrada","lat":42.5466,"lon":-6.5962,"category":"ciudad","videoId":"evG-fyD_irM","id":"cam-082","type":"youtube","active":true,"provider":"YouTube"},{"title":"Málaga Airport","country":"España","city":"Málaga","lat":36.6749,"lon":-4.4991,"category":"aeropuerto","videoId":"A6R81wOlQqs","id":"cam-083","type":"youtube","active":true,"provider":"YouTube"},{"title":"Lisbon Airport","country":"Portugal","city":"Lisboa","lat":38.7742,"lon":-9.1342,"category":"aeropuerto","videoId":"yaOna_OGZEs","id":"cam-084","type":"youtube","active":true,"provider":"YouTube"},{"title":"Venecia · Rialto Bridge","country":"Italia","city":"Venecia","lat":45.4371,"lon":12.3358,"category":"ciudad","videoId":"CMn6xQXuSjI","id":"cam-085","type":"youtube","active":true,"provider":"YouTube"},{"title":"Venecia 24/7 · Skyline","country":"Italia","city":"Venecia","lat":45.4408,"lon":12.3155,"category":"ciudad","videoId":"x4AlaibltlA","id":"cam-086","type":"youtube","active":true,"provider":"YouTube"},{"title":"Venecia · Canal","country":"Italia","city":"Venecia","lat":45.437,"lon":12.33,"category":"ciudad","videoId":"ofyDg3_72-s","id":"cam-087","type":"youtube","active":true,"provider":"YouTube"},{"title":"Venecia · Campo Santa Maria Formosa","country":"Italia","city":"Venecia","lat":45.4387,"lon":12.341,"category":"ciudad","videoId":"CJLrYIS7NFg","id":"cam-088","type":"youtube","active":true,"provider":"YouTube"},{"title":"Roma · Circo Massimo","country":"Italia","city":"Roma","lat":41.886,"lon":12.4858,"category":"ciudad","videoId":"2ZIxDAg1RvQ","id":"cam-089","type":"youtube","active":true,"provider":"YouTube"},{"title":"Tuscany · Vineyard","country":"Italia","city":"Toscana","lat":43.7711,"lon":11.2486,"category":"paisaje","videoId":"BIno8_T0uKc","id":"cam-090","type":"youtube","active":true,"provider":"YouTube"},{"title":"Dolomitas · panorama","country":"Italia","city":"Dolomitas","lat":46.4102,"lon":11.844,"category":"montaña","videoId":"Y1qp-EVF_oU","id":"cam-091","type":"youtube","active":true,"provider":"YouTube"},{"title":"Sassolungo / Langkofel","country":"Italia","city":"Dolomitas","lat":46.5245,"lon":11.7356,"category":"montaña","videoId":"ZTrqu4RYa7Y","id":"cam-092","type":"youtube","active":true,"provider":"YouTube"},{"title":"Foligno","country":"Italia","city":"Foligno","lat":42.956,"lon":12.7033,"category":"ciudad","videoId":"R24Ny0TDxtI","id":"cam-093","type":"youtube","active":true,"provider":"YouTube"},{"title":"Ajaccio · Corsica","country":"Francia","city":"Ajaccio","lat":41.9192,"lon":8.7386,"category":"ciudad","videoId":"I0jletlKwxo","id":"cam-094","type":"youtube","active":true,"provider":"YouTube"},{"title":"Saint-Véran · village","country":"Francia","city":"Saint-Véran","lat":44.7,"lon":6.8667,"category":"montaña","videoId":"hoN9su9T-G4","id":"cam-095","type":"youtube","active":true,"provider":"YouTube"},{"title":"Marseille · Calanque Samena","country":"Francia","city":"Marsella","lat":43.214,"lon":5.355,"category":"costa","videoId":"KmpCbWyTvpY","id":"cam-096","type":"youtube","active":true,"provider":"YouTube"},{"title":"Lille · cielo en directo","country":"Francia","city":"Lille","lat":50.6292,"lon":3.0573,"category":"ciudad","videoId":"PtH2JL9MEBw","id":"cam-097","type":"youtube","active":true,"provider":"YouTube"},{"title":"Saint-Trojan CNCO","country":"Francia","city":"Saint-Trojan-les-Bains","lat":45.841,"lon":-1.207,"category":"costa","videoId":"9yfjmxlKJTk","id":"cam-098","type":"youtube","active":true,"provider":"YouTube"},{"title":"Oléron · Phare de Chassiron","country":"Francia","city":"Île d'Oléron","lat":46.046,"lon":-1.411,"category":"costa","videoId":"kpzKmQUMh4E","id":"cam-099","type":"youtube","active":true,"provider":"YouTube"},{"title":"Ajaccio Airport","country":"Francia","city":"Ajaccio","lat":41.9236,"lon":8.8029,"category":"aeropuerto","videoId":"G1SBh8081ws","id":"cam-100","type":"youtube","active":true,"provider":"YouTube"},{"title":"Dieppe aérodrome","country":"Francia","city":"Dieppe","lat":49.922,"lon":1.077,"category":"aeropuerto","videoId":"PRDWF7PjBIU","id":"cam-101","type":"youtube","active":true,"provider":"YouTube"},{"title":"Jungfraujoch · Top of Europe","country":"Suiza","city":"Jungfraujoch","lat":46.5475,"lon":7.985,"category":"montaña","videoId":"5XhbFKe_qvA","id":"cam-102","type":"youtube","active":true,"provider":"YouTube"},{"title":"Grimentz · village","country":"Suiza","city":"Grimentz","lat":46.1806,"lon":7.575,"category":"montaña","videoId":"iCxfe27HpaY","id":"cam-103","type":"youtube","active":true,"provider":"YouTube"},{"title":"Saalbach · HD camera","country":"Austria","city":"Saalbach","lat":47.391,"lon":12.636,"category":"montaña","videoId":"7gikDXbCmVo","id":"cam-104","type":"youtube","active":true,"provider":"YouTube"},{"title":"Hamburg · St. Michaelis","country":"Alemania","city":"Hamburgo","lat":53.5488,"lon":9.9872,"category":"ciudad","videoId":"2_IpYA8apCE","id":"cam-105","type":"youtube","active":true,"provider":"YouTube"},{"title":"Charme.NL · ultraHD","country":"Países Bajos","city":"Países Bajos","lat":52.1326,"lon":5.2913,"category":"ciudad","videoId":"pOL0u6K4wLI","id":"cam-106","type":"youtube","active":true,"provider":"YouTube"},{"title":"Komárno · Basilica","country":"Eslovaquia","city":"Komárno","lat":47.7636,"lon":18.1226,"category":"ciudad","videoId":"JgXzXIh06SM","id":"cam-107","type":"youtube","active":true,"provider":"YouTube"},{"title":"Gdańsk · Olivia Centre","country":"Polonia","city":"Gdańsk","lat":54.352,"lon":18.6466,"category":"ciudad","videoId":"NhuDyWCX7eM","id":"cam-108","type":"youtube","active":true,"provider":"YouTube"},{"title":"Malta Cam 4K","country":"Malta","city":"Malta","lat":35.8997,"lon":14.5146,"category":"ciudad","videoId":"FrUd3ssj4GU","id":"cam-109","type":"youtube","active":true,"provider":"YouTube"},{"title":"Malta Cam 4K · alternativa","country":"Malta","city":"Malta","lat":35.8997,"lon":14.5146,"category":"ciudad","videoId":"gZuqT1cvfzY","id":"cam-110","type":"youtube","active":true,"provider":"YouTube"},{"title":"Tokyo Skytree / Tsukiji","country":"Japón","city":"Tokio","lat":35.6895,"lon":139.6917,"category":"ciudad","videoId":"1JNtX3IJ3W8","id":"cam-111","type":"youtube","active":true,"provider":"YouTube"},{"title":"Tokyo Bay & Shuto Expressway","country":"Japón","city":"Tokio","lat":35.63,"lon":139.8,"category":"ciudad","videoId":"g4FkkwNHyUk","id":"cam-112","type":"youtube","active":true,"provider":"YouTube"},{"title":"Tokyo Minato / Tsukiji","country":"Japón","city":"Tokio","lat":35.6655,"lon":139.7707,"category":"ciudad","videoId":"S20Y4xC2yfI","id":"cam-113","type":"youtube","active":true,"provider":"YouTube"},{"title":"Japan Live 24/7","country":"Japón","city":"varios","lat":35.6762,"lon":139.6503,"category":"multicámara","videoId":"7zt_869gXio","id":"cam-114","type":"youtube","active":true,"provider":"YouTube"},{"title":"Tokyo Shuto Expressway","country":"Japón","city":"Tokio","lat":35.65,"lon":139.77,"category":"tráfico","videoId":"Kozl3hd56Y0","id":"cam-115","type":"youtube","active":true,"provider":"YouTube"},{"title":"Odaiba Tokyo 4K","country":"Japón","city":"Tokio","lat":35.619,"lon":139.7798,"category":"ciudad","videoId":"BZNpjPbF1cI","id":"cam-116","type":"youtube","active":true,"provider":"YouTube"},{"title":"Tokyo Skytree & Sumida","country":"Japón","city":"Tokio","lat":35.7101,"lon":139.8107,"category":"ciudad","videoId":"xdjEmXaf8o8","id":"cam-117","type":"youtube","active":true,"provider":"YouTube"},{"title":"Japan multi · Tokyo/Fuji/Osaka","country":"Japón","city":"varios","lat":35.3606,"lon":138.7274,"category":"multicámara","videoId":"HG3w7Dk48Tg","id":"cam-118","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mount Fuji Station View","country":"Japón","city":"Fujikawaguchiko","lat":35.499,"lon":138.768,"category":"montaña","videoId":"3y2DWBwNOS0","id":"cam-119","type":"youtube","active":true,"provider":"YouTube"},{"title":"Bangkok · Sathorn/Silom","country":"Tailandia","city":"Bangkok","lat":13.7563,"lon":100.5018,"category":"ciudad","videoId":"uDV_qKiXRVU","id":"cam-120","type":"youtube","active":true,"provider":"YouTube"},{"title":"Koh Samui · Bophut","country":"Tailandia","city":"Koh Samui","lat":9.5624,"lon":100.0287,"category":"playa","videoId":"CSp55hSd_6A","id":"cam-121","type":"youtube","active":true,"provider":"YouTube"},{"title":"Koh Samui · The Shack","country":"Tailandia","city":"Koh Samui","lat":9.5624,"lon":100.0287,"category":"ciudad","videoId":"bbBGNNPu0rg","id":"cam-122","type":"youtube","active":true,"provider":"YouTube"},{"title":"Koh Samui · Crystal Bay","country":"Tailandia","city":"Koh Samui","lat":9.469,"lon":100.059,"category":"playa","videoId":"kkVrj2cr9Ko","id":"cam-123","type":"youtube","active":true,"provider":"YouTube"},{"title":"Koh Samui · Crystal Bay 4K","country":"Tailandia","city":"Koh Samui","lat":9.469,"lon":100.059,"category":"playa","videoId":"LGNYKz4yziE","id":"cam-124","type":"youtube","active":true,"provider":"YouTube"},{"title":"Crystal Bay Beach Resort","country":"Tailandia","city":"Koh Samui","lat":9.469,"lon":100.059,"category":"playa","videoId":"Fw9hgttWzIg","id":"cam-125","type":"youtube","active":true,"provider":"YouTube"},{"title":"Koh Samui · The Deck","country":"Tailandia","city":"Koh Samui","lat":9.56,"lon":100.05,"category":"playa","videoId":"1sJ5KR7n85E","id":"cam-126","type":"youtube","active":true,"provider":"YouTube"},{"title":"Baobab Cam · Lamai","country":"Tailandia","city":"Koh Samui","lat":9.4625,"lon":100.0448,"category":"playa","videoId":"Tpj0cmMVOd0","id":"cam-127","type":"youtube","active":true,"provider":"YouTube"},{"title":"Koh Tao Island","country":"Tailandia","city":"Koh Tao","lat":10.0956,"lon":99.8406,"category":"playa","videoId":"gYvml_zXKiE","id":"cam-128","type":"youtube","active":true,"provider":"YouTube"},{"title":"Khao Lak","country":"Tailandia","city":"Khao Lak","lat":8.644,"lon":98.252,"category":"ciudad","videoId":"GzuZ8FnN8mM","id":"cam-129","type":"youtube","active":true,"provider":"YouTube"},{"title":"Mount Kilimanjaro","country":"Tanzania","city":"Moshi","lat":-3.0674,"lon":37.3556,"category":"montaña","videoId":"5VV4SEGHnck","id":"cam-130","type":"youtube","active":true,"provider":"YouTube"},{"title":"Kenya Zoo / Africa Cam","country":"Kenia","city":"Kenia","lat":-1.2864,"lon":36.8172,"category":"animales","videoId":"dqGNbxpm_ms","id":"cam-131","type":"youtube","active":true,"provider":"YouTube"},{"title":"Griffon Vulture Nest","country":"Israel","city":"Israel","lat":31.0461,"lon":34.8516,"category":"animales","videoId":"_Xp9huFfzr8","id":"cam-132","type":"youtube","active":true,"provider":"YouTube"},{"title":"Hagafell Volcano Craters","country":"Islandia","city":"Grindavík","lat":63.8424,"lon":-22.4384,"category":"volcán","videoId":"bDl0ndRHgok","id":"cam-133","type":"youtube","active":true,"provider":"YouTube"},{"title":"Hagafell 4K · Iceland","country":"Islandia","city":"Grindavík","lat":63.8424,"lon":-22.4384,"category":"volcán","videoId":"CKZfepClHe8","id":"cam-134","type":"youtube","active":true,"provider":"YouTube"},{"title":"Þorbjörn mountain","country":"Islandia","city":"Grindavík","lat":63.85,"lon":-22.45,"category":"volcán","videoId":"JvLCr9xt_vI","id":"cam-135","type":"youtube","active":true,"provider":"YouTube"},{"title":"Reykjanes peninsula","country":"Islandia","city":"Reykjanes","lat":63.9,"lon":-22.3,"category":"volcán","videoId":"U9QEbirKQx4","id":"cam-136","type":"youtube","active":true,"provider":"YouTube"},{"title":"Iceland Volcano · multiple views","country":"Islandia","city":"Reykjanes","lat":63.9,"lon":-22.3,"category":"volcán","videoId":"E03yslGRq6g","id":"cam-137","type":"youtube","active":true,"provider":"YouTube"},{"title":"Global Webcams · iconos 24/7","country":"Mundo","city":"varios","lat":20,"lon":0,"category":"multicámara","videoId":"R02XQpQRT4Y","id":"cam-138","type":"youtube","active":true,"provider":"YouTube"},{"title":"World webcam tour · 500 random cams","country":"Mundo","city":"varios","lat":0,"lon":0,"category":"multicámara","videoId":"Y8u9g7nQHSk","id":"cam-139","type":"youtube","active":true,"provider":"YouTube"},{"title":"150 top live cams","country":"Mundo","city":"varios","lat":5,"lon":10,"category":"multicámara","videoId":"JfeOIUgyuvc","id":"cam-140","type":"youtube","active":true,"provider":"YouTube"},{"title":"Live sunsets around the world","country":"Mundo","city":"varios","lat":-10,"lon":20,"category":"multicámara","videoId":"Jdmj8FrwXNc","id":"cam-141","type":"youtube","active":true,"provider":"YouTube"},{"title":"LiveSunsets · cámaras globales","country":"Mundo","city":"varios","lat":-15,"lon":-20,"category":"multicámara","videoId":"a07RdwlI7XM","id":"cam-142","type":"youtube","active":true,"provider":"YouTube"},{"title":"International weather cams","country":"Mundo","city":"varios","lat":10,"lon":30,"category":"tiempo","videoId":"pKEw2mqEMfU","id":"cam-143","type":"youtube","active":true,"provider":"YouTube"},{"title":"FOX webcams around the world","country":"Mundo","city":"varios","lat":15,"lon":-30,"category":"multicámara","videoId":"JUfhg4QWu3U","id":"cam-144","type":"youtube","active":true,"provider":"YouTube"}];
+const STORE_KEY = "worldcam-minimal-v04-catalog";
+const SETTINGS_KEY = "worldcam-minimal-v04-settings";
+let catalog = loadCatalog();
+let settings = Object.assign({
+  view:"camerasView", grid:4, index:0, country:"", category:"", text:"",
+  labels:true, theme:"dark", rotation:false, interval:30000, selectedId:null
+}, loadSettings());
+
+let rotationTimer = null;
+let mapReady = false;
+let d3State = null;
+let lastFilteredIds = [];
+
+const $ = sel => document.querySelector(sel);
+const $$ = sel => [...document.querySelectorAll(sel)];
+
+function uid(){ return "cam-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,7); }
+function saveCatalog(){ localStorage.setItem(STORE_KEY, JSON.stringify(catalog)); }
+function loadCatalog(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed) && parsed.length) return normalizeCatalog(parsed);
+    }
+  }catch(e){}
+  return normalizeCatalog(DEFAULT_CAMS);
+}
+function loadSettings(){ try{return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}")}catch(e){return {}} }
+function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+function normalizeCatalog(arr){
+  return arr.map((c,i)=>{
+    const n = Object.assign({}, c);
+    n.id = n.id || `cam-${String(i+1).padStart(3,"0")}`;
+    n.title = n.title || "Sin título";
+    n.country = n.country || "Sin país";
+    n.city = n.city || "";
+    n.category = n.category || "sin categoría";
+    n.type = n.type || (n.videoId ? "youtube" : "iframe");
+    n.provider = n.provider || providerFrom(n);
+    n.active = n.active !== false;
+    n.lat = Number(n.lat || 0);
+    n.lon = Number(n.lon || 0);
+    return n;
+  });
+}
+function providerFrom(c){
+  if(c.provider) return c.provider;
+  if(c.type === "youtube") return "YouTube";
+  try{ return new URL(c.url || "").hostname.replace(/^www\./,""); }catch(e){ return c.type || "desconocido"; }
+}
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function openSide(){ $("#side").classList.add("open"); $("#drawerShade").classList.add("show"); }
+function closeSide(){ $("#side").classList.remove("open"); $("#drawerShade").classList.remove("show"); }
+
+function applyTheme(){
+  document.documentElement.classList.toggle("light", settings.theme === "light");
+  $("#themeBtn").textContent = settings.theme === "light" ? "día" : "noche";
+}
+function setView(id){
+  settings.view = id; saveSettings();
+  $$(".view").forEach(v=>v.classList.toggle("active", v.id===id));
+  $$(".nav button").forEach(b=>b.classList.toggle("active", b.dataset.view===id));
+  closeSide();
+  if(id === "mapView") setTimeout(renderMap, 50);
+  if(id === "catalogView") renderCatalog();
+}
+function countries(){
+  return [...new Set(catalog.map(c=>c.country).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+}
+function categories(){
+  return [...new Set(catalog.map(c=>c.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+}
+function fillFilters(){
+  const country = $("#countryFilter");
+  country.innerHTML = `<option value="">todo el mundo</option>` + countries().map(c=>`<option>${escapeHtml(c)}</option>`).join("");
+  country.value = settings.country || "";
+  const cat = $("#categoryFilter");
+  cat.innerHTML = `<option value="">todas</option>` + categories().map(c=>`<option>${escapeHtml(c)}</option>`).join("");
+  cat.value = settings.category || "";
+  $("#textFilter").value = settings.text || "";
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+function filteredCams(){
+  const q = (settings.text || "").trim().toLowerCase();
+  let arr = catalog.filter(c=>c.active !== false);
+  if(settings.country) arr = arr.filter(c=>c.country === settings.country);
+  if(settings.category) arr = arr.filter(c=>c.category === settings.category);
+  if(q) arr = arr.filter(c => [c.title,c.city,c.country,c.category,c.provider,c.videoId,c.url].join(" ").toLowerCase().includes(q));
+  return arr;
+}
+function gridShape(n){
+  if(n<=1) return [1,1];
+  if(n===2) return [2,1];
+  if(n===4) return [2,2];
+  if(n===6) return [3,2];
+  const s = Math.ceil(Math.sqrt(n));
+  return [s,s];
+}
+function visibleBatch(){
+  const arr = filteredCams();
+  if(!arr.length) return [];
+  const n = Number(settings.grid || 4);
+  if(settings.selectedId && n===1){
+    const selected = arr.find(c=>c.id===settings.selectedId) || catalog.find(c=>c.id===settings.selectedId);
+    return selected ? [selected] : arr.slice(0,1);
+  }
+  const start = ((settings.index % arr.length) + arr.length) % arr.length;
+  const out = [];
+  for(let i=0;i<Math.min(n,arr.length);i++) out.push(arr[(start+i)%arr.length]);
+  return out;
+}
+function renderMosaic(){
+  const grid = $("#tileGrid");
+  const batch = visibleBatch();
+  lastFilteredIds = filteredCams().map(c=>c.id);
+  const n = Math.max(1, Number(settings.grid || 4));
+  const [cols, rows] = gridShape(n);
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  if(!batch.length){
+    grid.innerHTML = `<div class="empty">No hay cámaras con estos filtros.</div>`;
+    updateStats();
+    return;
+  }
+  grid.innerHTML = batch.map(cam => cameraTile(cam)).join("");
+  $("#miniState").textContent = `${batch.length}/${filteredCams().length} cámaras`;
+  updateStats();
+}
+function cameraTile(cam){
+  return `<article class="camTile" data-id="${escapeHtml(cam.id)}">
+    ${cameraElement(cam)}
+    <div class="tileOverlay">
+      <div class="tileTitle">${escapeHtml(cam.title)}</div>
+      <div class="tileStatus">${escapeHtml(cam.city || cam.country)}</div>
+    </div>
+  </article>`;
+}
+function cameraElement(cam){
+  if(cam.type === "youtube" && cam.videoId){
+    const origin = location.origin && location.origin !== "null" ? `&origin=${encodeURIComponent(location.origin)}` : "";
+    const params = `autoplay=1&mute=1&playsinline=1&controls=0&modestbranding=1&rel=0&enablejsapi=1${origin}`;
+    return `<iframe loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(cam.videoId)}?${params}"></iframe>`;
+  }
+  if(cam.type === "image" || cam.type === "mjpeg"){
+    const src = cam.url || "";
+    return `<img loading="lazy" src="${escapeHtml(src)}" alt="${escapeHtml(cam.title)}">`;
+  }
+  if(cam.type === "hls"){
+    return `<video muted autoplay playsinline controls src="${escapeHtml(cam.url || "")}"></video>`;
+  }
+  return `<iframe loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" src="${escapeHtml(cam.url || "")}"></iframe>`;
+}
+function nextPage(step=1){
+  const arr = filteredCams();
+  if(!arr.length) return;
+  settings.index = (settings.index + step * Number(settings.grid || 4) + arr.length) % arr.length;
+  settings.selectedId = null;
+  saveSettings(); renderMosaic();
+}
+function shuffle(){
+  const arr = filteredCams();
+  if(!arr.length) return;
+  settings.index = Math.floor(Math.random()*arr.length);
+  settings.selectedId = null;
+  saveSettings(); renderMosaic();
+}
+function startRotation(){
+  clearInterval(rotationTimer);
+  if(settings.rotation){
+    rotationTimer = setInterval(()=>nextPage(1), Number(settings.interval || 30000));
+    $("#rotationBtn").textContent = "on"; $("#rotationBtn").classList.add("good");
+  }else{
+    $("#rotationBtn").textContent = "off"; $("#rotationBtn").classList.remove("good");
+  }
+}
+function updateStats(){
+  const active = catalog.filter(c=>c.active !== false).length;
+  const total = catalog.length;
+  const f = filteredCams().length;
+  $("#sideStats").textContent = `${f} filtradas · ${active} activas · ${total} catálogo`;
+}
+
+function renderCatalog(){
+  const q = ($("#catalogSearch").value || "").toLowerCase().trim();
+  let arr = catalog;
+  if(q) arr = arr.filter(c=>[c.title,c.city,c.country,c.category,c.provider,c.videoId,c.url].join(" ").toLowerCase().includes(q));
+  const list = $("#catalogList");
+  list.innerHTML = arr.map(c=>`
+    <div class="camRow" data-id="${escapeHtml(c.id)}">
+      <div class="camMain">
+        <div class="camName"><span class="dot ${statusClass(c)}"></span> ${escapeHtml(c.title)}</div>
+        <div class="camMeta">${escapeHtml(c.city || "")}${c.city?" · ":""}${escapeHtml(c.country)} · ${escapeHtml(c.category)} · ${escapeHtml(c.providerFrom || c.provider || c.type)} ${c.videoId ? "· " + escapeHtml(c.videoId) : ""}</div>
+      </div>
+      <div class="camActions">
+        <button class="mini" data-action="test">test</button>
+        <button class="mini" data-action="view">ver</button>
+        <button class="mini" data-action="map">mapa</button>
+        <button class="mini ${c.active===false?"warn":""}" data-action="toggle">${c.active===false?"activar":"ocultar"}</button>
+        <button class="mini bad" data-action="remove">quitar</button>
+      </div>
+    </div>`).join("") || `<div class="empty">Sin resultados.</div>`;
+  updateStats();
+}
+function statusClass(c){
+  if(c.status === "ok") return "ok";
+  if(c.status === "warn") return "warn";
+  if(c.status === "bad") return "bad";
+  if(c.status === "checking") return "checking";
+  return "";
+}
+async function checkCamera(cam){
+  cam.status = "checking"; cam.statusText = "comprobando"; renderCatalog();
+  try{
+    if(cam.type === "youtube" && cam.videoId){
+      const ok = await checkYouTube(cam.videoId);
+      cam.status = ok === "ok" ? "ok" : ok === "warn" ? "warn" : "bad";
+      cam.statusText = ok === "ok" ? "oEmbed OK" : ok === "warn" ? "miniatura OK, embed no confirmado" : "no responde";
+    }else if(cam.type === "image" || cam.type === "mjpeg"){
+      await checkImage(cam.url);
+      cam.status = "ok"; cam.statusText = "imagen OK";
+    }else{
+      await checkFrame(cam.url);
+      cam.status = "warn"; cam.statusText = "iframe cargado, contenido no verificable";
+    }
+  }catch(e){
+    cam.status = "bad"; cam.statusText = "fallo";
+  }
+  saveCatalog(); renderCatalog();
+  return cam.status;
+}
+async function checkYouTube(id){
+  try{
+    const r = await fetch(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent("https://www.youtube.com/watch?v="+id)}`, {cache:"no-store"});
+    if(r.ok) return "ok";
+  }catch(e){}
+  try{
+    await checkImage(`https://img.youtube.com/vi/${encodeURIComponent(id)}/mqdefault.jpg`);
+    return "warn";
+  }catch(e){
+    return "bad";
+  }
+}
+function checkImage(src){
+  return new Promise((resolve,reject)=>{
+    if(!src) return reject();
+    const img = new Image();
+    const to = setTimeout(()=>reject(new Error("timeout")), 7000);
+    img.onload = () => { clearTimeout(to); resolve(true); };
+    img.onerror = () => { clearTimeout(to); reject(new Error("error")); };
+    img.referrerPolicy = "no-referrer";
+    img.src = src + (src.includes("?") ? "&" : "?") + "_wc=" + Date.now();
+  });
+}
+function checkFrame(src){
+  return new Promise((resolve,reject)=>{
+    if(!src) return reject();
+    const f = document.createElement("iframe");
+    f.style.cssText = "position:fixed;left:-9999px;width:1px;height:1px;opacity:0";
+    const to = setTimeout(()=>{ f.remove(); reject(new Error("timeout")); }, 7000);
+    f.onload = () => { clearTimeout(to); f.remove(); resolve(true); };
+    f.onerror = () => { clearTimeout(to); f.remove(); reject(new Error("error")); };
+    f.src = src; document.body.appendChild(f);
+  });
+}
+async function checkVisible(){
+  const ids = new Set(lastFilteredIds.length ? lastFilteredIds : filteredCams().map(c=>c.id));
+  const arr = catalog.filter(c=>ids.has(c.id));
+  toast(`Comprobando ${arr.length} cámaras...`);
+  const workers = 5;
+  let idx = 0;
+  async function worker(){
+    while(idx < arr.length){
+      const cam = arr[idx++];
+      await checkCamera(cam);
+    }
+  }
+  await Promise.all(Array.from({length:workers}, worker));
+  toast("Comprobación terminada");
+}
+
+function setSelected(cam){
+  settings.selectedId = cam.id;
+  settings.grid = 1;
+  $("#gridSelect").value = "1";
+  saveSettings();
+  setView("camerasView");
+  renderMosaic();
+}
+function openSelected(){
+  let cam = settings.selectedId ? catalog.find(c=>c.id===settings.selectedId) : visibleBatch()[0];
+  if(!cam) return;
+  const url = cam.type === "youtube" ? `https://www.youtube.com/watch?v=${cam.videoId}` : (cam.url || "");
+  if(url) window.open(url, "_blank", "noopener");
+}
+
+function renderMap(){
+  const svgEl = $("#worldMap");
+  if(!svgEl) return;
+  const width = svgEl.clientWidth || window.innerWidth;
+  const height = svgEl.clientHeight || window.innerHeight;
+  if(!window.d3 || !window.topojson){
+    renderFallbackMap(svgEl, width, height);
+    return;
+  }
+  d3.select(svgEl).selectAll("*").remove();
+  const svg = d3.select(svgEl).attr("viewBox", [0,0,width,height]);
+  const projection = d3.geoNaturalEarth1().fitExtent([[28,28],[width-28,height-28]], {type:"Sphere"});
+  const path = d3.geoPath(projection);
+  const g = svg.append("g");
+  g.append("path").attr("class","sphere").attr("d",path({type:"Sphere"}));
+  g.append("path").attr("class","graticule").attr("d",path(d3.geoGraticule10()));
+  const markerLayer = g.append("g").attr("class","markers");
+  d3State = {svg,g,projection,path,markerLayer,width,height};
+  svg.call(d3.zoom().scaleExtent([1,12]).on("zoom", ev => g.attr("transform", ev.transform)));
+
+  d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(world=>{
+    const countries = topojson.feature(world, world.objects.countries).features;
+    g.insert("g",".markers").selectAll("path")
+      .data(countries)
+      .join("path")
+      .attr("class","country")
+      .attr("d",path)
+      .append("title").text(d=>d.properties.name);
+    drawMarkers();
+  }).catch(()=>{
+    drawMarkers();
+    toast("Mapa vectorial externo no cargado; se muestran solo puntos.");
+  });
+  mapReady = true;
+}
+function drawMarkers(){
+  if(!d3State) return;
+  const cams = filteredCams().filter(c=>Number.isFinite(c.lat) && Number.isFinite(c.lon));
+  const grouped = new Map();
+  for(const cam of cams){
+    const key = `${Math.round(cam.lat*10)/10},${Math.round(cam.lon*10)/10}`;
+    if(!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(cam);
+  }
+  const points = [...grouped.values()].map(list=>({cam:list[0], count:list.length}));
+  $("#mapCount").textContent = `${points.length} puntos`;
+  const sel = d3State.markerLayer.selectAll("g.mapMarker").data(points, d=>d.cam.id);
+  const enter = sel.enter().append("g")
+    .attr("class","mapMarker")
+    .on("click", (ev,d)=>{ setSelected(d.cam); });
+  enter.append("circle").attr("class","outer").attr("r",12);
+  enter.append("circle").attr("class","inner").attr("r",4.5);
+  enter.append("text").attr("class","mapLabel").attr("x",9).attr("y",3).text(d=>d.count>1 ? `${d.cam.city || d.cam.country} (${d.count})` : (d.cam.city || d.cam.country));
+  sel.merge(enter).attr("transform", d=>{
+    const p = d3State.projection([d.cam.lon, d.cam.lat]) || [0,0];
+    return `translate(${p[0]},${p[1]})`;
+  });
+  sel.exit().remove();
+}
+function renderFallbackMap(svgEl,w,h){
+  svgEl.innerHTML = "";
+  const ns = "http://www.w3.org/2000/svg";
+  svgEl.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  const bg = document.createElementNS(ns,"rect");
+  bg.setAttribute("width",w); bg.setAttribute("height",h); bg.setAttribute("fill","var(--map-water)"); svgEl.appendChild(bg);
+  const cams = filteredCams();
+  for(const c of cams){
+    const x = (c.lon + 180) / 360 * w;
+    const y = (90 - c.lat) / 180 * h;
+    const g = document.createElementNS(ns,"g");
+    g.setAttribute("class","mapMarker");
+    g.setAttribute("transform",`translate(${x},${y})`);
+    g.innerHTML = `<circle class="outer" r="12"></circle><circle class="inner" r="4.5"></circle><text class="mapLabel" x="9" y="3">${escapeHtml(c.city || c.country)}</text>`;
+    g.addEventListener("click",()=>setSelected(c));
+    svgEl.appendChild(g);
+  }
+  $("#mapCount").textContent = `${cams.length} puntos`;
+}
+
+function resetMap(){
+  if(d3State){
+    d3State.svg.transition().duration(250).call(d3.zoom().transform, d3.zoomIdentity);
+  }
+}
+
+function addCamFromFields(){
+  const type = $("#newType").value;
+  const val = $("#newUrl").value.trim();
+  if(!val){ toast("falta URL o ID"); return; }
+  const cam = {
+    id: uid(),
+    title: $("#newTitle").value.trim() || "Nueva cámara",
+    city: $("#newCity").value.trim(),
+    country: $("#newCountry").value.trim() || "Sin país",
+    category: "personal",
+    type,
+    lat: Number($("#newLat").value || 0),
+    lon: Number($("#newLon").value || 0),
+    active: true
+  };
+  if(type === "youtube"){
+    cam.videoId = extractYouTubeId(val) || val;
+    cam.provider = "YouTube";
+  }else{
+    cam.url = val;
+    cam.provider = providerFrom(cam);
+  }
+  catalog.unshift(cam); saveCatalog(); fillFilters(); renderMosaic(); renderCatalog(); toast("cámara añadida");
+}
+function extractYouTubeId(s){
+  const patterns = [/youtu\.be\/([^?&/]+)/, /youtube\.com\/watch\?v=([^?&]+)/, /youtube\.com\/embed\/([^?&/]+)/, /youtube\.com\/live\/([^?&/]+)/];
+  for(const p of patterns){ const m = s.match(p); if(m) return m[1]; }
+  if(/^[\w-]{8,}$/.test(s)) return s;
+  return "";
+}
+function importJSON(){
+  try{
+    const data = JSON.parse($("#jsonImport").value);
+    const arr = Array.isArray(data) ? data : [data];
+    const norm = normalizeCatalog(arr);
+    catalog = [...norm, ...catalog];
+    saveCatalog(); fillFilters(); renderMosaic(); renderCatalog(); $("#jsonImport").value=""; toast(`${norm.length} importadas`);
+  }catch(e){ toast("JSON no válido"); }
+}
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(catalog,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "worldcam_catalogo.json";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function resetCatalog(){
+  if(!confirm("¿Restaurar catálogo base y eliminar cambios locales?")) return;
+  catalog = normalizeCatalog(DEFAULT_CAMS); saveCatalog(); fillFilters(); renderMosaic(); renderCatalog(); renderMap(); toast("catálogo restaurado");
+}
+
+function wire(){
+  $("#menuBtn").onclick=openSide; $("#closeSide").onclick=closeSide; $("#drawerShade").onclick=closeSide;
+  $$(".nav button").forEach(b=>b.onclick=()=>setView(b.dataset.view));
+  $("#countryFilter").onchange=e=>{settings.country=e.target.value;settings.index=0;saveSettings();renderMosaic();drawMarkers();renderCatalog();};
+  $("#categoryFilter").onchange=e=>{settings.category=e.target.value;settings.index=0;saveSettings();renderMosaic();drawMarkers();renderCatalog();};
+  $("#textFilter").oninput=e=>{settings.text=e.target.value;settings.index=0;saveSettings();renderMosaic();drawMarkers();};
+  $("#gridSelect").onchange=e=>{settings.grid=Number(e.target.value);settings.selectedId=null;saveSettings();renderMosaic();};
+  $("#prevBtn").onclick=()=>nextPage(-1); $("#nextBtn").onclick=()=>nextPage(1); $("#shuffleBtn").onclick=shuffle;
+  $("#rotationBtn").onclick=()=>{settings.rotation=!settings.rotation;saveSettings();startRotation();};
+  $("#rotationInterval").onchange=e=>{settings.interval=Number(e.target.value);saveSettings();startRotation();};
+  $("#labelsBtn").onclick=()=>{settings.labels=!settings.labels;document.body.classList.toggle("labels-on",settings.labels);$("#labelsBtn").textContent=settings.labels?"on":"off";$("#labelsBtn").classList.toggle("good",settings.labels);saveSettings();};
+  $("#themeBtn").onclick=()=>{settings.theme=settings.theme==="light"?"dark":"light";applyTheme();saveSettings();renderMap();};
+  $("#fullscreenBtn").onclick=()=>{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();};
+  $("#openSelectedBtn").onclick=openSelected;
+  $("#mapReset").onclick=resetMap;
+  $("#catalogSearch").oninput=renderCatalog;
+  $("#checkVisibleBtn").onclick=checkVisible;
+  $("#catalogList").onclick=e=>{
+    const btn = e.target.closest("button"); if(!btn) return;
+    const row = e.target.closest(".camRow"); if(!row) return;
+    const cam = catalog.find(c=>c.id===row.dataset.id); if(!cam) return;
+    const action = btn.dataset.action;
+    if(action==="test") checkCamera(cam);
+    if(action==="view") setSelected(cam);
+    if(action==="map"){ settings.country=""; settings.category=""; settings.text=""; fillFilters(); setView("mapView"); setTimeout(()=>{ drawMarkers(); },100); }
+    if(action==="toggle"){ cam.active = cam.active === false; saveCatalog(); renderCatalog(); renderMosaic(); drawMarkers(); }
+    if(action==="remove"){ if(confirm("¿Quitar esta cámara del catálogo local?")){ catalog = catalog.filter(c=>c.id!==cam.id); saveCatalog(); fillFilters(); renderCatalog(); renderMosaic(); drawMarkers(); } }
+  };
+  $("#addCamBtn").onclick=addCamFromFields;
+  $("#importBtn").onclick=importJSON; $("#exportBtn").onclick=exportJSON; $("#resetCatalogBtn").onclick=resetCatalog;
+  window.addEventListener("resize",()=>{ if(settings.view==="mapView") renderMap(); });
+}
+function init(){
+  applyTheme();
+  document.body.classList.toggle("labels-on", settings.labels);
+  $("#labelsBtn").textContent=settings.labels?"on":"off";
+  $("#labelsBtn").classList.toggle("good", settings.labels);
+  $("#gridSelect").value = String(settings.grid || 4);
+  $("#rotationInterval").value = String(settings.interval || 30000);
+  fillFilters();
+  wire();
+  setView(settings.view || "camerasView");
+  renderMosaic(); renderCatalog(); startRotation();
+  if(location.protocol === "file:") {
+    setTimeout(()=>toast("YouTube funciona mejor desde localhost que con file://"),700);
+  }
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
