@@ -1,0 +1,1372 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WorldCam Lite · visor mundial de webcams</title>
+  <style>
+    :root {
+      --bg: #08111f;
+      --bg-2: #0d1a2c;
+      --panel: rgba(15, 29, 50, .86);
+      --panel-solid: #111f35;
+      --card: #13243d;
+      --card-2: #0d1b30;
+      --line: rgba(164, 190, 230, .18);
+      --text: #eaf2ff;
+      --muted: #96a8c3;
+      --accent: #4cc9f0;
+      --accent-2: #8b5cf6;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --control: rgba(255,255,255,.07);
+      --control-hover: rgba(255,255,255,.13);
+      --map-sea-1: #102544;
+      --map-sea-2: #09182e;
+      --map-land: rgba(87, 178, 150, .32);
+      --map-land-2: rgba(105, 139, 196, .20);
+      color-scheme: dark;
+    }
+
+    body.light {
+      --bg: #edf4ff;
+      --bg-2: #f8fbff;
+      --panel: rgba(255,255,255,.88);
+      --panel-solid: #ffffff;
+      --card: #ffffff;
+      --card-2: #f3f7ff;
+      --line: rgba(22, 44, 77, .14);
+      --text: #172033;
+      --muted: #627089;
+      --accent: #0ea5e9;
+      --accent-2: #7c3aed;
+      --control: rgba(16, 40, 80, .07);
+      --control-hover: rgba(16, 40, 80, .12);
+      --map-sea-1: #d9ecff;
+      --map-sea-2: #c6dcf4;
+      --map-land: rgba(36, 145, 115, .28);
+      --map-land-2: rgba(75, 95, 160, .15);
+      color-scheme: light;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(76,201,240,.18), transparent 32vw),
+        radial-gradient(circle at bottom right, rgba(139,92,246,.17), transparent 34vw),
+        linear-gradient(135deg, var(--bg), var(--bg-2));
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    button, select, input, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 14px;
+      padding: 14px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid; place-items: center;
+      box-shadow: 0 14px 34px rgba(76, 201, 240, .22);
+      flex: none;
+    }
+    .logo svg { width: 25px; height: 25px; }
+    h1 { margin: 0; font-size: 1.08rem; letter-spacing: .2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .subtitle { color: var(--muted); font-size: .86rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .tab-btn, .btn, .chip {
+      border: 1px solid var(--line);
+      background: var(--control);
+      border-radius: 999px;
+      padding: 9px 12px;
+      transition: .15s ease;
+      min-height: 38px;
+    }
+    .tab-btn:hover, .btn:hover, .chip:hover { background: var(--control-hover); transform: translateY(-1px); }
+    .tab-btn.active, .btn.primary {
+      background: linear-gradient(135deg, rgba(76,201,240,.23), rgba(139,92,246,.20));
+      border-color: rgba(76,201,240,.42);
+    }
+    .btn.danger { border-color: rgba(239,68,68,.35); color: #fecaca; background: rgba(239,68,68,.12); }
+    body.light .btn.danger { color: #991b1b; }
+    .btn.good { border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.12); }
+    .btn.small { padding: 7px 10px; min-height: 32px; font-size: .84rem; }
+    .btn.square { border-radius: 12px; }
+
+    main {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .sidebar, .stage {
+      min-height: 0;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+    .sidebar { display: flex; flex-direction: column; }
+    .panel-section { padding: 14px; border-bottom: 1px solid var(--line); }
+    .panel-section:last-child { border-bottom: 0; }
+    .panel-title { margin: 0 0 10px; font-size: .88rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .scroll { overflow: auto; min-height: 0; }
+
+    .form-grid { display: grid; gap: 9px; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .row.nowrap { flex-wrap: nowrap; }
+    label { display: grid; gap: 6px; font-size: .83rem; color: var(--muted); }
+    select, input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--control);
+      border-radius: 12px;
+      padding: 10px 11px;
+      outline: none;
+    }
+    textarea { min-height: 90px; resize: vertical; line-height: 1.35; }
+    select:focus, input:focus, textarea:focus { border-color: rgba(76,201,240,.55); box-shadow: 0 0 0 3px rgba(76,201,240,.12); }
+    .hint { color: var(--muted); font-size: .82rem; line-height: 1.35; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .stat { padding: 11px; border-radius: 14px; background: var(--control); border: 1px solid var(--line); }
+    .stat b { display: block; font-size: 1.25rem; }
+    .stat span { font-size: .78rem; color: var(--muted); }
+
+    .stage { position: relative; display: grid; grid-template-rows: auto 1fr; }
+    .stage-toolbar {
+      display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,.05);
+    }
+    .stage-title { margin: 0; font-size: .95rem; display: flex; gap: 8px; align-items: center; }
+    .status-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--good); box-shadow: 0 0 0 5px rgba(34,197,94,.14); }
+    .view { display: none; min-height: 0; overflow: auto; padding: 14px; }
+    .view.active { display: block; }
+
+    .map-wrap { height: 100%; min-height: 520px; display: grid; grid-template-rows: auto 1fr; gap: 12px; }
+    .map-help {
+      display: flex; gap: 10px; justify-content: space-between; align-items: center; flex-wrap: wrap;
+      padding: 12px 14px; border-radius: 16px; background: var(--control); border: 1px solid var(--line);
+    }
+    .world-map {
+      position: relative;
+      min-height: 480px;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px) 0 0 / 10% 100%,
+        linear-gradient(0deg, rgba(255,255,255,.055) 1px, transparent 1px) 0 0 / 100% 20%,
+        radial-gradient(circle at 20% 25%, rgba(76,201,240,.22), transparent 18%),
+        radial-gradient(circle at 80% 35%, rgba(139,92,246,.20), transparent 24%),
+        linear-gradient(160deg, var(--map-sea-1), var(--map-sea-2));
+      box-shadow: inset 0 0 80px rgba(0,0,0,.22);
+    }
+    .world-map:before {
+      content: "";
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(90deg, transparent 49.7%, rgba(255,255,255,.16) 50%, transparent 50.3%),
+        linear-gradient(0deg, transparent 49.7%, rgba(255,255,255,.16) 50%, transparent 50.3%);
+      opacity: .45;
+      pointer-events: none;
+    }
+    .land {
+      position: absolute; background: var(--map-land); filter: blur(.2px); opacity: .95;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 -18px 40px rgba(0,0,0,.12);
+    }
+    .land.na { left: 11%; top: 18%; width: 25%; height: 30%; border-radius: 62% 45% 55% 50%; transform: rotate(-13deg); }
+    .land.sa { left: 29%; top: 50%; width: 12%; height: 32%; border-radius: 60% 42% 55% 55%; transform: rotate(18deg); }
+    .land.eu { left: 47%; top: 25%; width: 13%; height: 14%; border-radius: 55% 45% 45% 55%; transform: rotate(-5deg); background: var(--map-land-2); }
+    .land.af { left: 49%; top: 39%; width: 15%; height: 30%; border-radius: 48% 55% 60% 47%; transform: rotate(4deg); }
+    .land.as { left: 59%; top: 22%; width: 28%; height: 32%; border-radius: 48% 58% 45% 52%; transform: rotate(5deg); }
+    .land.au { left: 77%; top: 63%; width: 13%; height: 12%; border-radius: 55% 45% 50% 45%; transform: rotate(8deg); }
+    .land.gr { left: 34%; top: 9%; width: 9%; height: 10%; border-radius: 50%; transform: rotate(-18deg); background: rgba(200,225,240,.14); }
+
+    .marker {
+      position: absolute; width: 18px; height: 18px; border-radius: 999px;
+      transform: translate(-50%, -50%);
+      border: 2px solid rgba(255,255,255,.92);
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 0 7px rgba(76,201,240,.14), 0 10px 22px rgba(0,0,0,.25);
+      z-index: 3;
+    }
+    .marker:hover, .marker.active { width: 23px; height: 23px; z-index: 4; box-shadow: 0 0 0 10px rgba(76,201,240,.18), 0 18px 34px rgba(0,0,0,.32); }
+    .marker:after {
+      content: attr(data-title);
+      position: absolute;
+      left: 50%; top: -10px; transform: translate(-50%, -100%);
+      white-space: nowrap;
+      padding: 7px 9px; border-radius: 10px;
+      background: var(--panel-solid);
+      color: var(--text);
+      border: 1px solid var(--line);
+      opacity: 0; pointer-events: none;
+      font-size: .8rem;
+      transition: .15s ease;
+      box-shadow: var(--shadow);
+    }
+    .marker:hover:after { opacity: 1; }
+    .map-legend {
+      position: absolute; left: 14px; bottom: 14px; right: 14px;
+      display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+      color: var(--muted); font-size: .82rem;
+      background: rgba(0,0,0,.16); border: 1px solid var(--line); border-radius: 15px; padding: 10px 12px;
+      backdrop-filter: blur(8px);
+    }
+    body.light .map-legend { background: rgba(255,255,255,.55); }
+
+    .camera-grid { display: grid; gap: 12px; height: 100%; align-content: start; }
+    .camera-grid.grid-1 { grid-template-columns: 1fr; }
+    .camera-grid.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .camera-grid.grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .camera-grid.grid-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .camera-grid.grid-9 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .camera-grid.grid-16 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .camera-grid.grid-25 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+    .camera-card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, var(--card), var(--card-2));
+      box-shadow: 0 12px 34px rgba(0,0,0,.18);
+    }
+    .camera-card.selected { border-color: rgba(76,201,240,.58); box-shadow: 0 0 0 3px rgba(76,201,240,.12), 0 12px 34px rgba(0,0,0,.20); }
+    .player-box {
+      position: relative; width: 100%; aspect-ratio: 16 / 9; background: #020817;
+      display: grid; place-items: center;
+    }
+    .player-box iframe, .player-box video, .player-box img { width: 100%; height: 100%; border: 0; object-fit: cover; display: block; }
+    .camera-meta { padding: 11px 12px 12px; display: grid; gap: 8px; }
+    .camera-title { display: flex; gap: 8px; justify-content: space-between; align-items: start; }
+    .camera-title b { line-height: 1.2; font-size: .93rem; }
+    .camera-sub { color: var(--muted); font-size: .8rem; line-height: 1.25; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { font-size: .72rem; padding: 5px 7px; border-radius: 999px; background: var(--control); border: 1px solid var(--line); color: var(--muted); }
+    .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .empty {
+      min-height: 360px; display: grid; place-items: center; text-align: center;
+      border: 1px dashed var(--line); border-radius: 18px; color: var(--muted); padding: 28px;
+    }
+    .placeholder {
+      color: var(--muted); padding: 18px; text-align: center; line-height: 1.35;
+    }
+    .placeholder b { color: var(--text); }
+
+    .catalog-list { display: grid; gap: 8px; max-height: 280px; overflow: auto; padding-right: 4px; }
+    .catalog-item {
+      border: 1px solid var(--line); background: var(--control); border-radius: 13px; padding: 9px;
+      display: grid; gap: 4px;
+    }
+    .catalog-item:hover { background: var(--control-hover); }
+    .catalog-item b { font-size: .88rem; line-height: 1.2; }
+    .catalog-item span { color: var(--muted); font-size: .78rem; }
+
+    .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .settings-card { border: 1px solid var(--line); border-radius: 18px; padding: 14px; background: var(--control); }
+    .settings-card h3 { margin: 0 0 10px; font-size: .98rem; }
+    .settings-card p { color: var(--muted); line-height: 1.45; margin: 0 0 10px; }
+    .code-mini { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .78rem; background: rgba(0,0,0,.18); padding: 2px 5px; border-radius: 6px; }
+
+    .toast {
+      position: fixed; right: 18px; bottom: 18px; z-index: 50;
+      padding: 11px 13px; border-radius: 14px;
+      border: 1px solid var(--line); background: var(--panel-solid); color: var(--text);
+      box-shadow: var(--shadow);
+      opacity: 0; transform: translateY(10px); pointer-events: none; transition: .18s ease;
+      max-width: min(420px, calc(100vw - 36px));
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1080px) {
+      body { overflow: auto; }
+      .app { min-height: 100vh; height: auto; }
+      main { grid-template-columns: 1fr; }
+      .sidebar, .stage { min-height: auto; }
+      .camera-grid.grid-16, .camera-grid.grid-25 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      header { grid-template-columns: 1fr; }
+      .tabs { justify-content: flex-start; }
+      .camera-grid, .camera-grid.grid-2, .camera-grid.grid-4, .camera-grid.grid-6, .camera-grid.grid-9, .camera-grid.grid-16, .camera-grid.grid-25 { grid-template-columns: 1fr; }
+      .world-map { min-height: 360px; }
+      .stat-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7.75A3.75 3.75 0 0 1 7.75 4h8.5A3.75 3.75 0 0 1 20 7.75v8.5A3.75 3.75 0 0 1 16.25 20h-8.5A3.75 3.75 0 0 1 4 16.25v-8.5Z" stroke="white" stroke-width="1.7"/><path d="M8 12.1l2.2 2.2L16 8.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <h1>WorldCam Lite</h1>
+          <div class="subtitle">Visor ligero de webcams públicas · HTML + CSS + JavaScript</div>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Pestañas principales">
+        <button class="tab-btn active" data-tab="map">🌍 Mapa</button>
+        <button class="tab-btn" data-tab="cams">🎥 Cámaras</button>
+        <button class="tab-btn" data-tab="catalog">📚 Catálogo</button>
+        <button class="tab-btn" data-tab="settings">⚙️ Configuración</button>
+        <button id="themeBtn" class="btn square" title="Cambiar modo día/noche">🌙</button>
+      </nav>
+    </header>
+
+    <main>
+      <aside class="sidebar">
+        <div class="panel-section">
+          <h2 class="panel-title">Filtros</h2>
+          <div class="form-grid">
+            <label>País
+              <select id="countryFilter"></select>
+            </label>
+            <label>Categoría
+              <select id="categoryFilter"></select>
+            </label>
+            <label>Buscar
+              <input id="searchInput" type="search" placeholder="Ciudad, cámara, país, categoría..." />
+            </label>
+            <div class="row">
+              <button id="clearFiltersBtn" class="btn small">Limpiar filtros</button>
+              <button id="randomCountryBtn" class="btn small">País aleatorio</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2 class="panel-title">Mosaico</h2>
+          <div class="form-grid">
+            <label>Cámaras simultáneas
+              <select id="layoutSelect">
+                <option value="1">1 cámara</option>
+                <option value="2">2 cámaras</option>
+                <option value="4" selected>4 cámaras</option>
+                <option value="6">6 cámaras</option>
+                <option value="9">9 cámaras</option>
+                <option value="16">16 cámaras</option>
+                <option value="25">25 cámaras</option>
+              </select>
+            </label>
+            <div class="row nowrap">
+              <label style="flex:1">Rotación cada segundos
+                <input id="rotateSeconds" type="number" min="5" max="600" step="5" value="25" />
+              </label>
+              <button id="rotationBtn" class="btn good" style="align-self:end">▶ Rotar</button>
+            </div>
+            <div class="row">
+              <button id="shuffleBtn" class="btn small">Mezclar cámaras</button>
+              <button id="pinBtn" class="btn small">📌 Anclar actual</button>
+              <button id="gridFullscreenBtn" class="btn small">⛶ Pantalla completa</button>
+            </div>
+            <p class="hint">Consejo: 16 o 25 cámaras de YouTube a la vez pueden consumir bastante CPU/red. Para un PC modesto, 4 o 9 suele ser más razonable.</p>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2 class="panel-title">Resumen</h2>
+          <div class="stat-grid">
+            <div class="stat"><b id="totalStat">0</b><span>cámaras cargadas</span></div>
+            <div class="stat"><b id="visibleStat">0</b><span>coinciden con filtros</span></div>
+            <div class="stat"><b id="countryStat">0</b><span>países</span></div>
+            <div class="stat"><b id="customStat">0</b><span>personalizadas</span></div>
+          </div>
+        </div>
+
+        <div class="panel-section scroll" style="min-height:190px;">
+          <h2 class="panel-title">Cámaras visibles</h2>
+          <div id="quickList" class="catalog-list"></div>
+        </div>
+      </aside>
+
+      <section class="stage" id="stage">
+        <div class="stage-toolbar">
+          <h2 id="stageTitle" class="stage-title"><span class="status-dot"></span>Mapa mundial</h2>
+          <div class="row">
+            <span id="filterLabel" class="hint">Todo el mundo</span>
+          </div>
+        </div>
+
+        <div id="view-map" class="view active">
+          <div class="map-wrap">
+            <div class="map-help">
+              <div><b>Mapa esquemático por coordenadas.</b> Pulsa un punto para abrir esa cámara o filtra por país.</div>
+              <div class="row">
+                <button id="mapToCamsBtn" class="btn small primary">Ver selección en mosaico</button>
+                <button id="mapRandomBtn" class="btn small">Aleatorio mundial</button>
+              </div>
+            </div>
+            <div id="worldMap" class="world-map" aria-label="Mapa mundial de webcams">
+              <div class="land na"></div><div class="land sa"></div><div class="land eu"></div><div class="land af"></div><div class="land as"></div><div class="land au"></div><div class="land gr"></div>
+              <div class="map-legend"><span>● Punto = cámara pública del catálogo actual</span><span id="mapCount">0 puntos</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-cams" class="view">
+          <div id="cameraGrid" class="camera-grid grid-4"></div>
+        </div>
+
+        <div id="view-catalog" class="view">
+          <div class="settings-grid">
+            <div class="settings-card">
+              <h3>Añadir cámara manualmente</h3>
+              <p>Guarda cámaras públicas propias en este navegador. No se sube nada a ningún servidor.</p>
+              <div class="form-grid">
+                <label>Título <input id="newTitle" placeholder="Ej. Barcelona playa / cámara oficial" /></label>
+                <div class="row nowrap">
+                  <label style="flex:1">País <input id="newCountry" placeholder="España" /></label>
+                  <label style="flex:1">Ciudad / zona <input id="newCity" placeholder="Barcelona" /></label>
+                </div>
+                <div class="row nowrap">
+                  <label style="flex:1">Latitud <input id="newLat" type="number" step="0.0001" placeholder="41.3874" /></label>
+                  <label style="flex:1">Longitud <input id="newLon" type="number" step="0.0001" placeholder="2.1686" /></label>
+                </div>
+                <label>Tipo
+                  <select id="newType">
+                    <option value="youtube">YouTube Live / vídeo</option>
+                    <option value="iframe">Iframe permitido por proveedor</option>
+                    <option value="snapshot">Imagen estática actualizable</option>
+                    <option value="direct">Vídeo directo MP4/WebM/HLS simple</option>
+                  </select>
+                </label>
+                <label>URL o ID
+                  <input id="newUrl" placeholder="ID de YouTube, URL de embed, imagen jpg, stream..." />
+                </label>
+                <label>Categorías separadas por comas
+                  <input id="newTags" placeholder="Ciudad, Playa, Tráfico" />
+                </label>
+                <div class="row">
+                  <button id="addCameraBtn" class="btn primary">Añadir cámara</button>
+                  <button id="clearCustomBtn" class="btn danger">Borrar personalizadas</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>Importar / exportar</h3>
+              <p>Formato JSON simple. Útil para pasar tu catálogo a otro PC o ir ampliando la base de datos poco a poco.</p>
+              <div class="row">
+                <button id="exportBtn" class="btn small">Exportar JSON</button>
+                <button id="copyCatalogBtn" class="btn small">Copiar catálogo base</button>
+              </div>
+              <label style="margin-top:10px">Pegar JSON de cámaras personalizadas
+                <textarea id="importText" placeholder='[{"title":"...","country":"...","lat":0,"lon":0,"type":"youtube","videoId":"..."}]'></textarea>
+              </label>
+              <button id="importBtn" class="btn small primary">Importar JSON</button>
+              <p class="hint" style="margin-top:10px">La clave mínima es: <span class="code-mini">title</span>, <span class="code-mini">country</span>, <span class="code-mini">lat</span>, <span class="code-mini">lon</span>, <span class="code-mini">type</span> y una fuente compatible.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-settings" class="view">
+          <div class="settings-grid">
+            <div class="settings-card">
+              <h3>Arquitectura de esta primera versión</h3>
+              <p>Esta versión es un único archivo HTML: estilos internos, lógica JavaScript interna y catálogo inicial incrustado. No necesita PHP para funcionar.</p>
+              <p>PHP o Node serían útiles más adelante si quieres buscar miles de webcams automáticamente, normalizar datos, cachear APIs o usar un proxy legal para flujos con CORS.</p>
+            </div>
+            <div class="settings-card">
+              <h3>Limitaciones reales del navegador</h3>
+              <p>No todas las webcams se pueden incrustar. Algunos proveedores bloquean iframes, otros solo dejan imágenes periódicas y otros exigen clave API.</p>
+              <p>La app prioriza YouTube embebido, iframes permitidos, imágenes públicas y enlaces originales como respaldo.</p>
+            </div>
+            <div class="settings-card">
+              <h3>Privacidad y uso correcto</h3>
+              <p>Usa solo cámaras públicas, oficiales o autorizadas. No está pensado para cámaras privadas, RTSP doméstico, paneles vulnerables ni streams encontrados por escaneo.</p>
+            </div>
+            <div class="settings-card">
+              <h3>Modo día / noche</h3>
+              <p>El tema se guarda automáticamente en este navegador. Puedes cambiarlo con el botón de la cabecera.</p>
+              <button id="themeBtn2" class="btn small">Cambiar tema</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    "use strict";
+
+    const BASE_CAMERAS = [
+      {
+        id: "sf-bay-bridges",
+        title: "San Francisco Bay Bridges Panorama",
+        country: "Estados Unidos",
+        countryCode: "US",
+        region: "California",
+        city: "San Francisco",
+        lat: 37.8197,
+        lon: -122.3932,
+        type: "youtube",
+        videoId: "BSWhGNXxT9A",
+        categories: ["Ciudad", "Puerto"],
+        source: "https://openwebcamdb.com/webcams/san-francisco-bay-bridges-panorama",
+        original: "https://www.youtube.com/watch?v=BSWhGNXxT9A"
+      },
+      {
+        id: "vienna-stephansplatz",
+        title: "Stephansplatz Square and Cathedral",
+        country: "Austria",
+        countryCode: "AT",
+        region: "Viena",
+        city: "Viena",
+        lat: 48.2089,
+        lon: 16.3698,
+        type: "youtube",
+        videoId: "J2pXJEZ6IvU",
+        categories: ["Ciudad", "Histórico"],
+        source: "https://openwebcamdb.com/webcams/stephansplatz-square-and-cathedral",
+        original: "https://www.youtube.com/watch?v=J2pXJEZ6IvU"
+      },
+      {
+        id: "krakow-main-square",
+        title: "Kraków Main Market Square",
+        country: "Polonia",
+        countryCode: "PL",
+        region: "Małopolskie",
+        city: "Cracovia",
+        lat: 50.0618,
+        lon: 19.9366,
+        type: "iframe",
+        embedUrl: "https://static.webcamera.pl/player/krakow_cam_9a3b91-webcamera.html?preroll-wait=true",
+        categories: ["Ciudad", "Histórico"],
+        source: "https://openwebcamdb.com/webcams/krakow-main-market-square",
+        original: "https://static.webcamera.pl/player/krakow_cam_9a3b91-webcamera.html?preroll-wait=true"
+      },
+      {
+        id: "oita-airport",
+        title: "Oita Airport Runway Operations",
+        country: "Japón",
+        countryCode: "JP",
+        region: "Oita",
+        city: "Kunisaki",
+        lat: 33.4807,
+        lon: 131.7278,
+        type: "youtube",
+        videoId: "sFhl7CFnNZA",
+        categories: ["Aeropuerto", "Transporte"],
+        source: "https://openwebcamdb.com/webcams/oita-airport-runway-operations",
+        original: "https://www.youtube.com/watch?v=sFhl7CFnNZA"
+      },
+      {
+        id: "tenerife-los-cristianos",
+        title: "Los Cristianos Beachfront, Tenerife",
+        country: "España",
+        countryCode: "ES",
+        region: "Santa Cruz de Tenerife",
+        city: "Arona",
+        lat: 28.0504,
+        lon: -16.7217,
+        type: "youtube",
+        videoId: "S_0ZBCRJids",
+        categories: ["Naturaleza", "Playa"],
+        source: "https://openwebcamdb.com/webcams/los-cristianos-beachfront-tenerife",
+        original: "https://www.youtube.com/watch?v=S_0ZBCRJids"
+      },
+      {
+        id: "donana-marshes",
+        title: "Doñana National Park Marshes",
+        country: "España",
+        countryCode: "ES",
+        region: "Huelva",
+        city: "Almonte",
+        lat: 37.1041,
+        lon: -6.4535,
+        type: "youtube",
+        videoId: "wq4JPwX5v2I",
+        categories: ["Naturaleza", "Fauna"],
+        source: "https://openwebcamdb.com/webcams/donana-national-park-marshes",
+        original: "https://www.youtube.com/watch?v=wq4JPwX5v2I"
+      },
+      {
+        id: "vigo-plaza-espana",
+        title: "Vigo Plaza de España Urban Square",
+        country: "España",
+        countryCode: "ES",
+        region: "Pontevedra",
+        city: "Vigo",
+        lat: 42.2290,
+        lon: -8.7217,
+        type: "youtube",
+        videoId: "f5gxcYb0XCg",
+        categories: ["Ciudad", "Histórico"],
+        source: "https://openwebcamdb.com/webcams/vigo-plaza-de-espana-urban-square",
+        original: "https://www.youtube.com/watch?v=f5gxcYb0XCg"
+      },
+      {
+        id: "sheffield-bird-feeder",
+        title: "Sheffield Garden Bird Feeder View",
+        country: "Reino Unido",
+        countryCode: "GB",
+        region: "Inglaterra",
+        city: "Sheffield",
+        lat: 53.3849,
+        lon: -1.5056,
+        type: "youtube",
+        videoId: "sJYcgL18FGQ",
+        categories: ["Naturaleza", "Fauna"],
+        source: "https://openwebcamdb.com/webcams/sheffield-garden-bird-feeder-view",
+        original: "https://www.youtube.com/watch?v=sJYcgL18FGQ"
+      },
+      {
+        id: "townsville-port",
+        title: "Townsville Port Cargo Operations",
+        country: "Australia",
+        countryCode: "AU",
+        region: "Queensland",
+        city: "Townsville",
+        lat: -19.2593,
+        lon: 146.8345,
+        type: "youtube",
+        videoId: "EabbsMllaIc",
+        categories: ["Tráfico", "Puerto"],
+        source: "https://openwebcamdb.com/webcams/townsville-port-cargo-operations",
+        original: "https://www.youtube.com/watch?v=EabbsMllaIc"
+      },
+      {
+        id: "palmas-beach-brazil",
+        title: "Palmas Beach Serene Shores Brazil",
+        country: "Brasil",
+        countryCode: "BR",
+        region: "Santa Catarina",
+        city: "Governador Celso Ramos",
+        lat: -27.3339,
+        lon: -48.5358,
+        type: "youtube",
+        videoId: "W5_CbptDPwI",
+        categories: ["Naturaleza", "Playa"],
+        source: "https://openwebcamdb.com/webcams/palmas-beach-serene-shores-brazil",
+        original: "https://www.youtube.com/watch?v=W5_CbptDPwI"
+      },
+      {
+        id: "calgary-eau-claire",
+        title: "Eau Claire Calgary Urban Panorama",
+        country: "Canadá",
+        countryCode: "CA",
+        region: "Alberta",
+        city: "Calgary",
+        lat: 51.0506,
+        lon: -114.0706,
+        type: "youtube",
+        videoId: "2udtsRKecyw",
+        categories: ["Ciudad", "Tráfico"],
+        source: "https://openwebcamdb.com/webcams/eau-claire-calgary-urban-panorama",
+        original: "https://www.youtube.com/watch?v=2udtsRKecyw"
+      },
+      {
+        id: "whistler-blackcomb",
+        title: "Whistler Blackcomb Sundial Peaks",
+        country: "Canadá",
+        countryCode: "CA",
+        region: "British Columbia",
+        city: "Whistler",
+        lat: 50.1139,
+        lon: -122.9562,
+        type: "youtube",
+        videoId: "wDjwCK6qFFA",
+        categories: ["Naturaleza", "Montaña"],
+        source: "https://openwebcamdb.com/webcams/whistler-blackcomb-sundial-peaks",
+        original: "https://www.youtube.com/watch?v=wDjwCK6qFFA"
+      },
+      {
+        id: "texel-sheep-farm",
+        title: "De Waddel Sheep Farm on Texel Island",
+        country: "Países Bajos",
+        countryCode: "NL",
+        region: "North Holland",
+        city: "Den Burg",
+        lat: 53.0363,
+        lon: 4.8166,
+        type: "youtube",
+        videoId: "uAFVMFWHAZU",
+        categories: ["Naturaleza", "Fauna"],
+        source: "https://openwebcamdb.com/webcams/de-waddel-sheep-farm-on-texel-island",
+        original: "https://www.youtube.com/watch?v=uAFVMFWHAZU"
+      },
+      {
+        id: "oslo-skyline",
+        title: "Oslo Skyline Panorama Norway",
+        country: "Noruega",
+        countryCode: "NO",
+        region: "Oslo",
+        city: "Oslo",
+        lat: 59.9084,
+        lon: 10.7028,
+        type: "youtube",
+        videoId: "kK2mwuxIPSE",
+        categories: ["Ciudad"],
+        source: "https://openwebcamdb.com/webcams/oslo-skyline-panorama-norway",
+        original: "https://www.youtube.com/watch?v=kK2mwuxIPSE"
+      },
+      {
+        id: "geiranger-fjord",
+        title: "Geiranger Fjord Panorama Norway",
+        country: "Noruega",
+        countryCode: "NO",
+        region: "Møre and Romsdal",
+        city: "Geiranger",
+        lat: 62.1015,
+        lon: 7.2041,
+        type: "youtube",
+        videoId: "wAdTV6Uc5eA",
+        categories: ["Naturaleza", "Montaña"],
+        source: "https://openwebcamdb.com/webcams/geiranger-fjord-panorama-norway",
+        original: "https://www.youtube.com/watch?v=wAdTV6Uc5eA"
+      }
+    ];
+
+    const STORAGE_KEY = "worldcam-lite-custom-cameras-v1";
+    const THEME_KEY = "worldcam-lite-theme-v1";
+    let customCameras = loadCustomCameras();
+    let cameraOrder = [];
+    let rotationTimer = null;
+
+    const state = {
+      tab: "map",
+      country: "",
+      category: "",
+      query: "",
+      layout: 4,
+      rotateSeconds: 25,
+      rotation: false,
+      rotationIndex: 0,
+      selectedId: null,
+      pinnedId: null
+    };
+
+    const els = {
+      body: document.body,
+      stage: document.getElementById("stage"),
+      stageTitle: document.getElementById("stageTitle"),
+      filterLabel: document.getElementById("filterLabel"),
+      countryFilter: document.getElementById("countryFilter"),
+      categoryFilter: document.getElementById("categoryFilter"),
+      searchInput: document.getElementById("searchInput"),
+      layoutSelect: document.getElementById("layoutSelect"),
+      rotateSeconds: document.getElementById("rotateSeconds"),
+      rotationBtn: document.getElementById("rotationBtn"),
+      pinBtn: document.getElementById("pinBtn"),
+      worldMap: document.getElementById("worldMap"),
+      cameraGrid: document.getElementById("cameraGrid"),
+      quickList: document.getElementById("quickList"),
+      mapCount: document.getElementById("mapCount"),
+      totalStat: document.getElementById("totalStat"),
+      visibleStat: document.getElementById("visibleStat"),
+      countryStat: document.getElementById("countryStat"),
+      customStat: document.getElementById("customStat"),
+      toast: document.getElementById("toast")
+    };
+
+    init();
+
+    function init() {
+      const storedTheme = localStorage.getItem(THEME_KEY) || "dark";
+      setTheme(storedTheme, false);
+      hydrateSelectors();
+      resetOrder();
+      bindEvents();
+      renderAll();
+    }
+
+    function allCameras() {
+      return [...BASE_CAMERAS, ...customCameras].map((cam, index) => ({...cam, _index: index}));
+    }
+
+    function normalizeText(value) {
+      return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    }
+
+    function uniqueSorted(values) {
+      return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+    }
+
+    function hydrateSelectors() {
+      const cameras = allCameras();
+      const countries = uniqueSorted(cameras.map(c => c.country));
+      const categories = uniqueSorted(cameras.flatMap(c => c.categories || []));
+      els.countryFilter.innerHTML = `<option value="">Todo el mundo</option>` + countries.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join("");
+      els.categoryFilter.innerHTML = `<option value="">Todas</option>` + categories.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join("");
+      els.countryFilter.value = state.country;
+      els.categoryFilter.value = state.category;
+    }
+
+    function filteredCameras() {
+      const q = normalizeText(state.query);
+      const cameras = orderedCameras();
+      return cameras.filter(cam => {
+        const countryOk = !state.country || cam.country === state.country;
+        const categoryOk = !state.category || (cam.categories || []).includes(state.category);
+        const haystack = normalizeText([cam.title, cam.country, cam.city, cam.region, ...(cam.categories || [])].join(" "));
+        const queryOk = !q || haystack.includes(q);
+        return countryOk && categoryOk && queryOk;
+      });
+    }
+
+    function orderedCameras() {
+      const map = new Map(allCameras().map(c => [c.id, c]));
+      const ordered = cameraOrder.map(id => map.get(id)).filter(Boolean);
+      const missing = allCameras().filter(c => !cameraOrder.includes(c.id));
+      return [...ordered, ...missing];
+    }
+
+    function resetOrder() {
+      cameraOrder = allCameras().map(c => c.id);
+    }
+
+    function shuffleOrder() {
+      const ids = filteredCameras().map(c => c.id);
+      for (let i = ids.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [ids[i], ids[j]] = [ids[j], ids[i]];
+      }
+      const rest = allCameras().map(c => c.id).filter(id => !ids.includes(id));
+      cameraOrder = [...ids, ...rest];
+      state.rotationIndex = 0;
+      renderAll();
+    }
+
+    function renderAll() {
+      updateHeaderState();
+      renderMap();
+      renderCameras();
+      renderQuickList();
+      renderStats();
+      updateRotationButton();
+    }
+
+    function updateHeaderState() {
+      const labels = {
+        map: "Mapa mundial",
+        cams: "Mosaico de cámaras",
+        catalog: "Catálogo de cámaras",
+        settings: "Configuración"
+      };
+      els.stageTitle.innerHTML = `<span class="status-dot"></span>${labels[state.tab] || "WorldCam Lite"}`;
+      const parts = [];
+      if (state.country) parts.push(state.country); else parts.push("Todo el mundo");
+      if (state.category) parts.push(state.category);
+      if (state.query) parts.push(`“${state.query}”`);
+      els.filterLabel.textContent = parts.join(" · ");
+    }
+
+    function renderMap() {
+      const existing = els.worldMap.querySelectorAll(".marker");
+      existing.forEach(node => node.remove());
+      const cams = filteredCameras();
+      cams.forEach(cam => {
+        const p = project(cam.lat, cam.lon);
+        const btn = document.createElement("button");
+        btn.className = "marker" + (cam.id === state.selectedId ? " active" : "");
+        btn.style.left = `${p.x}%`;
+        btn.style.top = `${p.y}%`;
+        btn.dataset.title = `${cam.title} · ${cam.country}`;
+        btn.title = `${cam.title} · ${cam.city || cam.country}`;
+        btn.addEventListener("click", () => {
+          state.selectedId = cam.id;
+          state.pinnedId = cam.id;
+          state.layout = 1;
+          els.layoutSelect.value = "1";
+          stopRotation();
+          switchTab("cams");
+          renderAll();
+        });
+        els.worldMap.appendChild(btn);
+      });
+      els.mapCount.textContent = `${cams.length} punto${cams.length === 1 ? "" : "s"}`;
+    }
+
+    function project(lat, lon) {
+      const x = ((Number(lon) + 180) / 360) * 100;
+      const y = ((90 - Number(lat)) / 180) * 100;
+      return { x: clamp(x, 1.5, 98.5), y: clamp(y, 3, 97) };
+    }
+
+    function activeCameraSet() {
+      const cams = filteredCameras();
+      if (!cams.length) return [];
+      const pinned = state.pinnedId ? cams.find(c => c.id === state.pinnedId) || allCameras().find(c => c.id === state.pinnedId) : null;
+      if (pinned) return [pinned];
+      const count = Number(state.layout) || 4;
+      if (count === 1) {
+        const cam = cams[state.rotationIndex % cams.length];
+        return cam ? [cam] : [];
+      }
+      if (state.rotation) {
+        const out = [];
+        for (let i = 0; i < count; i++) out.push(cams[(state.rotationIndex + i) % cams.length]);
+        return out.filter(Boolean);
+      }
+      return cams.slice(0, count);
+    }
+
+    function renderCameras() {
+      const cams = activeCameraSet();
+      const gridClass = `camera-grid grid-${state.layout}`;
+      els.cameraGrid.className = gridClass;
+      if (!filteredCameras().length) {
+        els.cameraGrid.innerHTML = `<div class="empty"><div><h3>No hay cámaras para estos filtros.</h3><p>Cambia el país, la categoría o añade cámaras propias en Catálogo.</p></div></div>`;
+        return;
+      }
+      els.cameraGrid.innerHTML = cams.map(cam => renderCameraCard(cam)).join("");
+      cams.forEach(cam => {
+        const card = document.getElementById(`card-${cssId(cam.id)}`);
+        if (card) card.addEventListener("click", event => {
+          if (event.target.closest("button") || event.target.closest("a")) return;
+          state.selectedId = cam.id;
+          renderAll();
+        });
+      });
+    }
+
+    function renderCameraCard(cam) {
+      const isSelected = cam.id === state.selectedId || cam.id === state.pinnedId;
+      const tags = (cam.categories || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+      return `
+        <article id="card-${cssId(cam.id)}" class="camera-card ${isSelected ? "selected" : ""}">
+          <div class="player-box" id="player-${cssId(cam.id)}">
+            ${renderPlayer(cam)}
+          </div>
+          <div class="camera-meta">
+            <div class="camera-title">
+              <b>${escapeHtml(cam.title)}</b>
+              <span class="tag">${escapeHtml(cam.type || "webcam")}</span>
+            </div>
+            <div class="camera-sub">${escapeHtml([cam.city, cam.region, cam.country].filter(Boolean).join(" · "))}</div>
+            <div class="tags">${tags}</div>
+            <div class="card-actions">
+              <button class="btn small" onclick="focusCamera('${escapeJs(cam.id)}')">Ver solo</button>
+              <button class="btn small" onclick="togglePin('${escapeJs(cam.id)}')">${state.pinnedId === cam.id ? "Desanclar" : "Anclar"}</button>
+              <button class="btn small" onclick="fullscreenElement('player-${cssId(cam.id)}')">Pantalla</button>
+              <a class="btn small" href="${escapeAttr(cam.original || cam.source || "#")}" target="_blank" rel="noopener">Original</a>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    function renderPlayer(cam) {
+      if (cam.type === "youtube" && cam.videoId) {
+        const src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(cam.videoId)}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`;
+        return `<iframe src="${src}" title="${escapeAttr(cam.title)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+      }
+      if (cam.type === "iframe" && cam.embedUrl) {
+        return `<iframe src="${escapeAttr(cam.embedUrl)}" title="${escapeAttr(cam.title)}" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+      }
+      if (cam.type === "snapshot" && cam.snapshotUrl) {
+        const src = cacheBust(cam.snapshotUrl, cam.refreshSeconds || 300);
+        return `<img src="${escapeAttr(src)}" alt="${escapeAttr(cam.title)}" loading="lazy" />`;
+      }
+      if (cam.type === "direct" && cam.streamUrl) {
+        return `<video src="${escapeAttr(cam.streamUrl)}" controls autoplay muted playsinline></video>`;
+      }
+      return `<div class="placeholder"><b>No se puede incrustar directamente.</b><br>Abre el enlace original o corrige la URL de esta cámara.</div>`;
+    }
+
+    function cacheBust(url, seconds) {
+      const bucket = Math.floor(Date.now() / (Math.max(10, seconds) * 1000));
+      return url + (url.includes("?") ? "&" : "?") + "t=" + bucket;
+    }
+
+    function renderQuickList() {
+      const cams = filteredCameras();
+      if (!cams.length) {
+        els.quickList.innerHTML = `<div class="hint">Sin resultados.</div>`;
+        return;
+      }
+      els.quickList.innerHTML = cams.map(cam => `
+        <button class="catalog-item" onclick="focusCamera('${escapeJs(cam.id)}')">
+          <b>${escapeHtml(cam.title)}</b>
+          <span>${escapeHtml([cam.city, cam.country].filter(Boolean).join(" · "))}</span>
+        </button>`).join("");
+    }
+
+    function renderStats() {
+      const cameras = allCameras();
+      els.totalStat.textContent = cameras.length;
+      els.visibleStat.textContent = filteredCameras().length;
+      els.countryStat.textContent = uniqueSorted(cameras.map(c => c.country)).length;
+      els.customStat.textContent = customCameras.length;
+    }
+
+    function bindEvents() {
+      document.querySelectorAll(".tab-btn[data-tab]").forEach(btn => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+      });
+      document.getElementById("themeBtn").addEventListener("click", toggleTheme);
+      document.getElementById("themeBtn2").addEventListener("click", toggleTheme);
+      els.countryFilter.addEventListener("change", e => { state.country = e.target.value; state.rotationIndex = 0; state.pinnedId = null; renderAll(); });
+      els.categoryFilter.addEventListener("change", e => { state.category = e.target.value; state.rotationIndex = 0; state.pinnedId = null; renderAll(); });
+      els.searchInput.addEventListener("input", e => { state.query = e.target.value; state.rotationIndex = 0; state.pinnedId = null; renderAll(); });
+      els.layoutSelect.addEventListener("change", e => { state.layout = Number(e.target.value); state.pinnedId = null; renderAll(); restartRotationIfNeeded(); });
+      els.rotateSeconds.addEventListener("change", e => { state.rotateSeconds = clamp(Number(e.target.value) || 25, 5, 600); e.target.value = state.rotateSeconds; restartRotationIfNeeded(); });
+      els.rotationBtn.addEventListener("click", () => { state.rotation ? stopRotation() : startRotation(); renderAll(); });
+      document.getElementById("clearFiltersBtn").addEventListener("click", () => clearFilters());
+      document.getElementById("randomCountryBtn").addEventListener("click", randomCountry);
+      document.getElementById("mapRandomBtn").addEventListener("click", randomWorldCamera);
+      document.getElementById("mapToCamsBtn").addEventListener("click", () => switchTab("cams"));
+      document.getElementById("shuffleBtn").addEventListener("click", shuffleOrder);
+      document.getElementById("pinBtn").addEventListener("click", () => {
+        if (state.pinnedId) state.pinnedId = null;
+        else if (state.selectedId) state.pinnedId = state.selectedId;
+        else {
+          const first = activeCameraSet()[0];
+          if (first) state.pinnedId = first.id;
+        }
+        renderAll();
+      });
+      document.getElementById("gridFullscreenBtn").addEventListener("click", () => fullscreenElement("stage"));
+      document.getElementById("addCameraBtn").addEventListener("click", addCustomCameraFromForm);
+      document.getElementById("clearCustomBtn").addEventListener("click", clearCustomCameras);
+      document.getElementById("exportBtn").addEventListener("click", exportCustomCameras);
+      document.getElementById("copyCatalogBtn").addEventListener("click", copyBaseCatalog);
+      document.getElementById("importBtn").addEventListener("click", importCustomCameras);
+    }
+
+    function switchTab(tab) {
+      state.tab = tab;
+      document.querySelectorAll(".tab-btn[data-tab]").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tab));
+      document.querySelectorAll(".view").forEach(view => view.classList.remove("active"));
+      const selected = document.getElementById(`view-${tab}`);
+      if (selected) selected.classList.add("active");
+      renderAll();
+    }
+
+    function startRotation() {
+      if (!filteredCameras().length) return;
+      state.rotation = true;
+      state.pinnedId = null;
+      window.clearInterval(rotationTimer);
+      rotationTimer = window.setInterval(() => {
+        const count = Number(state.layout) || 1;
+        const total = filteredCameras().length || 1;
+        state.rotationIndex = (state.rotationIndex + (count === 1 ? 1 : count)) % total;
+        renderCameras();
+      }, state.rotateSeconds * 1000);
+      showToast("Rotación activada.");
+    }
+
+    function stopRotation() {
+      state.rotation = false;
+      window.clearInterval(rotationTimer);
+      rotationTimer = null;
+    }
+
+    function restartRotationIfNeeded() {
+      if (state.rotation) startRotation();
+    }
+
+    function updateRotationButton() {
+      els.rotationBtn.textContent = state.rotation ? "⏸ Parar" : "▶ Rotar";
+      els.rotationBtn.classList.toggle("danger", state.rotation);
+      els.rotationBtn.classList.toggle("good", !state.rotation);
+      els.pinBtn.textContent = state.pinnedId ? "📌 Desanclar" : "📌 Anclar actual";
+    }
+
+    window.focusCamera = function(id) {
+      const cam = allCameras().find(c => c.id === id);
+      if (!cam) return;
+      state.selectedId = id;
+      state.pinnedId = id;
+      state.layout = 1;
+      els.layoutSelect.value = "1";
+      stopRotation();
+      switchTab("cams");
+      renderAll();
+    };
+
+    window.togglePin = function(id) {
+      state.pinnedId = state.pinnedId === id ? null : id;
+      if (state.pinnedId) {
+        state.selectedId = id;
+        stopRotation();
+      }
+      renderAll();
+    };
+
+    window.fullscreenElement = function(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    };
+
+    function clearFilters() {
+      state.country = "";
+      state.category = "";
+      state.query = "";
+      state.rotationIndex = 0;
+      state.pinnedId = null;
+      els.countryFilter.value = "";
+      els.categoryFilter.value = "";
+      els.searchInput.value = "";
+      renderAll();
+    }
+
+    function randomCountry() {
+      const countries = uniqueSorted(allCameras().map(c => c.country));
+      if (!countries.length) return;
+      state.country = countries[Math.floor(Math.random() * countries.length)];
+      state.category = "";
+      state.query = "";
+      state.pinnedId = null;
+      state.rotationIndex = 0;
+      hydrateSelectors();
+      els.searchInput.value = "";
+      renderAll();
+    }
+
+    function randomWorldCamera() {
+      const cams = allCameras();
+      if (!cams.length) return;
+      const cam = cams[Math.floor(Math.random() * cams.length)];
+      window.focusCamera(cam.id);
+    }
+
+    function setTheme(theme, notify = true) {
+      const isLight = theme === "light";
+      document.body.classList.toggle("light", isLight);
+      localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
+      document.getElementById("themeBtn").textContent = isLight ? "☀️" : "🌙";
+      if (notify) showToast(isLight ? "Modo día activado." : "Modo noche activado.");
+    }
+
+    function toggleTheme() {
+      const next = document.body.classList.contains("light") ? "dark" : "light";
+      setTheme(next);
+    }
+
+    function addCustomCameraFromForm() {
+      const title = document.getElementById("newTitle").value.trim();
+      const country = document.getElementById("newCountry").value.trim();
+      const city = document.getElementById("newCity").value.trim();
+      const lat = Number(document.getElementById("newLat").value);
+      const lon = Number(document.getElementById("newLon").value);
+      const type = document.getElementById("newType").value;
+      const rawUrl = document.getElementById("newUrl").value.trim();
+      const tags = document.getElementById("newTags").value.split(",").map(s => s.trim()).filter(Boolean);
+
+      if (!title || !country || Number.isNaN(lat) || Number.isNaN(lon) || !rawUrl) {
+        showToast("Faltan datos obligatorios: título, país, latitud, longitud y URL/ID.");
+        return;
+      }
+      if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        showToast("Latitud o longitud fuera de rango.");
+        return;
+      }
+      const cam = {
+        id: "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7),
+        title, country, city,
+        region: "",
+        lat, lon,
+        type,
+        categories: tags.length ? tags : ["Personalizada"],
+        source: rawUrl,
+        original: rawUrl,
+        custom: true
+      };
+      if (type === "youtube") cam.videoId = extractYouTubeId(rawUrl);
+      if (type === "iframe") cam.embedUrl = rawUrl;
+      if (type === "snapshot") cam.snapshotUrl = rawUrl;
+      if (type === "direct") cam.streamUrl = rawUrl;
+      if (type === "youtube" && !cam.videoId) {
+        showToast("No he podido extraer el ID de YouTube. Pega el ID o una URL de YouTube válida.");
+        return;
+      }
+      customCameras.push(cam);
+      saveCustomCameras();
+      resetOrder();
+      hydrateSelectors();
+      renderAll();
+      clearNewCameraForm();
+      showToast("Cámara añadida al catálogo local.");
+    }
+
+    function extractYouTubeId(value) {
+      const v = value.trim();
+      if (/^[a-zA-Z0-9_-]{8,20}$/.test(v)) return v;
+      const patterns = [
+        /youtube\.com\/watch\?v=([^&]+)/i,
+        /youtu\.be\/([^?&/]+)/i,
+        /youtube\.com\/embed\/([^?&/]+)/i,
+        /youtube-nocookie\.com\/embed\/([^?&/]+)/i,
+        /youtube\.com\/live\/([^?&/]+)/i
+      ];
+      for (const p of patterns) {
+        const m = v.match(p);
+        if (m) return m[1];
+      }
+      return "";
+    }
+
+    function clearNewCameraForm() {
+      ["newTitle", "newCountry", "newCity", "newLat", "newLon", "newUrl", "newTags"].forEach(id => document.getElementById(id).value = "");
+      document.getElementById("newType").value = "youtube";
+    }
+
+    function loadCustomCameras() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveCustomCameras() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customCameras));
+    }
+
+    function clearCustomCameras() {
+      if (!customCameras.length) { showToast("No hay cámaras personalizadas."); return; }
+      const ok = confirm("¿Borrar todas las cámaras personalizadas guardadas en este navegador?");
+      if (!ok) return;
+      customCameras = [];
+      saveCustomCameras();
+      state.pinnedId = null;
+      state.selectedId = null;
+      resetOrder();
+      hydrateSelectors();
+      renderAll();
+      showToast("Cámaras personalizadas borradas.");
+    }
+
+    function exportCustomCameras() {
+      const data = JSON.stringify(customCameras, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "worldcam-lite-camaras-personalizadas.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+    }
+
+    async function copyBaseCatalog() {
+      const data = JSON.stringify(BASE_CAMERAS, null, 2);
+      try {
+        await navigator.clipboard.writeText(data);
+        showToast("Catálogo base copiado al portapapeles.");
+      } catch {
+        document.getElementById("importText").value = data;
+        showToast("No se pudo copiar; lo he pegado en la caja de texto.");
+      }
+    }
+
+    function importCustomCameras() {
+      const raw = document.getElementById("importText").value.trim();
+      if (!raw) { showToast("Pega primero un JSON."); return; }
+      try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) throw new Error("El JSON debe ser un array.");
+        const clean = parsed.map((cam, i) => sanitizeImportedCamera(cam, i));
+        customCameras = [...customCameras, ...clean];
+        saveCustomCameras();
+        resetOrder();
+        hydrateSelectors();
+        renderAll();
+        document.getElementById("importText").value = "";
+        showToast(`${clean.length} cámara(s) importada(s).`);
+      } catch (err) {
+        showToast("JSON no válido: " + err.message);
+      }
+    }
+
+    function sanitizeImportedCamera(cam, i) {
+      if (!cam || typeof cam !== "object") throw new Error(`Elemento ${i + 1} inválido.`);
+      const title = String(cam.title || "").trim();
+      const country = String(cam.country || "").trim();
+      const lat = Number(cam.lat);
+      const lon = Number(cam.lon);
+      const type = String(cam.type || "youtube").trim();
+      if (!title || !country || Number.isNaN(lat) || Number.isNaN(lon)) throw new Error(`Elemento ${i + 1}: faltan title/country/lat/lon.`);
+      return {
+        ...cam,
+        id: cam.id && !BASE_CAMERAS.some(b => b.id === cam.id) ? String(cam.id) : "custom-import-" + Date.now().toString(36) + "-" + i,
+        title,
+        country,
+        city: String(cam.city || "").trim(),
+        region: String(cam.region || "").trim(),
+        lat,
+        lon,
+        type,
+        categories: Array.isArray(cam.categories) ? cam.categories.map(String) : ["Personalizada"],
+        custom: true
+      };
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      window.clearTimeout(showToast._timer);
+      showToast._timer = window.setTimeout(() => els.toast.classList.remove("show"), 2800);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function cssId(value) {
+      return String(value).replace(/[^a-zA-Z0-9_-]/g, "_");
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#039;","\"":"&quot;"}[char]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+
+    function escapeJs(value) {
+      return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    }
+  </script>
+</body>
+</html>
