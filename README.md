@@ -20,6 +20,9 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 - El catálogo base contiene **144 cámaras** procedentes de la versión WorldCam Minimal v0.4.
 - La vista **Directo** usa la misma cantidad seleccionada en el mosaico principal.
 - La vista **Mapa** muestra una **esfera terrestre 3D** con textura satelital, atmósfera, zoom ampliado, rotación, fronteras de países y marcadores de cámaras.
+- Los marcadores del globo son iconos de cámara HTML/SVG, no tubos 3D.
+- El borde del icono cambia por situación solar: amarillo en día, naranja en crepúsculo y rojo en noche.
+- La ventana flotante de cámara muestra la hora local aproximada calculada desde la longitud de sus coordenadas.
 - El globo permite acercarse mucho más a la superficie mediante zoom óptico de la esfera.
 - Para detalle de alta resolución se añade un **zoom satelital profundo** con teselas, dentro del propio escenario del mapa.
 - El mapa incorpora una guía día/noche mediante línea de terminador solar, sin oscurecer la textura satelital del globo.
@@ -38,6 +41,7 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 ├── assets/
 │   ├── css/
 │   │   ├── globe.css
+│   │   ├── map-markers.css
 │   │   ├── panel.css
 │   │   └── styles.css
 │   ├── img/
@@ -81,7 +85,9 @@ Muestra el mismo lote de cámaras en un mosaico controlado de iframes, imágenes
 
 Muestra un globo 3D interactivo. La esfera usa textura satelital tipo Blue Marble, relieve sutil, atmósfera, fondo espacial, fronteras nacionales y puntos de cámaras. El usuario puede rotar la Tierra y hacer zoom mucho más cerca de la superficie.
 
-Al pulsar un punto se abre una ventana flotante con el directo de esa cámara dentro del mismo escenario del globo. Desde esa ventana se puede abrir un **zoom satelital profundo** con teselas de mayor detalle. También se puede pulsar una zona del globo para abrir directamente ese visor de detalle sobre las coordenadas seleccionadas.
+Los puntos de cámara se representan con iconos SVG de cámara con halo de alto contraste. El color del halo depende de la situación solar aproximada del punto: día, crepúsculo o noche. Al pulsar un icono se abre una ventana flotante con el directo de esa cámara dentro del mismo escenario del globo, incluyendo hora local aproximada por longitud.
+
+Desde esa ventana se puede abrir un **zoom satelital profundo** con teselas de mayor detalle. También se puede pulsar una zona del globo para abrir directamente ese visor de detalle sobre las coordenadas seleccionadas.
 
 La transición día/noche se representa con una línea de terminador solar calculada en tiempo real. No se aplica una capa de oscuridad encima del planeta para no degradar la textura satelital.
 
@@ -114,6 +120,10 @@ En el globo 3D se evita recrear la escena si ya existe, se ajusta el tamaño sin
 - Texturas públicas de `three-globe` para la visualización satelital y el fondo espacial.
 - Teselas satelitales externas para el detalle de aproximación.
 
+## Nota sobre horas locales
+
+La hora local mostrada en el globo se calcula de forma aproximada a partir de la longitud geográfica. No aplica todavía una base completa de husos horarios, fronteras administrativas ni cambios de horario de verano.
+
 ## Nota sobre YouTube y embeds
 
 Muchas cámaras de YouTube pueden cambiar, dejar de emitir o bloquear inserción según el propietario del directo. Esta versión usa `youtube-nocookie.com/embed/ID` para la reproducción y evita miniaturas como vista principal.
@@ -121,6 +131,7 @@ Muchas cámaras de YouTube pueden cambiar, dejar de emitir o bloquear inserción
 ## Próximos pasos
 
 - Curar manualmente las cámaras que no sigan emitiendo.
+- Sustituir la hora local aproximada por una base real de husos horarios.
 - Añadir más cámaras paisajísticas con prioridad a costas, montañas, volcanes, skylines y espacios naturales.
 - Separar el catálogo por regiones si supera varios cientos de entradas.
 - Añadir favoritos locales.
