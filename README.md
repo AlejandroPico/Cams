@@ -1,24 +1,19 @@
 # Cams
 
-Mosaico minimalista de cámaras web públicas del mundo, preparado para publicarse directamente con **GitHub Pages**.
+Mosaico minimalista de webcams públicas del mundo, preparado para publicarse directamente con **GitHub Pages**.
 
-Esta primera versión convierte el proyecto en una aplicación estática modular, separando HTML, CSS, JavaScript, datos y documentación. La base inicial contiene **100 referencias de webcams** organizadas por continente, categoría, proveedor, prioridad paisajística y ubicación.
+La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla completa, cámaras visibles desde el primer segundo y un único panel lateral tipo hamburguesa para navegación, filtros, mapa, catálogo técnico y configuración.
 
-## Objetivo
+## Estado actual
 
-Crear un atlas visual de cámaras en directo con estética limpia, navegación rápida y una base de datos fácil de ampliar. La prioridad del catálogo son vistas paisajísticas: costas, montañas, volcanes, skylines, monumentos, naturaleza, puertos y lugares icónicos.
-
-## Características de la versión 1
-
-- Mosaico responsive de cámaras.
-- Panel lateral de filtros por búsqueda, continente, categoría y proveedor.
-- Priorización automática de cámaras paisajísticas.
-- Panel de rotación secuencial con controles de anterior/siguiente, pausa y selección de intervalo.
-- Ficha de detalle por cámara.
-- Enlace de salida para localizar la fuente pública de cada cámara.
-- Visor interno experimental para probar incrustaciones cuando el proveedor lo permita.
-- Datos separados en `assets/js/data/cameras.js`.
-- Sin backend, sin dependencias externas y sin proceso de build.
+- La página abre directamente en **Lugares**, con todo el listado de cámaras disponible.
+- No hay landing, hero ni tarjetas informativas externas ocupando la pantalla inicial.
+- El botón hamburguesa es la vía principal para acceder a opciones, filtros, mapa, directo, catálogo y configuración.
+- El catálogo base contiene **144 cámaras** procedentes de la versión WorldCam Minimal v0.4.
+- La vista **Directo** muestra el mosaico de cámaras en vivo con selección de 1, 2, 4, 6, 9, 16 o 25 cámaras.
+- La vista **Mapa** reutiliza D3 + TopoJSON para colocar puntos geográficos.
+- La vista **Catálogo** permite ver, ocultar, comprobar o retirar cámaras del catálogo local.
+- La vista **Config** permite añadir cámaras, importar JSON, exportar el catálogo y restaurar la base.
 
 ## Estructura del proyecto
 
@@ -39,6 +34,7 @@ Crear un atlas visual de cámaras en directo con estética limpia, navegación r
 │       │   └── cameras.js
 │       └── modules/
 │           ├── filtering.js
+│           ├── map.js
 │           ├── player.js
 │           ├── state.js
 │           └── ui.js
@@ -57,38 +53,38 @@ Crear un atlas visual de cámaras en directo con estética limpia, navegación r
 3. Guarda la configuración.
 4. GitHub Pages servirá directamente `index.html`.
 
-## Cómo añadir cámaras
+## Funcionamiento
 
-Edita `assets/js/data/cameras.js`. En esta primera versión el catálogo usa una semilla compacta en texto. Cada línea sigue este formato:
+### Lugares
 
-```text
-título|ciudad|país|continente|categoría|proveedor|tag1,tag2,tag3|puntuaciónPaisaje
-```
+Es la vista inicial. Muestra todos los lugares/cámaras del catálogo como mosaico compacto. Al pulsar una cámara, se abre la vista **Directo** con esa cámara a pantalla completa.
 
-Ejemplo:
+### Directo
 
-```text
-Barcelona playa|Barcelona|España|Europa|Costa|Proveedor oficial|playa,costa,paisaje|95
-```
+Muestra un mosaico real de iframes, imágenes, MJPEG o HLS según el tipo de cámara. Para no saturar el navegador, la vista en directo trabaja por lotes configurables.
 
-### Sobre `embedUrl`
+### Panel hamburguesa
 
-Muchas webs de cámaras bloquean su inserción en iframes mediante cabeceras de seguridad o políticas internas. Por eso el proyecto conserva dos niveles:
+Todo lo que no sea la cámara/listado principal vive dentro del panel lateral:
 
-- `sourceUrl`: enlace de acceso o búsqueda pública.
-- `embedUrl`: solo debe rellenarse cuando se haya comprobado que la cámara permite incrustación estable.
+- navegación entre vistas;
+- filtros;
+- tamaño del mosaico en directo;
+- rotación;
+- modo visual;
+- pantalla completa;
+- búsqueda técnica;
+- comprobación de cámaras.
 
-## Próximos pasos recomendados
+## Nota sobre YouTube y embeds
 
-- Verificar una por una las cámaras más importantes y sustituir las búsquedas por URLs oficiales exactas.
-- Convertir las cámaras más fiables en embeds reales, comprobando que cargan en iframe.
-- Añadir miniaturas propias o capturas estáticas permitidas por cada proveedor.
-- Incorporar un mapa mundial con marcadores.
-- Añadir favoritos locales con `localStorage`.
-- Crear un script de validación para detectar duplicados, campos vacíos y enlaces rotos.
-- Separar el catálogo por regiones si la base de datos supera varios cientos de cámaras.
+Muchas cámaras de YouTube pueden cambiar, dejar de emitir o bloquear inserción según el propietario del directo. Esta versión usa `youtube-nocookie.com/embed/ID` para la vista en directo y miniaturas públicas para el listado inicial.
 
-## Estado de la versión
+## Próximos pasos
 
-Versión inicial refactorizada: **v1.0.0**  
-Fecha: **9 de junio de 2026**
+- Curar manualmente las cámaras que no sigan emitiendo.
+- Añadir más cámaras paisajísticas con prioridad a costas, montañas, volcanes, skylines y espacios naturales.
+- Separar el catálogo por regiones si supera varios cientos de entradas.
+- Añadir favoritos locales.
+- Añadir previsualización expandida antes de abrir el directo.
+- Crear una validación automática del catálogo.
