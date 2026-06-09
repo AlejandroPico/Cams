@@ -9,15 +9,18 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 - La página abre directamente en **Mosaico**, con cámaras en reproducción.
 - La pantalla principal ya no intenta mostrar todo el catálogo a la vez.
 - El máximo visible simultáneo es **30 cámaras**, distribuido como **6 columnas × 5 filas**.
-- El selector del panel hamburguesa permite elegir mosaicos cerrados de 1, 2, 4, 6, 9, 12, 16, 20, 25 o 30 cámaras.
+- El selector del panel hamburguesa permite elegir 1, 2, 4, 6, 9, 12, 16, 20, 25 o 30 cámaras, sin texto de multiplicaciones.
 - Los botones anterior, siguiente y azar paginan por lotes del tamaño elegido.
 - Se eliminan las miniaturas como vista principal: cada celda visible carga un reproductor real.
 - El mosaico queda con bordes rectos, sin redondeos y sin separación entre cámaras.
+- El control **Etiquetas** muestra u oculta los rótulos visuales superpuestos en cámaras y mosaicos.
+- El panel hamburguesa corrige la legibilidad de desplegables en modo nocturno.
 - No hay landing, hero ni tarjetas informativas externas ocupando la pantalla inicial.
 - El botón hamburguesa es la vía principal para acceder a opciones, filtros, mapa, directo, catálogo y configuración.
 - El catálogo base contiene **144 cámaras** procedentes de la versión WorldCam Minimal v0.4.
 - La vista **Directo** usa la misma cantidad seleccionada en el mosaico principal.
 - La vista **Mapa** muestra una **esfera terrestre 3D** con textura satelital, atmósfera, zoom, rotación, fronteras de países y marcadores de cámaras.
+- Al pulsar una cámara en el globo se abre una ventana flotante dentro del propio mapa, sin cambiar a la vista 1×1.
 - La vista **Catálogo** permite ver, ocultar, comprobar o retirar cámaras del catálogo local.
 - La vista **Config** permite añadir cámaras, importar JSON, exportar el catálogo y restaurar la base.
 
@@ -32,6 +35,7 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 ├── assets/
 │   ├── css/
 │   │   ├── globe.css
+│   │   ├── panel.css
 │   │   └── styles.css
 │   ├── img/
 │   │   └── favicon.svg
@@ -72,7 +76,7 @@ Muestra el mismo lote de cámaras en un mosaico controlado de iframes, imágenes
 
 ### Mapa
 
-Muestra un globo 3D interactivo. La esfera usa textura satelital tipo Blue Marble, relieve sutil, atmósfera, fondo espacial, fronteras nacionales y puntos de cámaras. El usuario puede rotar la Tierra, hacer zoom y pulsar un punto para abrir la cámara correspondiente.
+Muestra un globo 3D interactivo. La esfera usa textura satelital tipo Blue Marble, relieve sutil, atmósfera, fondo espacial, fronteras nacionales y puntos de cámaras. El usuario puede rotar la Tierra y hacer zoom. Al pulsar un punto se abre una ventana flotante con el directo de esa cámara dentro del mismo escenario del globo.
 
 ### Panel hamburguesa
 
@@ -83,6 +87,7 @@ Todo lo que no sea la cámara/listado principal vive dentro del panel lateral:
 - tamaño del mosaico;
 - paginación del mosaico;
 - rotación;
+- etiquetas;
 - modo visual;
 - pantalla completa;
 - búsqueda técnica;
@@ -91,6 +96,8 @@ Todo lo que no sea la cámara/listado principal vive dentro del panel lateral:
 ## Nota sobre rendimiento
 
 La vista inicial no dispara todo el catálogo a la vez. Renderiza exclusivamente el lote visible, con un máximo de 30 reproductores simultáneos.
+
+En el globo 3D se evita recrear la escena si ya existe, se ajusta el tamaño sin recargar texturas y se limita el pixel ratio del render para mejorar la fluidez en pantallas densas.
 
 ## Dependencias externas de visualización
 
