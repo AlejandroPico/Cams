@@ -1,10 +1,11 @@
 import { DEFAULT_SETTINGS, SETTINGS_KEY, STORE_KEY, loadJSON, saveCatalog, saveSettings, state, stopRotation } from './state.js';
 import { categories, countries, filteredCams, gridShape, normalizeCatalog, providerFrom } from './filtering.js';
-import { cameraElement, escapeHtml, extractYouTubeId, publicUrl, thumbnailUrl } from './player.js';
+import { cameraElement, escapeHtml, extractYouTubeId, publicUrl } from './player.js';
 import { drawMarkers, renderMap } from './map.js';
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+let wallObserver = null;
 
 export function initUI(defaultCams) {
   state.catalog = loadCatalog(defaultCams);
@@ -112,15 +113,8 @@ function wireEvents() {
   $('#importBtn').addEventListener('click', importJSON);
   $('#exportBtn').addEventListener('click', exportJSON);
   $('#resetCatalogBtn').addEventListener('click', resetCatalog);
-
-  $('#wallGrid').addEventListener('click', (event) => {
-    const card = event.target.closest('.wall-card');
-    if (!card) return;
-    const camera = state.catalog.find((item) => item.id === card.dataset.id);
-    if (camera) setSelected(camera);
-  });
-
   $('#catalogList').addEventListener('click', handleCatalogAction);
+
   window.addEventListener('resize', () => {
     if (state.settings.view === 'mapView') renderMap();
   });
@@ -139,6 +133,11 @@ function renderWall() {
   const cameras = filteredCams(state.catalog, state.settings);
   state.lastFilteredIds = cameras.map((camera) => camera.id);
 
+  if (wallObserver) {
+    wallObserver.disconnect();
+    wallObserver = null;
+  }
+
   if (!cameras.length) {
     grid.innerHTML = '<div class="empty">No hay cámaras con estos filtros.</div>';
     return;
@@ -146,7 +145,9 @@ function renderWall() {
 
   grid.innerHTML = cameras.map((camera) => `
     <article class="wall-card" data-id="${escapeHtml(camera.id)}" title="${escapeHtml(camera.title)}">
-      <img class="wall-thumb" loading="lazy" src="${thumbnailUrl(camera)}" alt="${escapeHtml(camera.title)}">
+      <div class="wall-player" data-player-id="${escapeHtml(camera.id)}">
+        <div class="wall-loading">cargando directo</div>
+      </div>
       <div class="wall-badges">
         <span class="badge">${escapeHtml(camera.category)}</span>
         <span class="badge">${escapeHtml(camera.country)}</span>
@@ -157,6 +158,39 @@ function renderWall() {
       </div>
     </article>
   `).join('');
+
+  hydrateWallPlayers();
+}
+
+function hydrateWallPlayers() {
+  const slots = [...document.querySelectorAll('.wall-player[data-player-id]')];
+
+  const loadSlot = (slot) => {
+    if (slot.dataset.loaded === 'true') return;
+    const camera = state.catalog.find((item) => item.id === slot.dataset.playerId);
+    if (!camera) return;
+    slot.innerHTML = cameraElement(camera);
+    slot.dataset.loaded = 'true';
+  };
+
+  if (!('IntersectionObserver' in window)) {
+    slots.forEach(loadSlot);
+    return;
+  }
+
+  wallObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      loadSlot(entry.target);
+      wallObserver.unobserve(entry.target);
+    });
+  }, {
+    root: $('#wallGrid'),
+    rootMargin: '520px 0px',
+    threshold: 0.01
+  });
+
+  slots.forEach((slot) => wallObserver.observe(slot));
 }
 
 function renderLive() {
@@ -270,6 +304,7 @@ export function setView(id) {
   closeSide();
   if (id === 'mapView') setTimeout(renderMap, 40);
   if (id === 'catalogView') renderCatalog();
+  if (id === 'wallView') setTimeout(hydrateWallPlayers, 40);
 }
 
 function openSelected() {
