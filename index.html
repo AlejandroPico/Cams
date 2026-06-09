@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#030305">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/panel.css">
   <link rel="stylesheet" href="assets/css/globe.css">
 </head>
 <body class="labels-on">
@@ -31,6 +32,19 @@
           <button id="mapResetBtn" class="mini" type="button">reset esfera</button>
           <span id="mapStats" class="map-pill">globo 3D</span>
         </div>
+        <aside id="mapPreview" class="map-preview" aria-label="Vista previa de cámara en el mapa" hidden>
+          <header class="map-preview-head">
+            <div>
+              <strong id="mapPreviewTitle">Cámara</strong>
+              <span id="mapPreviewMeta">Vista en directo</span>
+            </div>
+            <button id="mapPreviewClose" class="mini" type="button" aria-label="Cerrar vista previa">×</button>
+          </header>
+          <div id="mapPreviewBody" class="map-preview-body"></div>
+          <footer class="map-preview-foot">
+            <a id="mapPreviewOpen" href="#" target="_blank" rel="noopener">abrir fuente</a>
+          </footer>
+        </aside>
       </div>
     </section>
 
@@ -136,16 +150,16 @@
         <h2>Mosaico</h2>
         <label>Número de cámaras en pantalla</label>
         <select id="gridSelect">
-          <option value="1">1 cámara · 1×1</option>
-          <option value="2">2 cámaras · 2×1</option>
-          <option value="4">4 cámaras · 2×2</option>
-          <option value="6">6 cámaras · 3×2</option>
-          <option value="9">9 cámaras · 3×3</option>
-          <option value="12">12 cámaras · 4×3</option>
-          <option value="16">16 cámaras · 4×4</option>
-          <option value="20">20 cámaras · 5×4</option>
-          <option value="25">25 cámaras · 5×5</option>
-          <option value="30" selected>30 cámaras · 6×5 máximo</option>
+          <option value="1">1 cámara</option>
+          <option value="2">2 cámaras</option>
+          <option value="4">4 cámaras</option>
+          <option value="6">6 cámaras</option>
+          <option value="9">9 cámaras</option>
+          <option value="12">12 cámaras</option>
+          <option value="16">16 cámaras</option>
+          <option value="20">20 cámaras</option>
+          <option value="25">25 cámaras</option>
+          <option value="30" selected>30 cámaras</option>
         </select>
         <div class="inline actions">
           <button id="prevBtn" type="button">←</button>
@@ -164,7 +178,7 @@
 
       <div class="section">
         <h2>Visual</h2>
-        <div class="toggle-line"><span>Rótulos mínimos</span><button id="labelsBtn" class="mini good" type="button">on</button></div>
+        <div class="toggle-line"><span>Etiquetas</span><button id="labelsBtn" class="mini good" type="button">on</button></div>
         <div class="toggle-line"><span>Modo visual</span><button id="themeBtn" class="mini" type="button">noche</button></div>
         <button id="fullscreenBtn" class="wide" type="button">Pantalla completa</button>
         <button id="openSelectedBtn" class="wide" type="button">Abrir cámara seleccionada</button>
