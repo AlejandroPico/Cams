@@ -19,7 +19,10 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 - El botón hamburguesa es la vía principal para acceder a opciones, filtros, mapa, directo, catálogo y configuración.
 - El catálogo base contiene **144 cámaras** procedentes de la versión WorldCam Minimal v0.4.
 - La vista **Directo** usa la misma cantidad seleccionada en el mosaico principal.
-- La vista **Mapa** muestra una **esfera terrestre 3D** con textura satelital, atmósfera, zoom, rotación, fronteras de países y marcadores de cámaras.
+- La vista **Mapa** muestra una **esfera terrestre 3D** con textura satelital, atmósfera, zoom ampliado, rotación, fronteras de países y marcadores de cámaras.
+- El globo permite acercarse mucho más a la superficie mediante zoom óptico de la esfera.
+- Para detalle de alta resolución se añade un **zoom satelital profundo** con teselas, dentro del propio escenario del mapa.
+- El mapa incorpora una guía día/noche mediante línea de terminador solar, sin oscurecer la textura satelital del globo.
 - Al pulsar una cámara en el globo se abre una ventana flotante dentro del propio mapa, sin cambiar a la vista 1×1.
 - La vista **Catálogo** permite ver, ocultar, comprobar o retirar cámaras del catálogo local.
 - La vista **Config** permite añadir cámaras, importar JSON, exportar el catálogo y restaurar la base.
@@ -76,7 +79,11 @@ Muestra el mismo lote de cámaras en un mosaico controlado de iframes, imágenes
 
 ### Mapa
 
-Muestra un globo 3D interactivo. La esfera usa textura satelital tipo Blue Marble, relieve sutil, atmósfera, fondo espacial, fronteras nacionales y puntos de cámaras. El usuario puede rotar la Tierra y hacer zoom. Al pulsar un punto se abre una ventana flotante con el directo de esa cámara dentro del mismo escenario del globo.
+Muestra un globo 3D interactivo. La esfera usa textura satelital tipo Blue Marble, relieve sutil, atmósfera, fondo espacial, fronteras nacionales y puntos de cámaras. El usuario puede rotar la Tierra y hacer zoom mucho más cerca de la superficie.
+
+Al pulsar un punto se abre una ventana flotante con el directo de esa cámara dentro del mismo escenario del globo. Desde esa ventana se puede abrir un **zoom satelital profundo** con teselas de mayor detalle. También se puede pulsar una zona del globo para abrir directamente ese visor de detalle sobre las coordenadas seleccionadas.
+
+La transición día/noche se representa con una línea de terminador solar calculada en tiempo real. No se aplica una capa de oscuridad encima del planeta para no degradar la textura satelital.
 
 ### Panel hamburguesa
 
@@ -97,13 +104,15 @@ Todo lo que no sea la cámara/listado principal vive dentro del panel lateral:
 
 La vista inicial no dispara todo el catálogo a la vez. Renderiza exclusivamente el lote visible, con un máximo de 30 reproductores simultáneos.
 
-En el globo 3D se evita recrear la escena si ya existe, se ajusta el tamaño sin recargar texturas y se limita el pixel ratio del render para mejorar la fluidez en pantallas densas.
+En el globo 3D se evita recrear la escena si ya existe, se ajusta el tamaño sin recargar texturas, se limita el pixel ratio del render y se reducen resoluciones de puntos/fronteras para mejorar la fluidez.
 
 ## Dependencias externas de visualización
 
 - D3 y TopoJSON para leer la geometría de países.
 - Globe.gl para la esfera 3D.
+- Leaflet para el visor de zoom satelital profundo.
 - Texturas públicas de `three-globe` para la visualización satelital y el fondo espacial.
+- Teselas satelitales externas para el detalle de aproximación.
 
 ## Nota sobre YouTube y embeds
 
