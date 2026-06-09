@@ -1,7 +1,7 @@
 import { DEFAULT_SETTINGS, SETTINGS_KEY, STORE_KEY, loadJSON, saveCatalog, saveSettings, state, stopRotation } from './state.js';
 import { categories, countries, filteredCams, gridShape, normalizeCatalog, normalizedGridCount, providerFrom } from './filtering.js';
 import { cameraElement, escapeHtml, extractYouTubeId, publicUrl } from './player.js';
-import { drawMarkers, renderMap } from './map.js';
+import { drawMarkers, renderMap, resetMap } from './map.js';
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -117,6 +117,7 @@ function wireEvents() {
   $('#exportBtn').addEventListener('click', exportJSON);
   $('#resetCatalogBtn').addEventListener('click', resetCatalog);
   $('#catalogList').addEventListener('click', handleCatalogAction);
+  $('#mapResetBtn')?.addEventListener('click', resetMap);
 
   window.addEventListener('resize', () => {
     if (state.settings.view === 'mapView') renderMap();
