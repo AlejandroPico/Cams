@@ -1,5 +1,4 @@
-import { CAMERAS, CATALOG_META } from "./data/cameras.js";
-import { initUI } from "./modules/ui.js";
+import { DEFAULT_CAMS } from './data/cameras.js';
+import { initUI } from './modules/ui.js';
 
-console.info(`Cams ${CATALOG_META.version}`, CATALOG_META);
-initUI(CAMERAS);
+initUI(DEFAULT_CAMS);
