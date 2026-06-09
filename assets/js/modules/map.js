@@ -3,11 +3,32 @@ import { filteredCams } from './filtering.js';
 import { cameraElement, escapeHtml, publicUrl } from './player.js';
 
 const COUNTRY_TOPOLOGY_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
-const SATELLITE_TEXTURE_URL = 'https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73934/world.topo.bathy.200412.3x5400x2700.jpg';
-const BUMP_TEXTURE_URL = 'https://unpkg.com/three-globe/example/img/earth-topology.png';
-const NIGHT_SKY_URL = 'https://unpkg.com/three-globe/example/img/night-sky.png';
+const SATELLITE_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg';
+const BUMP_TEXTURE_URL = 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png';
+const NIGHT_SKY_URL = 'https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png';
 const WORLD_IMAGERY_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-const DAY_NIGHT_UPDATE_MS = 60_000;
+const MARKER_LIGHT_UPDATE_MS = 60_000;
+
+const COUNTRY_TIME_ZONES = new Map([
+  ['españa', 'Europe/Madrid'], ['spain', 'Europe/Madrid'],
+  ['andorra', 'Europe/Andorra'], ['francia', 'Europe/Paris'], ['france', 'Europe/Paris'],
+  ['italia', 'Europe/Rome'], ['italy', 'Europe/Rome'], ['portugal', 'Europe/Lisbon'],
+  ['reino unido', 'Europe/London'], ['united kingdom', 'Europe/London'], ['uk', 'Europe/London'],
+  ['irlanda', 'Europe/Dublin'], ['ireland', 'Europe/Dublin'], ['alemania', 'Europe/Berlin'], ['germany', 'Europe/Berlin'],
+  ['países bajos', 'Europe/Amsterdam'], ['netherlands', 'Europe/Amsterdam'], ['bélgica', 'Europe/Brussels'], ['belgium', 'Europe/Brussels'],
+  ['suiza', 'Europe/Zurich'], ['switzerland', 'Europe/Zurich'], ['austria', 'Europe/Vienna'], ['grecia', 'Europe/Athens'], ['greece', 'Europe/Athens'],
+  ['noruega', 'Europe/Oslo'], ['norway', 'Europe/Oslo'], ['suecia', 'Europe/Stockholm'], ['sweden', 'Europe/Stockholm'],
+  ['finlandia', 'Europe/Helsinki'], ['finland', 'Europe/Helsinki'], ['dinamarca', 'Europe/Copenhagen'], ['denmark', 'Europe/Copenhagen'],
+  ['islandia', 'Atlantic/Reykjavik'], ['iceland', 'Atlantic/Reykjavik'],
+  ['marruecos', 'Africa/Casablanca'], ['morocco', 'Africa/Casablanca'], ['sudáfrica', 'Africa/Johannesburg'], ['south africa', 'Africa/Johannesburg'],
+  ['japón', 'Asia/Tokyo'], ['japan', 'Asia/Tokyo'], ['china', 'Asia/Shanghai'], ['corea del sur', 'Asia/Seoul'], ['south korea', 'Asia/Seoul'],
+  ['india', 'Asia/Kolkata'], ['tailandia', 'Asia/Bangkok'], ['thailand', 'Asia/Bangkok'], ['singapur', 'Asia/Singapore'], ['singapore', 'Asia/Singapore'],
+  ['emiratos árabes unidos', 'Asia/Dubai'], ['united arab emirates', 'Asia/Dubai'], ['turquía', 'Europe/Istanbul'], ['turkey', 'Europe/Istanbul'],
+  ['méxico', 'America/Mexico_City'], ['mexico', 'America/Mexico_City'],
+  ['argentina', 'America/Argentina/Buenos_Aires'], ['chile', 'America/Santiago'], ['colombia', 'America/Bogota'], ['perú', 'America/Lima'], ['peru', 'America/Lima'],
+  ['brasil', 'America/Sao_Paulo'], ['brazil', 'America/Sao_Paulo'], ['uruguay', 'America/Montevideo'],
+  ['nueva zelanda', 'Pacific/Auckland'], ['new zealand', 'Pacific/Auckland']
+]);
 
 let globe = null;
 let countryFeatures = null;
@@ -16,7 +37,7 @@ let leafletMap = null;
 let leafletMarker = null;
 let currentPreviewCamera = null;
 let controlsBound = false;
-let dayNightTimer = null;
+let markerTimer = null;
 let lastPointCount = 0;
 
 export function renderMap() {
@@ -37,7 +58,6 @@ export function renderMap() {
       currentSize = { width, height };
     }
     drawMarkers();
-    drawDayNightGuide();
     return;
   }
 
@@ -57,28 +77,14 @@ export function renderMap() {
     .htmlElementsData([])
     .htmlLat('lat')
     .htmlLng('lon')
-    .htmlAltitude(() => 0.026)
+    .htmlAltitude(() => 0.024)
     .htmlElement((point) => createCameraMarker(point))
-    .onGlobeClick(({ lat, lng }) => openDeepZoom({
-      title: 'Zona seleccionada',
-      city: 'Zoom satelital',
-      country: `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
-      category: 'detalle',
-      lat,
-      lon: lng
-    }))
     .polygonAltitude(0.004)
     .polygonCapColor(() => 'rgba(124,199,255,0.018)')
     .polygonSideColor(() => 'rgba(124,199,255,0.01)')
     .polygonStrokeColor(() => 'rgba(190,224,255,0.62)')
     .polygonsTransitionDuration(0)
-    .pathsData([])
-    .pathPoints('coords')
-    .pathPointLat((point) => point[0])
-    .pathPointLng((point) => point[1])
-    .pathPointAlt(() => 0.018)
-    .pathColor((path) => path.color)
-    .pathStroke((path) => path.stroke);
+    .pathsData([]);
 
   currentSize = { width, height };
   tuneRenderer();
@@ -89,13 +95,13 @@ export function renderMap() {
   bindMapControls();
   hydrateCountries();
   drawMarkers();
-  startDayNightGuide();
+  startMarkerLightUpdates();
 }
 
 function tuneRenderer() {
   try {
     const renderer = globe.renderer();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.65));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.45));
   } catch {}
 
   try {
@@ -112,8 +118,8 @@ function tuneControls() {
   controls.enableDamping = true;
   controls.dampingFactor = 0.045;
   controls.rotateSpeed = 0.34;
-  controls.zoomSpeed = 1.2;
-  controls.minDistance = 101.25;
+  controls.zoomSpeed = 1.25;
+  controls.minDistance = 101.15;
   controls.maxDistance = 1100;
 }
 
@@ -154,7 +160,7 @@ function groupCameraPoints(cameras) {
 
   return [...grouped.values()].map((list) => {
     const camera = list[0];
-    const local = getApproxLocalTime(camera);
+    const local = getLocalTime(camera);
     return {
       camera,
       count: list.length,
@@ -186,12 +192,6 @@ function createCameraMarker(point) {
     openMapPreview(point.camera);
   }, { capture: true });
 
-  marker.addEventListener('dblclick', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    openDeepZoom(point.camera);
-  }, { capture: true });
-
   return marker;
 }
 
@@ -203,7 +203,7 @@ function openMapPreview(camera) {
   const source = document.querySelector('#mapPreviewOpen');
   if (!preview || !body || !title || !meta || !source || !camera) return;
 
-  const local = getApproxLocalTime(camera);
+  const local = getLocalTime(camera);
   currentPreviewCamera = camera;
   title.textContent = camera.title || 'Cámara';
   meta.textContent = [camera.city, camera.country, camera.category, local.label].filter(Boolean).join(' · ');
@@ -239,7 +239,7 @@ function openDeepZoom(camera) {
     return;
   }
 
-  const local = getApproxLocalTime(camera);
+  const local = getLocalTime(camera);
   title.textContent = camera.title || 'Zoom satelital';
   meta.textContent = [camera.city, camera.country, local.label].filter(Boolean).join(' · ') || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
   panel.hidden = false;
@@ -298,26 +298,9 @@ function bindMapControls() {
   }, { passive: true });
 }
 
-function startDayNightGuide() {
-  clearInterval(dayNightTimer);
-  drawDayNightGuide();
-  dayNightTimer = setInterval(() => {
-    drawDayNightGuide();
-    drawMarkers();
-  }, DAY_NIGHT_UPDATE_MS);
-}
-
-function drawDayNightGuide() {
-  if (!globe) return;
-  const sun = getSubsolarPoint(new Date());
-  const terminator = buildTerminator(sun.lat, sun.lng, 181);
-  globe.pathsData([{
-    type: 'terminator',
-    coords: terminator,
-    color: 'rgba(255,226,146,0.92)',
-    stroke: 0.82
-  }]);
-  updateMapStats(sun);
+function startMarkerLightUpdates() {
+  clearInterval(markerTimer);
+  markerTimer = setInterval(drawMarkers, MARKER_LIGHT_UPDATE_MS);
 }
 
 function getSubsolarPoint(date) {
@@ -349,26 +332,6 @@ function getSubsolarPoint(date) {
   return { lat: radiansToDegrees(declination), lng };
 }
 
-function buildTerminator(sunLat, sunLng, steps = 181) {
-  const s = latLngToVector(sunLat, sunLng);
-  const reference = Math.abs(s.z) < 0.88 ? { x: 0, y: 0, z: 1 } : { x: 0, y: 1, z: 0 };
-  const u = normalize(cross(s, reference));
-  const v = normalize(cross(s, u));
-  const coords = [];
-
-  for (let i = 0; i <= steps; i++) {
-    const theta = 2 * Math.PI * i / steps;
-    const p = {
-      x: Math.cos(theta) * u.x + Math.sin(theta) * v.x,
-      y: Math.cos(theta) * u.y + Math.sin(theta) * v.y,
-      z: Math.cos(theta) * u.z + Math.sin(theta) * v.z
-    };
-    coords.push([radiansToDegrees(Math.asin(p.z)), radiansToDegrees(Math.atan2(p.y, p.x))]);
-  }
-
-  return coords;
-}
-
 function getLightClass(lat, lon) {
   const sun = getSubsolarPoint(new Date());
   const cameraVector = latLngToVector(lat, lon);
@@ -379,10 +342,22 @@ function getLightClass(lat, lon) {
   return 'is-night';
 }
 
-function getApproxLocalTime(camera) {
-  const lon = Number(camera.lon);
-  if (!Number.isFinite(lon)) return { label: 'hora local no disponible', offsetLabel: 'UTC' };
+function getLocalTime(camera) {
+  const timeZone = guessTimeZone(camera);
+  if (timeZone) {
+    try {
+      const formatted = new Intl.DateTimeFormat('es-ES', {
+        timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(new Date());
+      return { label: `hora local ${formatted} (${timeZone})`, timeZone };
+    } catch {}
+  }
 
+  const lon = Number(camera.lon);
+  if (!Number.isFinite(lon)) return { label: 'hora local no disponible', timeZone: '' };
   const offsetHours = Math.max(-12, Math.min(14, Math.round(lon / 15)));
   const now = new Date();
   const localMillis = now.getTime() + offsetHours * 3_600_000;
@@ -391,10 +366,76 @@ function getApproxLocalTime(camera) {
   const mm = String(local.getUTCMinutes()).padStart(2, '0');
   const sign = offsetHours >= 0 ? '+' : '-';
   const offsetLabel = `UTC${sign}${Math.abs(offsetHours)}`;
-  return {
-    label: `hora local aprox. ${hh}:${mm} (${offsetLabel})`,
-    offsetLabel
-  };
+  return { label: `hora local aprox. ${hh}:${mm} (${offsetLabel})`, timeZone: offsetLabel };
+}
+
+function guessTimeZone(camera) {
+  const country = normalizeText(camera.country || '');
+  const city = normalizeText(camera.city || '');
+  const lat = Number(camera.lat);
+  const lon = Number(camera.lon);
+
+  if ((country.includes('estados unidos') || country.includes('united states') || country === 'usa') && Number.isFinite(lon)) {
+    if (lon < -150) return 'Pacific/Honolulu';
+    if (lon < -130) return 'America/Anchorage';
+    if (lon < -114) return 'America/Los_Angeles';
+    if (lon < -101) return 'America/Denver';
+    if (lon < -86) return 'America/Chicago';
+    return 'America/New_York';
+  }
+
+  if ((country.includes('canada') || country.includes('canadá')) && Number.isFinite(lon)) {
+    if (lon < -125) return 'America/Vancouver';
+    if (lon < -100) return 'America/Edmonton';
+    if (lon < -85) return 'America/Winnipeg';
+    if (lon < -60) return 'America/Toronto';
+    return 'America/Halifax';
+  }
+
+  if ((country.includes('australia')) && Number.isFinite(lon)) {
+    if (lon < 129) return 'Australia/Perth';
+    if (lon < 141) return 'Australia/Adelaide';
+    return 'Australia/Sydney';
+  }
+
+  if ((country.includes('brasil') || country.includes('brazil')) && Number.isFinite(lon)) {
+    if (lon < -60) return 'America/Manaus';
+    return 'America/Sao_Paulo';
+  }
+
+  if ((country.includes('rusia') || country.includes('russia')) && Number.isFinite(lon)) {
+    if (lon < 60) return 'Europe/Moscow';
+    if (lon < 90) return 'Asia/Yekaterinburg';
+    if (lon < 115) return 'Asia/Novosibirsk';
+    if (lon < 135) return 'Asia/Irkutsk';
+    if (lon < 155) return 'Asia/Yakutsk';
+    return 'Asia/Vladivostok';
+  }
+
+  if ((country.includes('indonesia')) && Number.isFinite(lon)) {
+    if (lon < 120) return 'Asia/Jakarta';
+    if (lon < 135) return 'Asia/Makassar';
+    return 'Asia/Jayapura';
+  }
+
+  if ((country.includes('greenland') || country.includes('groenlandia')) && Number.isFinite(lon)) {
+    if (lon < -40) return 'America/Nuuk';
+    return 'America/Scoresbysund';
+  }
+
+  if ((country.includes('españa') || country.includes('spain')) && (city.includes('canarias') || city.includes('tenerife') || city.includes('gran canaria') || city.includes('lanzarote') || city.includes('fuerteventura'))) {
+    return 'Atlantic/Canary';
+  }
+
+  return COUNTRY_TIME_ZONES.get(country) || null;
+}
+
+function normalizeText(value) {
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 function latLngToVector(lat, lng) {
@@ -406,19 +447,6 @@ function latLngToVector(lat, lng) {
     y: cosPhi * Math.sin(lambda),
     z: Math.sin(phi)
   };
-}
-
-function cross(a, b) {
-  return {
-    x: a.y * b.z - a.z * b.y,
-    y: a.z * b.x - a.x * b.z,
-    z: a.x * b.y - a.y * b.x
-  };
-}
-
-function normalize(v) {
-  const length = Math.hypot(v.x, v.y, v.z) || 1;
-  return { x: v.x / length, y: v.y / length, z: v.z / length };
 }
 
 function degreesToRadians(value) {
@@ -475,11 +503,10 @@ export function resetMap() {
   globe.pointOfView({ lat: 23, lng: 12, altitude: 2.35 }, 650);
 }
 
-function updateMapStats(sun = null) {
+function updateMapStats() {
   const stats = document.querySelector('#mapStats');
   if (!stats) return;
-  const suffix = sun ? ` · día/noche ${sun.lat.toFixed(1)}°, ${sun.lng.toFixed(1)}°` : '';
-  stats.textContent = `${lastPointCount} puntos · globo 3D${suffix}`;
+  stats.textContent = `${lastPointCount} puntos · globo 3D`;
 }
 
 function toast(message) {
