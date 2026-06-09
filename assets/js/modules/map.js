@@ -53,13 +53,12 @@ export function renderMap() {
     .showAtmosphere(true)
     .atmosphereColor('#7cc7ff')
     .atmosphereAltitude(0.1)
-    .pointLat('lat')
-    .pointLng('lon')
-    .pointColor(() => '#7cc7ff')
-    .pointAltitude((point) => 0.018 + Math.min(point.count, 8) * 0.0025)
-    .pointRadius((point) => Math.min(0.32, 0.14 + Math.log2(point.count + 1) * 0.035))
-    .pointLabel((point) => point.label)
-    .onPointClick((point) => openMapPreview(point.camera))
+    .pointsData([])
+    .htmlElementsData([])
+    .htmlLat('lat')
+    .htmlLng('lon')
+    .htmlAltitude(() => 0.032)
+    .htmlElement((point) => createCameraMarker(point))
     .onGlobeClick(({ lat, lng }) => openDeepZoom({
       title: 'Zona seleccionada',
       city: 'Zoom satelital',
@@ -135,7 +134,8 @@ export function drawMarkers() {
   );
 
   lastPointCount = grouped.length;
-  globe.pointsData(grouped);
+  globe.pointsData([]);
+  globe.htmlElementsData(grouped);
   updateMapStats();
 }
 
@@ -149,14 +149,39 @@ function groupCameraPoints(cameras) {
 
   return [...grouped.values()].map((list) => {
     const camera = list[0];
+    const local = getApproxLocalTime(camera);
     return {
       camera,
       count: list.length,
       lat: camera.lat,
       lon: camera.lon,
-      label: `<b>${escapeHtml(camera.city || camera.country)}</b><br>${list.length} cámara${list.length === 1 ? '' : 's'}<br>${escapeHtml(camera.country)}`
+      light: getLightClass(camera.lat, camera.lon),
+      local,
+      label: `<b>${escapeHtml(camera.city || camera.country)}</b><br>${list.length} cámara${list.length === 1 ? '' : 's'}<br>${escapeHtml(camera.country)}<br>${escapeHtml(local.label)}`
     };
   });
+}
+
+function createCameraMarker(point) {
+  const marker = document.createElement('button');
+  marker.type = 'button';
+  marker.className = `globe-camera-marker ${point.light}`;
+  marker.title = `${point.camera.title || 'Cámara'} · ${point.local.label}`;
+  marker.setAttribute('aria-label', marker.title);
+  marker.innerHTML = `
+    <span class="camera-halo"></span>
+    <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+      <path class="camera-body" d="M14 16.5h6l2.2-3.5h8.2l2.2 3.5H39a4 4 0 0 1 4 4V34a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V20.5a4 4 0 0 1 4-4h5z"/>
+      <circle class="camera-lens" cx="24" cy="27" r="7.5"/>
+      <circle class="camera-glint" cx="34.5" cy="21.5" r="2"/>
+    </svg>
+    ${point.count > 1 ? `<span class="camera-count">${point.count}</span>` : ''}
+  `;
+  marker.addEventListener('click', (event) => {
+    event.stopPropagation();
+    openMapPreview(point.camera);
+  });
+  return marker;
 }
 
 function openMapPreview(camera) {
@@ -167,9 +192,10 @@ function openMapPreview(camera) {
   const source = document.querySelector('#mapPreviewOpen');
   if (!preview || !body || !title || !meta || !source || !camera) return;
 
+  const local = getApproxLocalTime(camera);
   currentPreviewCamera = camera;
   title.textContent = camera.title || 'Cámara';
-  meta.textContent = [camera.city, camera.country, camera.category].filter(Boolean).join(' · ');
+  meta.textContent = [camera.city, camera.country, camera.category, local.label].filter(Boolean).join(' · ');
   body.innerHTML = cameraElement(camera);
   const url = publicUrl(camera);
   source.href = url || '#';
@@ -202,8 +228,9 @@ function openDeepZoom(camera) {
     return;
   }
 
+  const local = getApproxLocalTime(camera);
   title.textContent = camera.title || 'Zoom satelital';
-  meta.textContent = [camera.city, camera.country].filter(Boolean).join(' · ') || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  meta.textContent = [camera.city, camera.country, local.label].filter(Boolean).join(' · ') || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
   panel.hidden = false;
 
   if (!window.L) {
@@ -263,7 +290,10 @@ function bindMapControls() {
 function startDayNightGuide() {
   clearInterval(dayNightTimer);
   drawDayNightGuide();
-  dayNightTimer = setInterval(drawDayNightGuide, DAY_NIGHT_UPDATE_MS);
+  dayNightTimer = setInterval(() => {
+    drawDayNightGuide();
+    drawMarkers();
+  }, DAY_NIGHT_UPDATE_MS);
 }
 
 function drawDayNightGuide() {
@@ -326,6 +356,34 @@ function buildTerminator(sunLat, sunLng, steps = 181) {
   }
 
   return coords;
+}
+
+function getLightClass(lat, lon) {
+  const sun = getSubsolarPoint(new Date());
+  const cameraVector = latLngToVector(lat, lon);
+  const sunVector = latLngToVector(sun.lat, sun.lng);
+  const illumination = cameraVector.x * sunVector.x + cameraVector.y * sunVector.y + cameraVector.z * sunVector.z;
+  if (illumination > 0.12) return 'is-day';
+  if (illumination > -0.08) return 'is-twilight';
+  return 'is-night';
+}
+
+function getApproxLocalTime(camera) {
+  const lon = Number(camera.lon);
+  if (!Number.isFinite(lon)) return { label: 'hora local no disponible', offsetLabel: 'UTC' };
+
+  const offsetHours = Math.max(-12, Math.min(14, Math.round(lon / 15)));
+  const now = new Date();
+  const localMillis = now.getTime() + offsetHours * 3_600_000;
+  const local = new Date(localMillis);
+  const hh = String(local.getUTCHours()).padStart(2, '0');
+  const mm = String(local.getUTCMinutes()).padStart(2, '0');
+  const sign = offsetHours >= 0 ? '+' : '-';
+  const offsetLabel = `UTC${sign}${Math.abs(offsetHours)}`;
+  return {
+    label: `hora local aprox. ${hh}:${mm} (${offsetLabel})`,
+    offsetLabel
+  };
 }
 
 function latLngToVector(lat, lng) {
