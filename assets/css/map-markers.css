@@ -66,7 +66,7 @@
 
 .globe-camera-marker.is-day{--marker-accent:#ffe34d;}
 .globe-camera-marker.is-twilight{--marker-accent:#ff9f1c;}
-.globe-camera-marker.is-night{--marker-accent:#ff4d2e;}
+.globe-camera-marker.is-night{--marker-accent:#3aa7ff;}
 
 .globe-camera-marker:hover,
 .globe-camera-marker:focus-visible{
