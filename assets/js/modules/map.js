@@ -5,9 +5,9 @@ import { cameraElement, escapeHtml, publicUrl } from './player.js';
 const EARTH_IMAGE = 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
 const EARTH_BUMP = 'https://unpkg.com/three-globe/example/img/earth-topology.png';
 const SKY_IMAGE = 'https://unpkg.com/three-globe/example/img/night-sky.png';
-const COUNTRIES_GEOJSON = 'https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
 const WORLD_IMAGERY = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const MARKER_LIGHT_UPDATE_MS = 60000;
+const TILE_UPDATE_DELAY_MS = 120;
 
 const COUNTRY_TIME_ZONES = new Map([
   ['espana', 'Europe/Madrid'], ['spain', 'Europe/Madrid'], ['francia', 'Europe/Paris'], ['france', 'Europe/Paris'],
@@ -26,14 +26,18 @@ const COUNTRY_TIME_ZONES = new Map([
 ]);
 
 let world = null;
-let borderPaths = [];
 let leafletMap = null;
 let leafletMarker = null;
 let currentPreviewCamera = null;
 let markerTimer = null;
 let controlsBound = false;
-let bordersRequested = false;
 let lastPointCount = 0;
+let tileGroup = null;
+let tileLoader = null;
+let tileUpdateTimer = null;
+let lastTileKey = '';
+let activeTileMeshes = new Map();
+let currentTileZoom = 0;
 
 export function renderMap() {
   const container = document.querySelector('#worldGlobe');
@@ -45,6 +49,7 @@ export function renderMap() {
   if (!world) initGlobe(container);
   else world.width(container.clientWidth || window.innerWidth).height(container.clientHeight || window.innerHeight);
   drawMarkers();
+  scheduleTileUpdate();
 }
 
 function initGlobe(container) {
@@ -61,18 +66,13 @@ function initGlobe(container) {
     .htmlAltitude('htmlAlt')
     .htmlTransitionDuration(0)
     .htmlElement(createCameraMarker)
-    .pathPoints('coords')
-    .pathPointLat('lat')
-    .pathPointLng('lng')
-    .pathPointAlt('alt')
-    .pathResolution(1)
-    .pathTransitionDuration(0)
-    .pathDashAnimateTime(0)
-    .polygonsTransitionDuration(0);
+    .pathsData([])
+    .polygonsData([])
+    .pointsData([]);
 
   configureControls();
+  initTileOverlay();
   bindMapControls();
-  requestBorders();
   drawMarkers();
   clearInterval(markerTimer);
   markerTimer = setInterval(drawMarkers, MARKER_LIGHT_UPDATE_MS);
@@ -84,10 +84,11 @@ function configureControls() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.rotateSpeed = 0.36;
-    controls.zoomSpeed = 1.35;
-    controls.minDistance = 100.006;
+    controls.zoomSpeed = 1.55;
+    controls.minDistance = 100.003;
     controls.maxDistance = 1500;
     controls.screenSpacePanning = false;
+    controls.addEventListener?.('change', scheduleTileUpdate);
     controls.update();
   } catch (err) {
     console.warn('No se pudieron ajustar controles del globo:', err);
@@ -95,61 +96,222 @@ function configureControls() {
 
   try {
     const camera = world.camera();
-    camera.near = 0.001;
-    camera.far = 8000;
+    camera.near = 0.0005;
+    camera.far = 9000;
     camera.updateProjectionMatrix();
   } catch (err) {
     console.warn('No se pudo ajustar la cámara del globo:', err);
   }
 
   try {
-    if (typeof world.globeCurvatureResolution === 'function') world.globeCurvatureResolution(0.9);
+    if (typeof world.globeCurvatureResolution === 'function') world.globeCurvatureResolution(0.65);
     const renderer = typeof world.renderer === 'function' ? world.renderer() : null;
-    if (renderer?.setPixelRatio) renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
-    if (world.globeMaterial && world.globeMaterial()) world.globeMaterial().bumpScale = 3.5;
+    if (renderer?.setPixelRatio) renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.85));
+    if (world.globeMaterial && world.globeMaterial()) world.globeMaterial().bumpScale = 2.4;
   } catch (err) {
     console.warn('No se pudo ajustar material del globo:', err);
   }
 }
 
-async function requestBorders() {
-  if (bordersRequested) return;
-  bordersRequested = true;
+function initTileOverlay() {
   try {
-    const geojson = await fetch(COUNTRIES_GEOJSON).then((response) => response.json());
-    borderPaths = geojsonToBorderPaths(geojson);
-    drawPaths();
+    const THREE = window.THREE;
+    if (!THREE || !world.scene) return;
+    tileGroup = new THREE.Group();
+    tileGroup.name = 'dynamic-satellite-tile-overlay';
+    world.scene().add(tileGroup);
+    tileLoader = new THREE.TextureLoader();
+    tileLoader.setCrossOrigin?.('anonymous');
+    scheduleTileUpdate();
+  } catch (err) {
+    console.warn('No se pudo iniciar la capa de teselas:', err);
+  }
+}
+
+function scheduleTileUpdate() {
+  if (!world || !tileGroup) return;
+  clearTimeout(tileUpdateTimer);
+  tileUpdateTimer = setTimeout(updateSatelliteTiles, TILE_UPDATE_DELAY_MS);
+}
+
+function updateSatelliteTiles() {
+  if (!world || !tileGroup || !window.THREE) return;
+  const pov = getPointOfView();
+  const tileZoom = tileZoomFromAltitude(pov.altitude);
+  currentTileZoom = tileZoom;
+
+  if (!tileZoom) {
+    clearTileMeshes();
+    lastTileKey = 'none';
+    updateMapStats();
+    return;
+  }
+
+  const center = lonLatToTile(pov.lng, pov.lat, tileZoom);
+  const radius = tileRadius(tileZoom);
+  const key = `${tileZoom}:${center.x}:${center.y}:${radius}`;
+  if (key === lastTileKey) return;
+  lastTileKey = key;
+
+  const needed = new Set();
+  const count = 2 ** tileZoom;
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const x = wrapTileX(center.x + dx, count);
+      const y = center.y + dy;
+      if (y < 0 || y >= count) continue;
+      const tileKey = `${tileZoom}/${x}/${y}`;
+      needed.add(tileKey);
+      if (!activeTileMeshes.has(tileKey)) {
+        const mesh = createTileMesh(x, y, tileZoom);
+        if (mesh) {
+          activeTileMeshes.set(tileKey, mesh);
+          tileGroup.add(mesh);
+        }
+      }
+    }
+  }
+
+  for (const [tileKey, mesh] of activeTileMeshes.entries()) {
+    if (!needed.has(tileKey)) {
+      tileGroup.remove(mesh);
+      disposeMesh(mesh);
+      activeTileMeshes.delete(tileKey);
+    }
+  }
+  updateMapStats();
+}
+
+function createTileMesh(x, y, z) {
+  const THREE = window.THREE;
+  if (!THREE || !tileLoader) return null;
+
+  const lonLeft = tileToLng(x, z);
+  const lonRight = tileToLng(x + 1, z);
+  const latTop = tileToLat(y, z);
+  const latBottom = tileToLat(y + 1, z);
+  const segments = z >= 14 ? 3 : z >= 11 ? 5 : 8;
+  const vertices = [];
+  const uvs = [];
+  const indices = [];
+  const tileAlt = z >= 15 ? 0.0011 : z >= 12 ? 0.0014 : 0.002;
+
+  for (let row = 0; row <= segments; row++) {
+    const v = row / segments;
+    const lat = latTop + (latBottom - latTop) * v;
+    for (let col = 0; col <= segments; col++) {
+      const u = col / segments;
+      const lng = lonLeft + (lonRight - lonLeft) * u;
+      const p = world.getCoords(lat, lng, tileAlt);
+      vertices.push(p.x, p.y, p.z);
+      uvs.push(u, 1 - v);
+    }
+  }
+
+  for (let row = 0; row < segments; row++) {
+    for (let col = 0; col < segments; col++) {
+      const a = row * (segments + 1) + col;
+      const b = a + 1;
+      const c = a + segments + 1;
+      const d = c + 1;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+
+  const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: false, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.renderOrder = 2;
+
+  const url = WORLD_IMAGERY.replace('{z}', z).replace('{y}', y).replace('{x}', x);
+  tileLoader.load(url, (texture) => {
+    if ('colorSpace' in texture && THREE.SRGBColorSpace) texture.colorSpace = THREE.SRGBColorSpace;
+    else texture.encoding = THREE.sRGBEncoding;
+    texture.anisotropy = Math.min(world.renderer?.()?.capabilities?.getMaxAnisotropy?.() || 4, 8);
+    material.map = texture;
+    material.needsUpdate = true;
+  }, undefined, () => {
+    material.opacity = 0;
+    material.transparent = true;
+  });
+
+  return mesh;
+}
+
+function clearTileMeshes() {
+  for (const mesh of activeTileMeshes.values()) {
+    tileGroup?.remove(mesh);
+    disposeMesh(mesh);
+  }
+  activeTileMeshes.clear();
+}
+
+function disposeMesh(mesh) {
+  mesh.geometry?.dispose?.();
+  if (mesh.material?.map) mesh.material.map.dispose?.();
+  mesh.material?.dispose?.();
+}
+
+function getPointOfView() {
+  try {
+    const pov = world.pointOfView();
+    return {
+      lat: Number.isFinite(pov.lat) ? pov.lat : 0,
+      lng: Number.isFinite(pov.lng) ? pov.lng : 0,
+      altitude: Number.isFinite(pov.altitude) ? pov.altitude : 2
+    };
   } catch {
-    toast('No se han podido cargar las fronteras de países.');
+    return { lat: 0, lng: 0, altitude: 2 };
   }
 }
 
-function geojsonToBorderPaths(geojson) {
-  const paths = [];
-  for (const feature of geojson.features || []) {
-    const geometry = feature.geometry;
-    if (!geometry) continue;
-    if (geometry.type === 'Polygon') collectPolygonPaths(paths, geometry.coordinates);
-    if (geometry.type === 'MultiPolygon') geometry.coordinates.forEach((polygon) => collectPolygonPaths(paths, polygon));
-  }
-  return paths;
+function tileZoomFromAltitude(altitude) {
+  if (altitude > 0.32) return 0;
+  if (altitude > 0.22) return 7;
+  if (altitude > 0.145) return 8;
+  if (altitude > 0.095) return 9;
+  if (altitude > 0.065) return 10;
+  if (altitude > 0.045) return 11;
+  if (altitude > 0.032) return 12;
+  if (altitude > 0.022) return 13;
+  if (altitude > 0.015) return 14;
+  if (altitude > 0.010) return 15;
+  if (altitude > 0.0065) return 16;
+  if (altitude > 0.0042) return 17;
+  return 18;
 }
 
-function collectPolygonPaths(paths, rings) {
-  for (const ring of rings || []) {
-    const coords = ring.map(([lng, lat]) => ({ lat, lng, alt: 0.014 }));
-    if (coords.length > 1) paths.push({ type: 'border', coords });
-  }
+function tileRadius(z) {
+  if (z >= 16) return 2;
+  if (z >= 13) return 3;
+  return 2;
 }
 
-function drawPaths() {
-  if (!world) return;
-  world.pathsData(borderPaths)
-    .pathColor(() => 'rgba(230,245,255,0.78)')
-    .pathStroke(() => 0.14)
-    .pathDashLength(() => 1)
-    .pathDashGap(() => 0)
-    .pathTransitionDuration(0);
+function lonLatToTile(lon, lat, zoom) {
+  const n = 2 ** zoom;
+  const safeLat = Math.max(-85.05112878, Math.min(85.05112878, lat));
+  const x = Math.floor((normalizeLng(lon) + 180) / 360 * n);
+  const latRad = degreesToRadians(safeLat);
+  const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+  return { x: wrapTileX(x, n), y: Math.max(0, Math.min(n - 1, y)) };
+}
+
+function tileToLng(x, z) {
+  return x / (2 ** z) * 360 - 180;
+}
+
+function tileToLat(y, z) {
+  const n = Math.PI - 2 * Math.PI * y / (2 ** z);
+  return radiansToDegrees(Math.atan(Math.sinh(n)));
+}
+
+function wrapTileX(x, count) {
+  return ((x % count) + count) % count;
 }
 
 export function drawMarkers() {
@@ -157,7 +319,8 @@ export function drawMarkers() {
   const data = groupCameraPoints(filteredCams(state.catalog, state.settings));
   lastPointCount = data.length;
   world.htmlElementsData(data);
-  drawPaths();
+  world.pathsData([]);
+  world.polygonsData([]);
   updateMapStats();
 }
 
@@ -218,7 +381,8 @@ function openMapPreview(camera) {
   source.hidden = !url;
   preview.hidden = false;
   if (Number.isFinite(camera.lat) && Number.isFinite(camera.lon)) {
-    world.pointOfView({ lat: camera.lat, lng: camera.lon, altitude: 0.035 }, 700);
+    world.pointOfView({ lat: camera.lat, lng: camera.lon, altitude: 0.018 }, 700);
+    setTimeout(scheduleTileUpdate, 760);
   }
 }
 
@@ -273,7 +437,11 @@ function bindMapControls() {
 
 export function resetMap() {
   if (!world) return;
+  clearTileMeshes();
+  lastTileKey = '';
+  currentTileZoom = 0;
   world.pointOfView({ lat: 23, lng: 12, altitude: 2.35 }, 650);
+  setTimeout(scheduleTileUpdate, 700);
 }
 
 function getSubsolarPoint(date) {
@@ -372,7 +540,9 @@ function normalizeLng(value) { let lng = value; while (lng > 180) lng -= 360; wh
 
 function updateMapStats() {
   const stats = document.querySelector('#mapStats');
-  if (stats) stats.textContent = `${lastPointCount} puntos · globo 3D`;
+  if (!stats) return;
+  const tileInfo = currentTileZoom ? ` · teselas z${currentTileZoom}` : '';
+  stats.textContent = `${lastPointCount} cámaras · globo 3D${tileInfo}`;
 }
 
 function fallback(container) {
