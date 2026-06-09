@@ -1,0 +1,38 @@
+#worldGlobe .cesium-viewer,
+#worldGlobe .cesium-viewer-cesiumWidgetContainer,
+#worldGlobe .cesium-widget,
+#worldGlobe .cesium-widget canvas{
+  position:absolute;
+  inset:0;
+  width:100%!important;
+  height:100%!important;
+  display:block;
+}
+
+#worldGlobe .cesium-viewer-bottom{
+  left:.5rem;
+  bottom:.4rem;
+  opacity:.62;
+  transform:scale(.86);
+  transform-origin:left bottom;
+}
+
+#worldGlobe .cesium-credit-logoContainer,
+#worldGlobe .cesium-credit-textContainer{
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.85));
+}
+
+.cesium-marker-layer{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+  overflow:hidden;
+}
+
+.cesium-marker-layer .globe-camera-marker{
+  position:absolute;
+  left:0;
+  top:0;
+  pointer-events:auto;
+}
