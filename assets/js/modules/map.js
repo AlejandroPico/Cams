@@ -3,7 +3,7 @@ import { filteredCams } from './filtering.js';
 import { cameraElement, escapeHtml, publicUrl } from './player.js';
 
 const COUNTRY_TOPOLOGY_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
-const SATELLITE_TEXTURE_URL = 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
+const SATELLITE_TEXTURE_URL = 'https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73934/world.topo.bathy.200412.3x5400x2700.jpg';
 const BUMP_TEXTURE_URL = 'https://unpkg.com/three-globe/example/img/earth-topology.png';
 const NIGHT_SKY_URL = 'https://unpkg.com/three-globe/example/img/night-sky.png';
 const WORLD_IMAGERY_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
@@ -57,7 +57,7 @@ export function renderMap() {
     .htmlElementsData([])
     .htmlLat('lat')
     .htmlLng('lon')
-    .htmlAltitude(() => 0.032)
+    .htmlAltitude(() => 0.026)
     .htmlElement((point) => createCameraMarker(point))
     .onGlobeClick(({ lat, lng }) => openDeepZoom({
       title: 'Zona seleccionada',
@@ -95,7 +95,12 @@ export function renderMap() {
 function tuneRenderer() {
   try {
     const renderer = globe.renderer();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.15));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.65));
+  } catch {}
+
+  try {
+    const material = globe.globeMaterial?.();
+    if (material) material.anisotropy = 8;
   } catch {}
 
   if (typeof globe.pointResolution === 'function') globe.pointResolution(7);
@@ -107,9 +112,9 @@ function tuneControls() {
   controls.enableDamping = true;
   controls.dampingFactor = 0.045;
   controls.rotateSpeed = 0.34;
-  controls.zoomSpeed = 1.05;
-  controls.minDistance = 104;
-  controls.maxDistance = 900;
+  controls.zoomSpeed = 1.2;
+  controls.minDistance = 101.25;
+  controls.maxDistance = 1100;
 }
 
 async function hydrateCountries() {
@@ -168,19 +173,25 @@ function createCameraMarker(point) {
   marker.className = `globe-camera-marker ${point.light}`;
   marker.title = `${point.camera.title || 'Cámara'} · ${point.local.label}`;
   marker.setAttribute('aria-label', marker.title);
-  marker.innerHTML = `
-    <span class="camera-halo"></span>
-    <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-      <path class="camera-body" d="M14 16.5h6l2.2-3.5h8.2l2.2 3.5H39a4 4 0 0 1 4 4V34a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V20.5a4 4 0 0 1 4-4h5z"/>
-      <circle class="camera-lens" cx="24" cy="27" r="7.5"/>
-      <circle class="camera-glint" cx="34.5" cy="21.5" r="2"/>
-    </svg>
-    ${point.count > 1 ? `<span class="camera-count">${point.count}</span>` : ''}
-  `;
+  marker.style.pointerEvents = 'auto';
+  marker.innerHTML = point.count > 1 ? `<span class="camera-count">${point.count}</span>` : '';
+
+  for (const type of ['pointerdown', 'mousedown', 'touchstart']) {
+    marker.addEventListener(type, (event) => event.stopPropagation(), { capture: true });
+  }
+
   marker.addEventListener('click', (event) => {
+    event.preventDefault();
     event.stopPropagation();
     openMapPreview(point.camera);
-  });
+  }, { capture: true });
+
+  marker.addEventListener('dblclick', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openDeepZoom(point.camera);
+  }, { capture: true });
+
   return marker;
 }
 
@@ -203,7 +214,7 @@ function openMapPreview(camera) {
   preview.hidden = false;
 
   if (globe && Number.isFinite(camera.lat) && Number.isFinite(camera.lon)) {
-    globe.pointOfView({ lat: camera.lat, lng: camera.lon, altitude: 0.28 }, 900);
+    globe.pointOfView({ lat: camera.lat, lng: camera.lon, altitude: 0.12 }, 900);
   }
 }
 
@@ -258,7 +269,7 @@ function openDeepZoom(camera) {
   leafletMarker = L.marker([lat, lon]).addTo(leafletMap);
   leafletMarker.bindPopup(escapeHtml(camera.title || 'Zona seleccionada'));
 
-  leafletMap.setView([lat, lon], 18, { animate: false });
+  leafletMap.setView([lat, lon], 19, { animate: false });
   setTimeout(() => {
     leafletMap.invalidateSize();
     leafletMarker?.openPopup();
