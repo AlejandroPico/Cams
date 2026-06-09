@@ -1,0 +1,61 @@
+/* Ajustes de legibilidad y comportamiento del panel lateral. */
+#side select,
+#side input,
+#side textarea,
+.config select,
+.config input,
+.config textarea{
+  background:#10141d;
+  color:#f4f6fb;
+  border-color:rgba(255,255,255,.16);
+  caret-color:#f4f6fb;
+}
+
+#side select option,
+.config select option{
+  background:#10141d;
+  color:#f4f6fb;
+}
+
+#side select option:checked,
+.config select option:checked{
+  background:#1b3854;
+  color:#fff;
+}
+
+html.light #side select,
+html.light #side input,
+html.light #side textarea,
+html.light .config select,
+html.light .config input,
+html.light .config textarea{
+  background:#fff;
+  color:#10141d;
+  border-color:rgba(0,0,0,.18);
+}
+
+html.light #side select option,
+html.light .config select option{
+  background:#fff;
+  color:#10141d;
+}
+
+body:not(.labels-on) .wall-card::before,
+body:not(.labels-on) .wall-badges,
+body:not(.labels-on) .wall-meta,
+body:not(.labels-on) .tile-overlay{
+  opacity:0!important;
+}
+
+body.labels-on .wall-card::before,
+body.labels-on .wall-badges,
+body.labels-on .wall-meta{
+  opacity:1;
+}
+
+.wall-card::before,
+.wall-badges,
+.wall-meta,
+.tile-overlay{
+  transition:opacity .16s ease;
+}
