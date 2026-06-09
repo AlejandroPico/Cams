@@ -6,14 +6,17 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 
 ## Estado actual
 
-- La página abre directamente en **Lugares**, con el mosaico principal de cámaras en reproducción.
-- Se eliminan las miniaturas como vista principal: cada celda carga un reproductor real.
-- Las cámaras visibles se cargan automáticamente y las siguientes se activan al entrar en pantalla durante el scroll.
+- La página abre directamente en **Mosaico**, con cámaras en reproducción.
+- La pantalla principal ya no intenta mostrar todo el catálogo a la vez.
+- El máximo visible simultáneo es **30 cámaras**, distribuido como **6 columnas × 5 filas**.
+- El selector del panel hamburguesa permite elegir mosaicos cerrados de 1, 2, 4, 6, 9, 12, 16, 20, 25 o 30 cámaras.
+- Los botones anterior, siguiente y azar paginan por lotes del tamaño elegido.
+- Se eliminan las miniaturas como vista principal: cada celda visible carga un reproductor real.
 - El mosaico queda con bordes rectos, sin redondeos y sin separación entre cámaras.
 - No hay landing, hero ni tarjetas informativas externas ocupando la pantalla inicial.
 - El botón hamburguesa es la vía principal para acceder a opciones, filtros, mapa, directo, catálogo y configuración.
 - El catálogo base contiene **144 cámaras** procedentes de la versión WorldCam Minimal v0.4.
-- La vista **Directo** mantiene el mosaico por lotes de 1, 2, 4, 6, 9, 16 o 25 cámaras.
+- La vista **Directo** usa la misma cantidad seleccionada en el mosaico principal.
 - La vista **Mapa** reutiliza D3 + TopoJSON para colocar puntos geográficos.
 - La vista **Catálogo** permite ver, ocultar, comprobar o retirar cámaras del catálogo local.
 - La vista **Config** permite añadir cámaras, importar JSON, exportar el catálogo y restaurar la base.
@@ -58,13 +61,13 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 
 ## Funcionamiento
 
-### Lugares
+### Mosaico
 
-Es la vista inicial. Muestra el catálogo como mosaico compacto de cámaras en reproducción. No requiere pulsar una cámara para empezar a verla.
+Es la vista inicial. Muestra un lote de cámaras en reproducción directa. Por defecto carga 30 cámaras como máximo en una cuadrícula 6×5. El resto del catálogo no desaparece: se recorre con los botones anterior, siguiente o azar desde el panel hamburguesa.
 
 ### Directo
 
-Muestra un mosaico controlado de iframes, imágenes, MJPEG o HLS según el tipo de cámara. Sirve para ver pocas cámaras de forma más grande.
+Muestra el mismo lote de cámaras en un mosaico controlado de iframes, imágenes, MJPEG o HLS según el tipo de cámara. Sirve para usar el modo fullscreen o rotación con el tamaño de lote seleccionado.
 
 ### Panel hamburguesa
 
@@ -72,16 +75,17 @@ Todo lo que no sea la cámara/listado principal vive dentro del panel lateral:
 
 - navegación entre vistas;
 - filtros;
-- tamaño del mosaico en directo;
+- tamaño del mosaico;
+- paginación del mosaico;
 - rotación;
 - modo visual;
 - pantalla completa;
 - búsqueda técnica;
-- comprobación de cámaras.
+- comprobación de cámaras visibles.
 
 ## Nota sobre rendimiento
 
-La vista inicial no dispara todos los reproductores del catálogo a la vez. Carga automáticamente los visibles y prepara los siguientes al aproximarse al viewport. Esto mantiene la idea de reproducción directa sin forzar decenas o cientos de iframes simultáneos desde el primer instante.
+La vista inicial no dispara todo el catálogo a la vez. Renderiza exclusivamente el lote visible, con un máximo de 30 reproductores simultáneos.
 
 ## Nota sobre YouTube y embeds
 
