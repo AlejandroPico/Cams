@@ -3,7 +3,7 @@ export const SETTINGS_KEY = 'cams_v2_settings';
 
 export const DEFAULT_SETTINGS = {
   view: 'wallView',
-  grid: 4,
+  grid: 30,
   index: 0,
   country: '',
   category: '',
