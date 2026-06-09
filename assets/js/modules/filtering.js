@@ -62,11 +62,30 @@ export function filteredCams(catalog, settings) {
   return result;
 }
 
-export function gridShape(n) {
-  if (n <= 1) return [1, 1];
+export function normalizedGridCount(value) {
+  const count = Number(value || 30);
+  if (count <= 1) return 1;
+  if (count <= 2) return 2;
+  if (count <= 4) return 4;
+  if (count <= 6) return 6;
+  if (count <= 9) return 9;
+  if (count <= 12) return 12;
+  if (count <= 16) return 16;
+  if (count <= 20) return 20;
+  if (count <= 25) return 25;
+  return 30;
+}
+
+export function gridShape(value) {
+  const n = normalizedGridCount(value);
+  if (n === 1) return [1, 1];
   if (n === 2) return [2, 1];
   if (n === 4) return [2, 2];
   if (n === 6) return [3, 2];
-  const side = Math.ceil(Math.sqrt(n));
-  return [side, side];
+  if (n === 9) return [3, 3];
+  if (n === 12) return [4, 3];
+  if (n === 16) return [4, 4];
+  if (n === 20) return [5, 4];
+  if (n === 25) return [5, 5];
+  return [6, 5];
 }
