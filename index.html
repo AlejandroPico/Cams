@@ -7,6 +7,7 @@
   <meta name="description" content="Mosaico minimalista de webcams en directo de todo el mundo.">
   <meta name="theme-color" content="#030305">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="stylesheet" href="assets/css/panel.css">
   <link rel="stylesheet" href="assets/css/globe.css">
@@ -42,8 +43,20 @@
           </header>
           <div id="mapPreviewBody" class="map-preview-body"></div>
           <footer class="map-preview-foot">
+            <button id="mapPreviewDeepZoom" class="mini" type="button">zoom satélite</button>
             <a id="mapPreviewOpen" href="#" target="_blank" rel="noopener">abrir fuente</a>
           </footer>
+        </aside>
+        <aside id="deepZoomPanel" class="deep-zoom" aria-label="Zoom satelital profundo" hidden>
+          <header class="deep-zoom-head">
+            <div>
+              <strong id="deepZoomTitle">Zoom satelital</strong>
+              <span id="deepZoomMeta">Detalle de terreno</span>
+            </div>
+            <button id="deepZoomClose" class="mini" type="button" aria-label="Cerrar zoom satelital">×</button>
+          </header>
+          <div id="deepZoomMap" class="deep-zoom-map"></div>
+          <footer class="deep-zoom-foot">Teselas satelitales para aproximación de calle. El detalle depende de la cobertura disponible.</footer>
         </aside>
       </div>
     </section>
@@ -202,6 +215,7 @@
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
   <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.32.1/dist/globe.gl.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>
