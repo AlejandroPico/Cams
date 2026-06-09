@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS, SETTINGS_KEY, STORE_KEY, loadJSON, saveCatalog, saveSettings, state, stopRotation } from './state.js';
-import { categories, countries, filteredCams, gridShape, normalizeCatalog, providerFrom } from './filtering.js';
+import { categories, countries, filteredCams, gridShape, normalizeCatalog, normalizedGridCount, providerFrom } from './filtering.js';
 import { cameraElement, escapeHtml, extractYouTubeId, publicUrl } from './player.js';
 import { drawMarkers, renderMap } from './map.js';
 
@@ -11,6 +11,7 @@ export function initUI(defaultCams) {
   state.catalog = loadCatalog(defaultCams);
   state.settings = { ...DEFAULT_SETTINGS, ...loadJSON(SETTINGS_KEY, {}) };
   state.settings.view = state.settings.view || 'wallView';
+  state.settings.grid = normalizedGridCount(state.settings.grid);
   applyTheme();
   document.body.classList.toggle('labels-on', state.settings.labels);
   fillFilters();
@@ -31,7 +32,7 @@ function loadCatalog(defaultCams) {
 function syncControls() {
   $('#labelsBtn').textContent = state.settings.labels ? 'on' : 'off';
   $('#labelsBtn').classList.toggle('good', state.settings.labels);
-  $('#gridSelect').value = String(state.settings.grid || 4);
+  $('#gridSelect').value = String(normalizedGridCount(state.settings.grid));
   $('#rotationInterval').value = String(state.settings.interval || 30000);
   $('#textFilter').value = state.settings.text || '';
   $('#countryFilter').value = state.settings.country || '';
@@ -66,10 +67,12 @@ function wireEvents() {
   });
 
   $('#gridSelect').addEventListener('change', (event) => {
-    state.settings.grid = Number(event.target.value);
+    state.settings.grid = normalizedGridCount(event.target.value);
     state.settings.selectedId = null;
     saveSettings();
+    renderWall();
     renderLive();
+    updateStats();
   });
 
   $('#prevBtn').addEventListener('click', () => nextPage(-1));
@@ -130,20 +133,26 @@ function renderAll() {
 
 function renderWall() {
   const grid = $('#wallGrid');
-  const cameras = filteredCams(state.catalog, state.settings);
-  state.lastFilteredIds = cameras.map((camera) => camera.id);
+  const filtered = filteredCams(state.catalog, state.settings);
+  const batch = visibleBatch(filtered);
+  const n = normalizedGridCount(state.settings.grid);
+  const [cols, rows] = gridShape(n);
+
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  state.lastFilteredIds = batch.map((camera) => camera.id);
 
   if (wallObserver) {
     wallObserver.disconnect();
     wallObserver = null;
   }
 
-  if (!cameras.length) {
+  if (!batch.length) {
     grid.innerHTML = '<div class="empty">No hay cámaras con estos filtros.</div>';
     return;
   }
 
-  grid.innerHTML = cameras.map((camera) => `
+  grid.innerHTML = batch.map((camera) => `
     <article class="wall-card" data-id="${escapeHtml(camera.id)}" title="${escapeHtml(camera.title)}">
       <div class="wall-player" data-player-id="${escapeHtml(camera.id)}">
         <div class="wall-loading">cargando directo</div>
@@ -173,30 +182,14 @@ function hydrateWallPlayers() {
     slot.dataset.loaded = 'true';
   };
 
-  if (!('IntersectionObserver' in window)) {
-    slots.forEach(loadSlot);
-    return;
-  }
-
-  wallObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      loadSlot(entry.target);
-      wallObserver.unobserve(entry.target);
-    });
-  }, {
-    root: $('#wallGrid'),
-    rootMargin: '520px 0px',
-    threshold: 0.01
-  });
-
-  slots.forEach((slot) => wallObserver.observe(slot));
+  slots.forEach(loadSlot);
 }
 
 function renderLive() {
   const grid = $('#tileGrid');
-  const batch = visibleBatch();
-  const n = Math.max(1, Number(state.settings.grid || 4));
+  const filtered = filteredCams(state.catalog, state.settings);
+  const batch = visibleBatch(filtered);
+  const n = normalizedGridCount(state.settings.grid);
   const [cols, rows] = gridShape(n);
   grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
   grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
@@ -243,27 +236,29 @@ function renderCatalog() {
   updateStats();
 }
 
-function visibleBatch() {
-  const cameras = filteredCams(state.catalog, state.settings);
-  if (!cameras.length) return [];
-  const n = Number(state.settings.grid || 4);
+function visibleBatch(filtered = filteredCams(state.catalog, state.settings)) {
+  if (!filtered.length) return [];
+  const n = normalizedGridCount(state.settings.grid);
 
   if (state.settings.selectedId && n === 1) {
-    const selected = cameras.find((camera) => camera.id === state.settings.selectedId) || state.catalog.find((camera) => camera.id === state.settings.selectedId);
-    return selected ? [selected] : cameras.slice(0, 1);
+    const selected = filtered.find((camera) => camera.id === state.settings.selectedId) || state.catalog.find((camera) => camera.id === state.settings.selectedId);
+    return selected ? [selected] : filtered.slice(0, 1);
   }
 
-  const start = ((state.settings.index % cameras.length) + cameras.length) % cameras.length;
-  return Array.from({ length: Math.min(n, cameras.length) }, (_, offset) => cameras[(start + offset) % cameras.length]);
+  const start = ((state.settings.index % filtered.length) + filtered.length) % filtered.length;
+  return Array.from({ length: Math.min(n, filtered.length) }, (_, offset) => filtered[(start + offset) % filtered.length]);
 }
 
 function nextPage(step = 1) {
   const cameras = filteredCams(state.catalog, state.settings);
   if (!cameras.length) return;
-  state.settings.index = (state.settings.index + step * Number(state.settings.grid || 4) + cameras.length) % cameras.length;
+  const n = normalizedGridCount(state.settings.grid);
+  state.settings.index = (state.settings.index + step * n + cameras.length) % cameras.length;
   state.settings.selectedId = null;
   saveSettings();
+  renderWall();
   renderLive();
+  updateStats();
 }
 
 function shuffle() {
@@ -272,7 +267,9 @@ function shuffle() {
   state.settings.index = Math.floor(Math.random() * cameras.length);
   state.settings.selectedId = null;
   saveSettings();
+  renderWall();
   renderLive();
+  updateStats();
 }
 
 function startRotation() {
@@ -355,9 +352,9 @@ function statusClass(camera) {
 }
 
 async function checkVisible() {
-  const ids = new Set(state.lastFilteredIds.length ? state.lastFilteredIds : filteredCams(state.catalog, state.settings).map((camera) => camera.id));
+  const ids = new Set(state.lastFilteredIds.length ? state.lastFilteredIds : visibleBatch().map((camera) => camera.id));
   const cameras = state.catalog.filter((camera) => ids.has(camera.id));
-  toast(`Comprobando ${cameras.length} cámaras...`);
+  toast(`Comprobando ${cameras.length} cámaras visibles...`);
   const workers = 5;
   let cursor = 0;
   async function worker() {
@@ -498,7 +495,9 @@ function updateStats() {
   const active = state.catalog.filter((camera) => camera.active !== false).length;
   const total = state.catalog.length;
   const filtered = filteredCams(state.catalog, state.settings).length;
-  $('#sideStats').textContent = `${filtered} filtradas · ${active} activas · ${total} catálogo`;
+  const visible = Math.min(normalizedGridCount(state.settings.grid), filtered);
+  const [cols, rows] = gridShape(state.settings.grid);
+  $('#sideStats').textContent = `${visible} visibles · ${filtered} filtradas · ${active} activas · ${total} catálogo · ${cols}×${rows}`;
 }
 
 function applyTheme() {
