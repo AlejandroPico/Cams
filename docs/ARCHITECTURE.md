@@ -6,9 +6,9 @@ La aplicación se organiza como una experiencia fullscreen. La pantalla principa
 
 ## Vistas
 
-- `wallView`: vista inicial. Muestra todos los lugares del catálogo.
+- `wallView`: vista inicial. Muestra un lote de cámaras en reproducción directa.
 - `liveView`: mosaico de cámaras en directo.
-- `mapView`: mapa mundial con marcadores.
+- `mapView`: globo 3D satelital con marcadores de cámaras.
 - `catalogView`: listado técnico de cámaras.
 - `configView`: importación, exportación y alta rápida de cámaras.
 
@@ -18,9 +18,15 @@ La aplicación se organiza como una experiencia fullscreen. La pantalla principa
 - `data/cameras.js`: catálogo base.
 - `modules/state.js`: estado, persistencia y temporizador.
 - `modules/filtering.js`: normalización, filtros y forma de mosaico.
-- `modules/player.js`: miniaturas, iframes, URLs públicas y utilidades HTML.
-- `modules/map.js`: mapa D3/TopoJSON y fallback SVG.
+- `modules/player.js`: iframes, URLs públicas y utilidades HTML.
+- `modules/map.js`: globo 3D con Globe.gl, fronteras vía D3/TopoJSON y fallback SVG.
 - `modules/ui.js`: eventos, renderizado, panel hamburguesa y catálogo.
+
+## Visualización 3D
+
+La vista `mapView` usa `Globe.gl` para montar una esfera interactiva. La capa base emplea una textura satelital, relieve suave y fondo espacial. Las fronteras se dibujan como polígonos transparentes con trazo claro para mantener la estética de satélite sin perder referencia política.
+
+Los puntos de cámaras se agrupan por coordenadas aproximadas para evitar superposiciones masivas. Al pulsar un punto se abre la cámara correspondiente en la vista de directo.
 
 ## Persistencia
 
