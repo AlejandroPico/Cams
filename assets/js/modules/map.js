@@ -1,7 +1,6 @@
 import { state } from './state.js';
 import { filteredCams } from './filtering.js';
-import { escapeHtml } from './player.js';
-import { setSelected } from './ui.js';
+import { cameraElement, escapeHtml, publicUrl } from './player.js';
 
 const COUNTRY_TOPOLOGY_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 const SATELLITE_TEXTURE_URL = 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
@@ -10,6 +9,7 @@ const NIGHT_SKY_URL = 'https://unpkg.com/three-globe/example/img/night-sky.png';
 
 let globe = null;
 let countryFeatures = null;
+let currentSize = { width: 0, height: 0 };
 
 export function renderMap() {
   const container = document.querySelector('#worldGlobe');
@@ -20,6 +20,15 @@ export function renderMap() {
 
   if (!window.Globe || !window.d3 || !window.topojson) {
     renderFallbackMap(container, width, height);
+    return;
+  }
+
+  if (globe) {
+    if (width !== currentSize.width || height !== currentSize.height) {
+      globe.width(width).height(height);
+      currentSize = { width, height };
+    }
+    drawMarkers();
     return;
   }
 
@@ -34,32 +43,49 @@ export function renderMap() {
     .backgroundImageUrl(NIGHT_SKY_URL)
     .showAtmosphere(true)
     .atmosphereColor('#7cc7ff')
-    .atmosphereAltitude(0.18)
+    .atmosphereAltitude(0.13)
     .pointLat('lat')
     .pointLng('lon')
     .pointColor(() => '#7cc7ff')
-    .pointAltitude((point) => 0.025 + Math.min(point.count, 8) * 0.004)
-    .pointRadius((point) => Math.min(0.42, 0.18 + Math.log2(point.count + 1) * 0.045))
+    .pointAltitude((point) => 0.02 + Math.min(point.count, 8) * 0.003)
+    .pointRadius((point) => Math.min(0.38, 0.16 + Math.log2(point.count + 1) * 0.04))
     .pointLabel((point) => point.label)
-    .onPointClick((point) => setSelected(point.camera))
-    .polygonAltitude(0.006)
-    .polygonCapColor(() => 'rgba(124,199,255,0.025)')
-    .polygonSideColor(() => 'rgba(124,199,255,0.015)')
-    .polygonStrokeColor(() => 'rgba(190,224,255,0.72)')
+    .onPointClick((point) => openMapPreview(point.camera))
+    .polygonAltitude(0.004)
+    .polygonCapColor(() => 'rgba(124,199,255,0.018)')
+    .polygonSideColor(() => 'rgba(124,199,255,0.01)')
+    .polygonStrokeColor(() => 'rgba(190,224,255,0.62)')
     .polygonsTransitionDuration(0);
 
-  const controls = globe.controls();
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.06;
-  controls.rotateSpeed = 0.42;
-  controls.zoomSpeed = 0.75;
-  controls.minDistance = 150;
-  controls.maxDistance = 650;
+  currentSize = { width, height };
+  tuneRenderer();
+  tuneControls();
   globe.pointOfView({ lat: 23, lng: 12, altitude: 2.35 }, 0);
 
   state.d3State = { globe, width, height };
+  bindMapPreviewControls();
   hydrateCountries();
   drawMarkers();
+}
+
+function tuneRenderer() {
+  try {
+    const renderer = globe.renderer();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+  } catch {}
+
+  if (typeof globe.pointResolution === 'function') globe.pointResolution(8);
+  if (typeof globe.polygonCapCurvatureResolution === 'function') globe.polygonCapCurvatureResolution(7);
+}
+
+function tuneControls() {
+  const controls = globe.controls();
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.rotateSpeed = 0.36;
+  controls.zoomSpeed = 0.72;
+  controls.minDistance = 165;
+  controls.maxDistance = 650;
 }
 
 async function hydrateCountries() {
@@ -107,6 +133,37 @@ function groupCameraPoints(cameras) {
   });
 }
 
+function openMapPreview(camera) {
+  const preview = document.querySelector('#mapPreview');
+  const body = document.querySelector('#mapPreviewBody');
+  const title = document.querySelector('#mapPreviewTitle');
+  const meta = document.querySelector('#mapPreviewMeta');
+  const source = document.querySelector('#mapPreviewOpen');
+  if (!preview || !body || !title || !meta || !source || !camera) return;
+
+  title.textContent = camera.title || 'Cámara';
+  meta.textContent = [camera.city, camera.country, camera.category].filter(Boolean).join(' · ');
+  body.innerHTML = cameraElement(camera);
+  const url = publicUrl(camera);
+  source.href = url || '#';
+  source.hidden = !url;
+  preview.hidden = false;
+}
+
+function closeMapPreview() {
+  const preview = document.querySelector('#mapPreview');
+  const body = document.querySelector('#mapPreviewBody');
+  if (body) body.innerHTML = '';
+  if (preview) preview.hidden = true;
+}
+
+function bindMapPreviewControls() {
+  document.querySelector('#mapPreviewClose')?.addEventListener('click', closeMapPreview);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeMapPreview();
+  }, { passive: true });
+}
+
 function renderFallbackMap(container, width, height) {
   container.innerHTML = '';
   const ns = 'http://www.w3.org/2000/svg';
@@ -131,11 +188,12 @@ function renderFallbackMap(container, width, height) {
     g.setAttribute('class', 'map-marker');
     g.setAttribute('transform', `translate(${x},${y})`);
     g.innerHTML = `<circle class="outer" r="12"></circle><circle class="inner" r="4.5"></circle><text class="map-label" x="9" y="3">${escapeHtml(camera.city || camera.country)}</text>`;
-    g.addEventListener('click', () => setSelected(camera));
+    g.addEventListener('click', () => openMapPreview(camera));
     svg.appendChild(g);
   }
 
   container.appendChild(svg);
+  bindMapPreviewControls();
   updateMapStats(cameras.length);
   toast('Globo 3D no disponible; se muestra fallback plano.');
 }
