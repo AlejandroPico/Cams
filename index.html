@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cams · Mosaico mundial de webcams en directo</title>
+  <meta name="description" content="Mosaico minimalista de cámaras web públicas del mundo, preparado para GitHub Pages.">
+  <meta name="theme-color" content="#090b10">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Inicio Cams">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>
+          <strong>Cams</strong>
+          <small>Mosaico mundial en directo</small>
+        </span>
+      </a>
+
+      <nav class="top-actions" aria-label="Acciones principales">
+        <a href="#mosaico">Mosaico</a>
+        <a href="#rotacion">Rotación</a>
+        <a href="docs/ARCHITECTURE.md">Arquitectura</a>
+      </nav>
+    </header>
+
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Versión 1 · GitHub Pages · HTML + JavaScript</p>
+        <h1 id="hero-title">Un atlas visual de webcams públicas del mundo.</h1>
+        <p>
+          Proyecto estático, modular y ampliable. Prioriza vistas paisajísticas, costas,
+          ciudades icónicas, montañas, volcanes, naturaleza y cámaras de larga duración.
+        </p>
+      </div>
+      <div class="hero-stats" aria-label="Resumen del catálogo">
+        <article>
+          <span id="stat-total">0</span>
+          <small>cámaras catalogadas</small>
+        </article>
+        <article>
+          <span id="stat-countries">0</span>
+          <small>países / territorios</small>
+        </article>
+        <article>
+          <span id="stat-landscape">0</span>
+          <small>prioridad paisaje</small>
+        </article>
+      </div>
+    </section>
+
+    <main class="workspace">
+      <aside class="control-panel" aria-labelledby="filters-title">
+        <div class="panel-heading">
+          <p class="eyebrow">Exploración</p>
+          <h2 id="filters-title">Filtros</h2>
+        </div>
+
+        <label class="field">
+          <span>Buscar</span>
+          <input id="search-input" type="search" placeholder="Barcelona, volcán, playa, Japón…">
+        </label>
+
+        <label class="field">
+          <span>Continente</span>
+          <select id="continent-select"></select>
+        </label>
+
+        <label class="field">
+          <span>Categoría</span>
+          <select id="category-select"></select>
+        </label>
+
+        <label class="field">
+          <span>Proveedor</span>
+          <select id="provider-select"></select>
+        </label>
+
+        <div class="switch-stack">
+          <label class="switch">
+            <input id="landscape-toggle" type="checkbox" checked>
+            <span>Priorizar cámaras paisajísticas</span>
+          </label>
+          <label class="switch">
+            <input id="high-priority-toggle" type="checkbox">
+            <span>Mostrar solo prioridad alta</span>
+          </label>
+        </div>
+
+        <button id="reset-filters" class="ghost-button" type="button">Reiniciar filtros</button>
+
+        <div class="data-note">
+          <strong>Nota técnica</strong>
+          <p>
+            Muchas fuentes de webcams bloquean la incrustación por políticas de seguridad.
+            Por eso cada ficha conserva siempre enlace oficial y un visor experimental.
+          </p>
+        </div>
+      </aside>
+
+      <section class="content-area" id="mosaico" aria-labelledby="mosaic-title">
+        <div class="section-bar">
+          <div>
+            <p class="eyebrow">Mosaico</p>
+            <h2 id="mosaic-title">Cámaras disponibles</h2>
+          </div>
+          <p id="result-count" class="result-count">0 resultados</p>
+        </div>
+
+        <div id="camera-grid" class="camera-grid" aria-live="polite"></div>
+      </section>
+
+      <aside class="rotation-panel" id="rotacion" aria-labelledby="rotation-title">
+        <div class="panel-heading">
+          <p class="eyebrow">Panel de rotación</p>
+          <h2 id="rotation-title">Reproducción secuencial</h2>
+        </div>
+
+        <article id="featured-camera" class="featured-card"></article>
+
+        <div class="rotation-controls">
+          <button id="prev-camera" type="button" aria-label="Cámara anterior">←</button>
+          <button id="toggle-rotation" type="button">Iniciar rotación</button>
+          <button id="next-camera" type="button" aria-label="Cámara siguiente">→</button>
+        </div>
+
+        <label class="field compact">
+          <span>Intervalo</span>
+          <select id="rotation-interval">
+            <option value="8000">8 segundos</option>
+            <option value="12000" selected>12 segundos</option>
+            <option value="20000">20 segundos</option>
+            <option value="30000">30 segundos</option>
+          </select>
+        </label>
+
+        <div class="progress-track" aria-hidden="true">
+          <span id="rotation-progress"></span>
+        </div>
+      </aside>
+    </main>
+
+    <dialog id="camera-dialog" class="camera-dialog">
+      <form method="dialog">
+        <button class="dialog-close" aria-label="Cerrar">×</button>
+      </form>
+      <div id="dialog-content"></div>
+    </dialog>
+
+    <footer class="site-footer">
+      <p>
+        Catálogo inicial mantenido en <code>assets/js/data/cameras.js</code>.
+        Sin backend, sin build y preparado para publicarse desde GitHub Pages.
+      </p>
+    </footer>
+  </div>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
