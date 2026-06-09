@@ -1,74 +1,36 @@
 # Arquitectura de Cams
 
-## Enfoque
+## Principio de interfaz
 
-Cams está diseñado como una aplicación estática pura: HTML, CSS y JavaScript moderno mediante módulos ES. No requiere framework, servidor, empaquetador ni API propia.
+La aplicación se organiza como una experiencia fullscreen. La pantalla principal se reserva para cámaras o lugares. Toda navegación, filtro, información técnica y configuración se canaliza desde el panel lateral tipo hamburguesa.
 
-La estructura está pensada para GitHub Pages, con rutas relativas y un único punto de entrada: `index.html`.
+## Vistas
 
-## Capas
+- `wallView`: vista inicial. Muestra todos los lugares del catálogo.
+- `liveView`: mosaico de cámaras en directo.
+- `mapView`: mapa mundial con marcadores.
+- `catalogView`: listado técnico de cámaras.
+- `configView`: importación, exportación y alta rápida de cámaras.
 
-### 1. Entrada HTML
+## Módulos
 
-`index.html` define la estructura semántica:
+- `app.js`: arranque.
+- `data/cameras.js`: catálogo base.
+- `modules/state.js`: estado, persistencia y temporizador.
+- `modules/filtering.js`: normalización, filtros y forma de mosaico.
+- `modules/player.js`: miniaturas, iframes, URLs públicas y utilidades HTML.
+- `modules/map.js`: mapa D3/TopoJSON y fallback SVG.
+- `modules/ui.js`: eventos, renderizado, panel hamburguesa y catálogo.
 
-- Cabecera.
-- Hero con estadísticas.
-- Panel de filtros.
-- Mosaico de cámaras.
-- Panel de rotación.
-- Diálogo de detalle.
+## Persistencia
 
-No contiene lógica de negocio ni datos incrustados.
+Se usa `localStorage` con dos claves:
 
-### 2. Estilos
+- `cams_v2_catalog`
+- `cams_v2_settings`
 
-`assets/css/styles.css` concentra la estética:
-
-- Tema oscuro minimalista.
-- Cards tipo mosaico.
-- Paneles sticky en escritorio.
-- Diseño responsive.
-- Animación de progreso del rotador.
-
-### 3. Datos
-
-`assets/js/data/cameras.js` exporta:
-
-- `CATALOG_META`: metadatos de versión.
-- `CAMERAS`: catálogo inicial de 100 referencias.
-
-Esta separación permite ampliar la base de datos sin tocar el resto de la aplicación.
-
-### 4. Módulos JavaScript
-
-- `app.js`: arranque de la aplicación.
-- `modules/state.js`: estado compartido y control de rotación.
-- `modules/filtering.js`: filtros, ordenación y estadísticas.
-- `modules/player.js`: construcción del visor y utilidades de representación.
-- `modules/ui.js`: renderizado, eventos, diálogo y rotador.
-
-## Decisión importante: enlaces oficiales frente a iframes
-
-En la web real, muchos proveedores de webcams impiden que sus páginas se muestren dentro de iframes. Forzar la incrustación genera resultados frágiles: pantallas en blanco, errores de navegador o páginas rotas.
-
-Por eso la versión 1 funciona como catálogo robusto:
-
-1. Cada cámara tiene `sourceUrl`.
-2. Si una fuente se verifica como embebible, se añade `embedUrl`.
-3. El usuario puede probar visor interno experimental.
-4. El enlace oficial se mantiene siempre como salida fiable.
-
-## Rendimiento
-
-El catálogo actual es ligero. Para varios cientos o miles de cámaras se recomienda:
-
-- Paginación o virtualización de la cuadrícula.
-- Carga diferida de detalles.
-- Separación del catálogo por regiones.
-- Índice de búsqueda precalculado.
-- Miniaturas servidas desde una carpeta propia solo si sus licencias lo permiten.
+Esto permite probar cambios sin servidor ni base de datos.
 
 ## GitHub Pages
 
-El proyecto no necesita build. La carpeta raíz puede publicarse directamente desde `main`.
+No hay build ni dependencias instalables. GitHub Pages sirve los ficheros estáticos desde la raíz.
