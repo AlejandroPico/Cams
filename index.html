@@ -3,161 +3,182 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cams · Mosaico mundial de webcams en directo</title>
-  <meta name="description" content="Mosaico minimalista de cámaras web públicas del mundo, preparado para GitHub Pages.">
-  <meta name="theme-color" content="#090b10">
+  <title>Cams · WorldCam Minimal</title>
+  <meta name="description" content="Mosaico minimalista de webcams en directo de todo el mundo.">
+  <meta name="theme-color" content="#030305">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
-<body>
-  <div class="app-shell">
-    <header class="site-header">
-      <a class="brand" href="./" aria-label="Inicio Cams">
-        <span class="brand-mark" aria-hidden="true"></span>
-        <span>
-          <strong>Cams</strong>
-          <small>Mosaico mundial en directo</small>
-        </span>
-      </a>
+<body class="labels-on">
+  <div id="app">
+    <div class="top-floating">
+      <button id="menuBtn" class="menu-button" type="button" aria-label="Abrir menú">☰</button>
+    </div>
 
-      <nav class="top-actions" aria-label="Acciones principales">
-        <a href="#mosaico">Mosaico</a>
-        <a href="#rotacion">Rotación</a>
-        <a href="docs/ARCHITECTURE.md">Arquitectura</a>
-      </nav>
-    </header>
+    <main id="wallView" class="view active" aria-label="Listado mundial de cámaras">
+      <div id="wallGrid" class="wall-grid"></div>
+    </main>
 
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <p class="eyebrow">Versión 1 · GitHub Pages · HTML + JavaScript</p>
-        <h1 id="hero-title">Un atlas visual de webcams públicas del mundo.</h1>
-        <p>
-          Proyecto estático, modular y ampliable. Prioriza vistas paisajísticas, costas,
-          ciudades icónicas, montañas, volcanes, naturaleza y cámaras de larga duración.
-        </p>
-      </div>
-      <div class="hero-stats" aria-label="Resumen del catálogo">
-        <article>
-          <span id="stat-total">0</span>
-          <small>cámaras catalogadas</small>
-        </article>
-        <article>
-          <span id="stat-countries">0</span>
-          <small>países / territorios</small>
-        </article>
-        <article>
-          <span id="stat-landscape">0</span>
-          <small>prioridad paisaje</small>
-        </article>
+    <section id="liveView" class="view" aria-label="Mosaico en directo">
+      <div id="tileGrid" class="tile-grid"></div>
+    </section>
+
+    <section id="mapView" class="view" aria-label="Mapa de cámaras">
+      <div id="mapCanvas">
+        <svg id="worldMap" role="img" aria-label="Mapa de cámaras"></svg>
       </div>
     </section>
 
-    <main class="workspace">
-      <aside class="control-panel" aria-labelledby="filters-title">
-        <div class="panel-heading">
-          <p class="eyebrow">Exploración</p>
-          <h2 id="filters-title">Filtros</h2>
-        </div>
+    <section id="catalogView" class="view" aria-label="Catálogo técnico">
+      <div class="catalog" id="catalogList"></div>
+    </section>
 
-        <label class="field">
-          <span>Buscar</span>
-          <input id="search-input" type="search" placeholder="Barcelona, volcán, playa, Japón…">
-        </label>
-
-        <label class="field">
-          <span>Continente</span>
-          <select id="continent-select"></select>
-        </label>
-
-        <label class="field">
-          <span>Categoría</span>
-          <select id="category-select"></select>
-        </label>
-
-        <label class="field">
-          <span>Proveedor</span>
-          <select id="provider-select"></select>
-        </label>
-
-        <div class="switch-stack">
-          <label class="switch">
-            <input id="landscape-toggle" type="checkbox" checked>
-            <span>Priorizar cámaras paisajísticas</span>
-          </label>
-          <label class="switch">
-            <input id="high-priority-toggle" type="checkbox">
-            <span>Mostrar solo prioridad alta</span>
-          </label>
-        </div>
-
-        <button id="reset-filters" class="ghost-button" type="button">Reiniciar filtros</button>
-
-        <div class="data-note">
-          <strong>Nota técnica</strong>
-          <p>
-            Muchas fuentes de webcams bloquean la incrustación por políticas de seguridad.
-            Por eso cada ficha conserva siempre enlace oficial y un visor experimental.
+    <section id="configView" class="view" aria-label="Configuración del catálogo">
+      <div class="config">
+        <div class="config-box">
+          <h1>Configuración</h1>
+          <p class="notice">
+            El catálogo se guarda localmente con <strong>localStorage</strong>. Para YouTube, es preferible servir la web desde GitHub Pages o desde un servidor local, no abrirla con <code>file://</code>.
           </p>
-        </div>
-      </aside>
 
-      <section class="content-area" id="mosaico" aria-labelledby="mosaic-title">
-        <div class="section-bar">
-          <div>
-            <p class="eyebrow">Mosaico</p>
-            <h2 id="mosaic-title">Cámaras disponibles</h2>
+          <div class="section">
+            <h2>Añadir cámara rápida</h2>
+            <label>Nombre</label>
+            <input id="newTitle" placeholder="Nombre de la cámara">
+            <div class="inline">
+              <div>
+                <label>Ciudad</label>
+                <input id="newCity" placeholder="Ciudad o zona">
+              </div>
+              <div>
+                <label>País</label>
+                <input id="newCountry" placeholder="País">
+              </div>
+            </div>
+            <div class="inline">
+              <div>
+                <label>Tipo</label>
+                <select id="newType">
+                  <option value="youtube">YouTube</option>
+                  <option value="iframe">iframe</option>
+                  <option value="image">imagen refrescada</option>
+                  <option value="mjpeg">MJPEG</option>
+                  <option value="hls">HLS .m3u8</option>
+                </select>
+              </div>
+              <div>
+                <label>Categoría</label>
+                <input id="newCategory" placeholder="playa, ciudad, montaña...">
+              </div>
+            </div>
+            <label>URL o ID de YouTube</label>
+            <input id="newUrl" placeholder="https://www.youtube.com/watch?v=...">
+            <div class="inline">
+              <div>
+                <label>Latitud</label>
+                <input id="newLat" placeholder="41.38">
+              </div>
+              <div>
+                <label>Longitud</label>
+                <input id="newLon" placeholder="2.17">
+              </div>
+            </div>
+            <button id="addCamBtn" class="wide" type="button">Añadir cámara</button>
           </div>
-          <p id="result-count" class="result-count">0 resultados</p>
+
+          <div class="section">
+            <h2>Importar / exportar</h2>
+            <label>Importar JSON</label>
+            <textarea id="jsonImport" placeholder='{"title":"Vigo","country":"España","city":"Vigo","lat":42.24,"lon":-8.72,"type":"youtube","videoId":"..."}'></textarea>
+            <div class="inline actions">
+              <button id="importBtn" type="button">Importar</button>
+              <button id="exportBtn" type="button">Exportar catálogo</button>
+              <button id="resetCatalogBtn" class="bad" type="button">Restaurar base</button>
+            </div>
+          </div>
         </div>
-
-        <div id="camera-grid" class="camera-grid" aria-live="polite"></div>
-      </section>
-
-      <aside class="rotation-panel" id="rotacion" aria-labelledby="rotation-title">
-        <div class="panel-heading">
-          <p class="eyebrow">Panel de rotación</p>
-          <h2 id="rotation-title">Reproducción secuencial</h2>
-        </div>
-
-        <article id="featured-camera" class="featured-card"></article>
-
-        <div class="rotation-controls">
-          <button id="prev-camera" type="button" aria-label="Cámara anterior">←</button>
-          <button id="toggle-rotation" type="button">Iniciar rotación</button>
-          <button id="next-camera" type="button" aria-label="Cámara siguiente">→</button>
-        </div>
-
-        <label class="field compact">
-          <span>Intervalo</span>
-          <select id="rotation-interval">
-            <option value="8000">8 segundos</option>
-            <option value="12000" selected>12 segundos</option>
-            <option value="20000">20 segundos</option>
-            <option value="30000">30 segundos</option>
-          </select>
-        </label>
-
-        <div class="progress-track" aria-hidden="true">
-          <span id="rotation-progress"></span>
-        </div>
-      </aside>
-    </main>
-
-    <dialog id="camera-dialog" class="camera-dialog">
-      <form method="dialog">
-        <button class="dialog-close" aria-label="Cerrar">×</button>
-      </form>
-      <div id="dialog-content"></div>
-    </dialog>
-
-    <footer class="site-footer">
-      <p>
-        Catálogo inicial mantenido en <code>assets/js/data/cameras.js</code>.
-        Sin backend, sin build y preparado para publicarse desde GitHub Pages.
-      </p>
-    </footer>
+      </div>
+    </section>
   </div>
 
+  <div id="drawerShade"></div>
+  <aside id="side" aria-label="Panel de control">
+    <div id="sideHead">
+      <strong>Cams</strong>
+      <button id="closeSide" class="ghost" type="button" aria-label="Cerrar menú">×</button>
+    </div>
+
+    <div id="sideBody">
+      <nav class="nav" aria-label="Secciones">
+        <button data-view="wallView" class="active" type="button">lugares</button>
+        <button data-view="liveView" type="button">directo</button>
+        <button data-view="mapView" type="button">mapa</button>
+        <button data-view="catalogView" type="button">catálogo</button>
+        <button data-view="configView" type="button">config</button>
+      </nav>
+
+      <div class="section first">
+        <h2>Explorar</h2>
+        <label>País</label>
+        <select id="countryFilter"></select>
+        <label>Categoría</label>
+        <select id="categoryFilter"></select>
+        <label>Texto</label>
+        <input id="textFilter" placeholder="ciudad, playa, volcán, airport...">
+      </div>
+
+      <div class="section">
+        <h2>Mosaico en directo</h2>
+        <label>Número de cámaras</label>
+        <select id="gridSelect">
+          <option value="1">1 cámara</option>
+          <option value="2">2 cámaras</option>
+          <option value="4" selected>4 cámaras</option>
+          <option value="6">6 cámaras</option>
+          <option value="9">9 cámaras</option>
+          <option value="16">16 cámaras</option>
+          <option value="25">25 cámaras</option>
+        </select>
+        <div class="inline actions">
+          <button id="prevBtn" type="button">←</button>
+          <button id="nextBtn" type="button">→</button>
+          <button id="shuffleBtn" type="button">azar</button>
+        </div>
+        <div class="toggle-line"><span>Rotación</span><button id="rotationBtn" class="mini" type="button">off</button></div>
+        <label>Intervalo</label>
+        <select id="rotationInterval">
+          <option value="15000">15 s</option>
+          <option value="30000" selected>30 s</option>
+          <option value="60000">60 s</option>
+          <option value="120000">120 s</option>
+        </select>
+      </div>
+
+      <div class="section">
+        <h2>Visual</h2>
+        <div class="toggle-line"><span>Rótulos mínimos</span><button id="labelsBtn" class="mini good" type="button">on</button></div>
+        <div class="toggle-line"><span>Modo visual</span><button id="themeBtn" class="mini" type="button">noche</button></div>
+        <button id="fullscreenBtn" class="wide" type="button">Pantalla completa</button>
+        <button id="openSelectedBtn" class="wide" type="button">Abrir cámara seleccionada</button>
+      </div>
+
+      <div class="section">
+        <h2>Catálogo</h2>
+        <label>Búsqueda técnica</label>
+        <input id="catalogSearch" placeholder="buscar en el catálogo...">
+        <button id="checkVisibleBtn" class="wide" type="button">Comprobar visibles</button>
+      </div>
+
+      <div class="section">
+        <small id="sideStats"></small>
+      </div>
+    </div>
+  </aside>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
   <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>
