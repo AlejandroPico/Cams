@@ -10,22 +10,21 @@ const WORLD_IMAGERY_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/service
 const MARKER_LIGHT_UPDATE_MS = 60_000;
 
 const COUNTRY_TIME_ZONES = new Map([
-  ['españa', 'Europe/Madrid'], ['spain', 'Europe/Madrid'],
+  ['espana', 'Europe/Madrid'], ['spain', 'Europe/Madrid'],
   ['andorra', 'Europe/Andorra'], ['francia', 'Europe/Paris'], ['france', 'Europe/Paris'],
   ['italia', 'Europe/Rome'], ['italy', 'Europe/Rome'], ['portugal', 'Europe/Lisbon'],
   ['reino unido', 'Europe/London'], ['united kingdom', 'Europe/London'], ['uk', 'Europe/London'],
   ['irlanda', 'Europe/Dublin'], ['ireland', 'Europe/Dublin'], ['alemania', 'Europe/Berlin'], ['germany', 'Europe/Berlin'],
-  ['países bajos', 'Europe/Amsterdam'], ['netherlands', 'Europe/Amsterdam'], ['bélgica', 'Europe/Brussels'], ['belgium', 'Europe/Brussels'],
+  ['paises bajos', 'Europe/Amsterdam'], ['netherlands', 'Europe/Amsterdam'], ['belgica', 'Europe/Brussels'], ['belgium', 'Europe/Brussels'],
   ['suiza', 'Europe/Zurich'], ['switzerland', 'Europe/Zurich'], ['austria', 'Europe/Vienna'], ['grecia', 'Europe/Athens'], ['greece', 'Europe/Athens'],
   ['noruega', 'Europe/Oslo'], ['norway', 'Europe/Oslo'], ['suecia', 'Europe/Stockholm'], ['sweden', 'Europe/Stockholm'],
   ['finlandia', 'Europe/Helsinki'], ['finland', 'Europe/Helsinki'], ['dinamarca', 'Europe/Copenhagen'], ['denmark', 'Europe/Copenhagen'],
   ['islandia', 'Atlantic/Reykjavik'], ['iceland', 'Atlantic/Reykjavik'],
-  ['marruecos', 'Africa/Casablanca'], ['morocco', 'Africa/Casablanca'], ['sudáfrica', 'Africa/Johannesburg'], ['south africa', 'Africa/Johannesburg'],
-  ['japón', 'Asia/Tokyo'], ['japan', 'Asia/Tokyo'], ['china', 'Asia/Shanghai'], ['corea del sur', 'Asia/Seoul'], ['south korea', 'Asia/Seoul'],
+  ['marruecos', 'Africa/Casablanca'], ['morocco', 'Africa/Casablanca'], ['sudafrica', 'Africa/Johannesburg'], ['south africa', 'Africa/Johannesburg'],
+  ['japon', 'Asia/Tokyo'], ['japan', 'Asia/Tokyo'], ['china', 'Asia/Shanghai'], ['corea del sur', 'Asia/Seoul'], ['south korea', 'Asia/Seoul'],
   ['india', 'Asia/Kolkata'], ['tailandia', 'Asia/Bangkok'], ['thailand', 'Asia/Bangkok'], ['singapur', 'Asia/Singapore'], ['singapore', 'Asia/Singapore'],
-  ['emiratos árabes unidos', 'Asia/Dubai'], ['united arab emirates', 'Asia/Dubai'], ['turquía', 'Europe/Istanbul'], ['turkey', 'Europe/Istanbul'],
-  ['méxico', 'America/Mexico_City'], ['mexico', 'America/Mexico_City'],
-  ['argentina', 'America/Argentina/Buenos_Aires'], ['chile', 'America/Santiago'], ['colombia', 'America/Bogota'], ['perú', 'America/Lima'], ['peru', 'America/Lima'],
+  ['emiratos arabes unidos', 'Asia/Dubai'], ['united arab emirates', 'Asia/Dubai'], ['turquia', 'Europe/Istanbul'], ['turkey', 'Europe/Istanbul'],
+  ['mexico', 'America/Mexico_City'], ['argentina', 'America/Argentina/Buenos_Aires'], ['chile', 'America/Santiago'], ['colombia', 'America/Bogota'], ['peru', 'America/Lima'],
   ['brasil', 'America/Sao_Paulo'], ['brazil', 'America/Sao_Paulo'], ['uruguay', 'America/Montevideo'],
   ['nueva zelanda', 'Pacific/Auckland'], ['new zealand', 'Pacific/Auckland']
 ]);
@@ -309,24 +308,8 @@ function getSubsolarPoint(date) {
   const dayOfYear = Math.floor((Date.UTC(year, date.getUTCMonth(), date.getUTCDate()) - start) / 86_400_000);
   const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
   const gamma = 2 * Math.PI / 365 * (dayOfYear - 1 + (utcHours - 12) / 24);
-
-  const equationOfTime = 229.18 * (
-    0.000075 +
-    0.001868 * Math.cos(gamma) -
-    0.032077 * Math.sin(gamma) -
-    0.014615 * Math.cos(2 * gamma) -
-    0.040849 * Math.sin(2 * gamma)
-  );
-
-  const declination =
-    0.006918 -
-    0.399912 * Math.cos(gamma) +
-    0.070257 * Math.sin(gamma) -
-    0.006758 * Math.cos(2 * gamma) +
-    0.000907 * Math.sin(2 * gamma) -
-    0.002697 * Math.cos(3 * gamma) +
-    0.00148 * Math.sin(3 * gamma);
-
+  const equationOfTime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+  const declination = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma) - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma) - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
   const utcMinutes = date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60;
   const lng = normalizeLng((720 - utcMinutes - equationOfTime) / 4);
   return { lat: radiansToDegrees(declination), lng };
@@ -346,12 +329,7 @@ function getLocalTime(camera) {
   const timeZone = guessTimeZone(camera);
   if (timeZone) {
     try {
-      const formatted = new Intl.DateTimeFormat('es-ES', {
-        timeZone,
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      }).format(new Date());
+      const formatted = new Intl.DateTimeFormat('es-ES', { timeZone, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
       return { label: `hora local ${formatted} (${timeZone})`, timeZone };
     } catch {}
   }
@@ -372,8 +350,10 @@ function getLocalTime(camera) {
 function guessTimeZone(camera) {
   const country = normalizeText(camera.country || '');
   const city = normalizeText(camera.city || '');
-  const lat = Number(camera.lat);
   const lon = Number(camera.lon);
+
+  if ((country.includes('espana') || country.includes('spain')) && (city.includes('canarias') || city.includes('tenerife') || city.includes('gran canaria') || city.includes('lanzarote') || city.includes('fuerteventura'))) return 'Atlantic/Canary';
+  if (country.includes('espana') || country.includes('spain')) return 'Europe/Madrid';
 
   if ((country.includes('estados unidos') || country.includes('united states') || country === 'usa') && Number.isFinite(lon)) {
     if (lon < -150) return 'Pacific/Honolulu';
@@ -383,26 +363,22 @@ function guessTimeZone(camera) {
     if (lon < -86) return 'America/Chicago';
     return 'America/New_York';
   }
-
-  if ((country.includes('canada') || country.includes('canadá')) && Number.isFinite(lon)) {
+  if ((country.includes('canada') || country.includes('canada')) && Number.isFinite(lon)) {
     if (lon < -125) return 'America/Vancouver';
     if (lon < -100) return 'America/Edmonton';
     if (lon < -85) return 'America/Winnipeg';
     if (lon < -60) return 'America/Toronto';
     return 'America/Halifax';
   }
-
-  if ((country.includes('australia')) && Number.isFinite(lon)) {
+  if (country.includes('australia') && Number.isFinite(lon)) {
     if (lon < 129) return 'Australia/Perth';
     if (lon < 141) return 'Australia/Adelaide';
     return 'Australia/Sydney';
   }
-
   if ((country.includes('brasil') || country.includes('brazil')) && Number.isFinite(lon)) {
     if (lon < -60) return 'America/Manaus';
     return 'America/Sao_Paulo';
   }
-
   if ((country.includes('rusia') || country.includes('russia')) && Number.isFinite(lon)) {
     if (lon < 60) return 'Europe/Moscow';
     if (lon < 90) return 'Asia/Yekaterinburg';
@@ -412,41 +388,18 @@ function guessTimeZone(camera) {
     return 'Asia/Vladivostok';
   }
 
-  if ((country.includes('indonesia')) && Number.isFinite(lon)) {
-    if (lon < 120) return 'Asia/Jakarta';
-    if (lon < 135) return 'Asia/Makassar';
-    return 'Asia/Jayapura';
-  }
-
-  if ((country.includes('greenland') || country.includes('groenlandia')) && Number.isFinite(lon)) {
-    if (lon < -40) return 'America/Nuuk';
-    return 'America/Scoresbysund';
-  }
-
-  if ((country.includes('españa') || country.includes('spain')) && (city.includes('canarias') || city.includes('tenerife') || city.includes('gran canaria') || city.includes('lanzarote') || city.includes('fuerteventura'))) {
-    return 'Atlantic/Canary';
-  }
-
   return COUNTRY_TIME_ZONES.get(country) || null;
 }
 
 function normalizeText(value) {
-  return String(value)
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+  return String(value).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 function latLngToVector(lat, lng) {
   const phi = degreesToRadians(lat);
   const lambda = degreesToRadians(lng);
   const cosPhi = Math.cos(phi);
-  return {
-    x: cosPhi * Math.cos(lambda),
-    y: cosPhi * Math.sin(lambda),
-    z: Math.sin(phi)
-  };
+  return { x: cosPhi * Math.cos(lambda), y: cosPhi * Math.sin(lambda), z: Math.sin(phi) };
 }
 
 function degreesToRadians(value) {
