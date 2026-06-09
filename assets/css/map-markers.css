@@ -1,0 +1,83 @@
+.globe-camera-marker{
+  --marker-accent:#ffd84d;
+  position:relative;
+  width:34px;
+  height:34px;
+  border:0;
+  padding:0;
+  margin:0;
+  display:grid;
+  place-items:center;
+  background:transparent;
+  color:#070707;
+  cursor:pointer;
+  transform:translate(-50%,-50%);
+  filter:drop-shadow(0 7px 12px rgba(0,0,0,.72));
+}
+
+.globe-camera-marker svg{
+  position:relative;
+  z-index:2;
+  width:26px;
+  height:26px;
+  overflow:visible;
+}
+
+.globe-camera-marker .camera-body{
+  fill:#070707;
+  stroke:var(--marker-accent);
+  stroke-width:4.4;
+  paint-order:stroke fill;
+}
+
+.globe-camera-marker .camera-lens{
+  fill:#1d2735;
+  stroke:#fff;
+  stroke-width:2.2;
+}
+
+.globe-camera-marker .camera-glint{
+  fill:#fff;
+}
+
+.camera-halo{
+  position:absolute;
+  inset:1px;
+  z-index:1;
+  border:2px solid var(--marker-accent);
+  border-radius:999px;
+  background:rgba(0,0,0,.52);
+  box-shadow:0 0 0 2px rgba(0,0,0,.68),0 0 18px var(--marker-accent),0 0 30px rgba(0,0,0,.52);
+}
+
+.camera-count{
+  position:absolute;
+  z-index:3;
+  right:-7px;
+  top:-8px;
+  min-width:18px;
+  height:18px;
+  display:grid;
+  place-items:center;
+  border:2px solid #000;
+  background:var(--marker-accent);
+  color:#050505;
+  font-size:.62rem;
+  font-weight:800;
+  line-height:1;
+}
+
+.globe-camera-marker.is-day{--marker-accent:#ffe34d;}
+.globe-camera-marker.is-twilight{--marker-accent:#ff9f1c;}
+.globe-camera-marker.is-night{--marker-accent:#ff4d2e;}
+
+.globe-camera-marker:hover,
+.globe-camera-marker:focus-visible{
+  transform:translate(-50%,-50%) scale(1.18);
+  outline:none;
+}
+
+.globe-camera-marker:hover .camera-halo,
+.globe-camera-marker:focus-visible .camera-halo{
+  box-shadow:0 0 0 3px rgba(0,0,0,.8),0 0 24px var(--marker-accent),0 0 46px var(--marker-accent);
+}
