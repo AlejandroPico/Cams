@@ -6,11 +6,14 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 
 ## Estado actual
 
-- La página abre directamente en **Lugares**, con todo el listado de cámaras disponible.
+- La página abre directamente en **Lugares**, con el mosaico principal de cámaras en reproducción.
+- Se eliminan las miniaturas como vista principal: cada celda carga un reproductor real.
+- Las cámaras visibles se cargan automáticamente y las siguientes se activan al entrar en pantalla durante el scroll.
+- El mosaico queda con bordes rectos, sin redondeos y sin separación entre cámaras.
 - No hay landing, hero ni tarjetas informativas externas ocupando la pantalla inicial.
 - El botón hamburguesa es la vía principal para acceder a opciones, filtros, mapa, directo, catálogo y configuración.
 - El catálogo base contiene **144 cámaras** procedentes de la versión WorldCam Minimal v0.4.
-- La vista **Directo** muestra el mosaico de cámaras en vivo con selección de 1, 2, 4, 6, 9, 16 o 25 cámaras.
+- La vista **Directo** mantiene el mosaico por lotes de 1, 2, 4, 6, 9, 16 o 25 cámaras.
 - La vista **Mapa** reutiliza D3 + TopoJSON para colocar puntos geográficos.
 - La vista **Catálogo** permite ver, ocultar, comprobar o retirar cámaras del catálogo local.
 - La vista **Config** permite añadir cámaras, importar JSON, exportar el catálogo y restaurar la base.
@@ -57,11 +60,11 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 
 ### Lugares
 
-Es la vista inicial. Muestra todos los lugares/cámaras del catálogo como mosaico compacto. Al pulsar una cámara, se abre la vista **Directo** con esa cámara a pantalla completa.
+Es la vista inicial. Muestra el catálogo como mosaico compacto de cámaras en reproducción. No requiere pulsar una cámara para empezar a verla.
 
 ### Directo
 
-Muestra un mosaico real de iframes, imágenes, MJPEG o HLS según el tipo de cámara. Para no saturar el navegador, la vista en directo trabaja por lotes configurables.
+Muestra un mosaico controlado de iframes, imágenes, MJPEG o HLS según el tipo de cámara. Sirve para ver pocas cámaras de forma más grande.
 
 ### Panel hamburguesa
 
@@ -76,9 +79,13 @@ Todo lo que no sea la cámara/listado principal vive dentro del panel lateral:
 - búsqueda técnica;
 - comprobación de cámaras.
 
+## Nota sobre rendimiento
+
+La vista inicial no dispara todos los reproductores del catálogo a la vez. Carga automáticamente los visibles y prepara los siguientes al aproximarse al viewport. Esto mantiene la idea de reproducción directa sin forzar decenas o cientos de iframes simultáneos desde el primer instante.
+
 ## Nota sobre YouTube y embeds
 
-Muchas cámaras de YouTube pueden cambiar, dejar de emitir o bloquear inserción según el propietario del directo. Esta versión usa `youtube-nocookie.com/embed/ID` para la vista en directo y miniaturas públicas para el listado inicial.
+Muchas cámaras de YouTube pueden cambiar, dejar de emitir o bloquear inserción según el propietario del directo. Esta versión usa `youtube-nocookie.com/embed/ID` para la reproducción y evita miniaturas como vista principal.
 
 ## Próximos pasos
 
@@ -86,5 +93,5 @@ Muchas cámaras de YouTube pueden cambiar, dejar de emitir o bloquear inserción
 - Añadir más cámaras paisajísticas con prioridad a costas, montañas, volcanes, skylines y espacios naturales.
 - Separar el catálogo por regiones si supera varios cientos de entradas.
 - Añadir favoritos locales.
-- Añadir previsualización expandida antes de abrir el directo.
+- Añadir control de densidad del mosaico inicial.
 - Crear una validación automática del catálogo.
