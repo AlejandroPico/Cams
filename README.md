@@ -17,7 +17,7 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 - El botón hamburguesa es la vía principal para acceder a opciones, filtros, mapa, directo, catálogo y configuración.
 - El catálogo base contiene **144 cámaras** procedentes de la versión WorldCam Minimal v0.4.
 - La vista **Directo** usa la misma cantidad seleccionada en el mosaico principal.
-- La vista **Mapa** reutiliza D3 + TopoJSON para colocar puntos geográficos.
+- La vista **Mapa** muestra una **esfera terrestre 3D** con textura satelital, atmósfera, zoom, rotación, fronteras de países y marcadores de cámaras.
 - La vista **Catálogo** permite ver, ocultar, comprobar o retirar cámaras del catálogo local.
 - La vista **Config** permite añadir cámaras, importar JSON, exportar el catálogo y restaurar la base.
 
@@ -31,6 +31,7 @@ La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla co
 ├── .gitignore
 ├── assets/
 │   ├── css/
+│   │   ├── globe.css
 │   │   └── styles.css
 │   ├── img/
 │   │   └── favicon.svg
@@ -69,6 +70,10 @@ Es la vista inicial. Muestra un lote de cámaras en reproducción directa. Por d
 
 Muestra el mismo lote de cámaras en un mosaico controlado de iframes, imágenes, MJPEG o HLS según el tipo de cámara. Sirve para usar el modo fullscreen o rotación con el tamaño de lote seleccionado.
 
+### Mapa
+
+Muestra un globo 3D interactivo. La esfera usa textura satelital tipo Blue Marble, relieve sutil, atmósfera, fondo espacial, fronteras nacionales y puntos de cámaras. El usuario puede rotar la Tierra, hacer zoom y pulsar un punto para abrir la cámara correspondiente.
+
 ### Panel hamburguesa
 
 Todo lo que no sea la cámara/listado principal vive dentro del panel lateral:
@@ -86,6 +91,12 @@ Todo lo que no sea la cámara/listado principal vive dentro del panel lateral:
 ## Nota sobre rendimiento
 
 La vista inicial no dispara todo el catálogo a la vez. Renderiza exclusivamente el lote visible, con un máximo de 30 reproductores simultáneos.
+
+## Dependencias externas de visualización
+
+- D3 y TopoJSON para leer la geometría de países.
+- Globe.gl para la esfera 3D.
+- Texturas públicas de `three-globe` para la visualización satelital y el fondo espacial.
 
 ## Nota sobre YouTube y embeds
 
