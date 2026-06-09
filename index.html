@@ -23,9 +23,13 @@
       <div id="tileGrid" class="tile-grid"></div>
     </section>
 
-    <section id="mapView" class="view" aria-label="Mapa de cámaras">
+    <section id="mapView" class="view" aria-label="Globo 3D de cámaras">
       <div id="mapCanvas">
-        <svg id="worldMap" role="img" aria-label="Mapa de cámaras"></svg>
+        <div id="worldGlobe" role="img" aria-label="Esfera terrestre 3D con cámaras"></div>
+        <div id="mapHud">
+          <button id="mapResetBtn" class="mini" type="button">reset esfera</button>
+          <span id="mapStats" class="map-pill">globo 3D</span>
+        </div>
       </div>
     </section>
 
@@ -182,6 +186,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.32.1/dist/globe.gl.min.js"></script>
   <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>
