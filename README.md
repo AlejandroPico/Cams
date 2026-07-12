@@ -34,10 +34,10 @@ El esquema completo está en:
 data/schema.sql
 ```
 
-El generador es:
+El punto de entrada seguro es:
 
 ```text
-scripts/catalog/build_catalog.py
+scripts/catalog/run_catalog.py
 ```
 
 Cada ejecución actualiza SQLite y exporta:
@@ -50,6 +50,8 @@ src/data/catalog.seed.json
 ```
 
 El último archivo se compila dentro de la aplicación. Si GitHub Pages entrega un 404 temporal en `data/cameras.json`, Cams utiliza esa copia integrada y no se queda sin catálogo.
+
+Antes de importar, `prepare_database.py` comprueba la cabecera SQLite y ejecuta `PRAGMA quick_check`. Si encuentra una imagen malformada, elimina únicamente esa base y sus archivos auxiliares y la reconstruye desde `data/schema.sql`. Véase [docs/SQLITE_RECOVERY.md](docs/SQLITE_RECOVERY.md).
 
 La explicación campo por campo está en [docs/SQLITE_DATABASE.md](docs/SQLITE_DATABASE.md).
 
@@ -104,8 +106,14 @@ El filtro inicial es `Cualquier estado`, por lo que las cámaras `unknown` ya no
 ```bash
 nvm use
 npm install
-python scripts/catalog/build_catalog.py
+npm run catalog:refresh
 npm run dev
+```
+
+Comprobación aislada de SQLite:
+
+```bash
+npm run catalog:check
 ```
 
 Compilación:
@@ -114,7 +122,7 @@ Compilación:
 npm run build
 ```
 
-Regeneración sin Internet, utilizando lo que ya exista en SQLite:
+Regeneración sin Internet:
 
 ```bash
 npm run catalog:offline
@@ -126,12 +134,14 @@ npm run catalog:offline
 
 1. fuerza el runtime JavaScript compatible con Node.js 24;
 2. instala Node.js 24 y Python 3.13;
-3. actualiza SQLite y los JSON;
-4. compila la aplicación;
-5. persiste la base y el catálogo generado en `main` con `[skip ci]`;
-6. publica `dist` en GitHub Pages.
+3. valida o reconstruye SQLite;
+4. actualiza la base y los JSON;
+5. comprueba integridad, recuentos y coincidencia de exportaciones;
+6. compila la aplicación;
+7. persiste la base y el catálogo generado en `main` con `[skip ci]`;
+8. publica `dist` en GitHub Pages.
 
-`.github/workflows/refresh-catalog.yml` actualiza la base cada seis horas.
+`.github/workflows/refresh-catalog.yml` actualiza la base cada seis horas y aplica la misma recuperación automática.
 
 En **Settings → Pages** debe estar seleccionada la fuente **GitHub Actions**.
 
