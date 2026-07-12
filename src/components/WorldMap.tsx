@@ -67,7 +67,6 @@ export function WorldMap({ cameras, selected, onSelect, showLabels, showDayNight
       pitch: 0,
       bearing: 0,
       renderWorldCopies: false,
-      antialias: true,
       attributionControl: false,
       cooperativeGestures: false,
       fadeDuration: 80
