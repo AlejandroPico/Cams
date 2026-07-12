@@ -1,54 +1,15 @@
 <!doctype html>
 <html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cams · WorldCam Minimal</title>
-  <meta name="description" content="Mosaico minimalista de webcams en directo de todo el mundo.">
-  <meta name="theme-color" content="#030305">
-  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="assets/css/styles.css">
-  <link rel="stylesheet" href="assets/css/panel.css">
-  <link rel="stylesheet" href="assets/css/globe.css">
-  <link rel="stylesheet" href="assets/css/map-markers.css">
-</head>
-<body class="labels-on">
-  <div id="app">
-    <div class="top-floating"><button id="menuBtn" class="menu-button" type="button" aria-label="Abrir menú">☰</button></div>
-    <main id="wallView" class="view active" aria-label="Mosaico principal de cámaras"><div id="wallGrid" class="wall-grid"></div></main>
-    <section id="liveView" class="view" aria-label="Mosaico en directo"><div id="tileGrid" class="tile-grid"></div></section>
-    <section id="mapView" class="view" aria-label="Globo 3D de cámaras">
-      <div id="mapCanvas">
-        <div id="worldGlobe" role="img" aria-label="Esfera terrestre 3D con cámaras"></div>
-        <div id="mapHud"><button id="mapResetBtn" class="mini" type="button">reset esfera</button><span id="mapStats" class="map-pill">globo 3D</span></div>
-        <aside id="mapPreview" class="map-preview" aria-label="Vista previa de cámara en el mapa" hidden>
-          <header class="map-preview-head"><div><strong id="mapPreviewTitle">Cámara</strong><span id="mapPreviewMeta">Vista en directo</span></div><button id="mapPreviewClose" class="mini" type="button" aria-label="Cerrar vista previa">×</button></header>
-          <div id="mapPreviewBody" class="map-preview-body"></div>
-          <footer class="map-preview-foot"><button id="mapPreviewDeepZoom" class="mini" type="button">zoom satélite</button><a id="mapPreviewOpen" href="#" target="_blank" rel="noopener">abrir fuente</a></footer>
-        </aside>
-        <aside id="deepZoomPanel" class="deep-zoom" aria-label="Zoom satelital profundo" hidden>
-          <header class="deep-zoom-head"><div><strong id="deepZoomTitle">Zoom satelital</strong><span id="deepZoomMeta">Detalle de terreno</span></div><button id="deepZoomClose" class="mini" type="button" aria-label="Cerrar zoom satelital">×</button></header>
-          <div id="deepZoomMap" class="deep-zoom-map"></div>
-          <footer class="deep-zoom-foot">Teselas satelitales para aproximación de calle. El detalle depende de la cobertura disponible.</footer>
-        </aside>
-      </div>
-    </section>
-    <section id="catalogView" class="view" aria-label="Catálogo técnico"><div class="catalog" id="catalogList"></div></section>
-    <section id="configView" class="view" aria-label="Configuración del catálogo">
-      <div class="config"><div class="config-box">
-        <h1>Configuración</h1><p class="notice">El catálogo se guarda localmente con <strong>localStorage</strong>. Para YouTube, es preferible servir la web desde GitHub Pages o desde un servidor local, no abrirla con <code>file://</code>.</p>
-        <div class="section"><h2>Añadir cámara rápida</h2><label>Nombre</label><input id="newTitle" placeholder="Nombre de la cámara"><div class="inline"><div><label>Ciudad</label><input id="newCity" placeholder="Ciudad o zona"></div><div><label>País</label><input id="newCountry" placeholder="País"></div></div><div class="inline"><div><label>Tipo</label><select id="newType"><option value="youtube">YouTube</option><option value="iframe">iframe</option><option value="image">imagen refrescada</option><option value="mjpeg">MJPEG</option><option value="hls">HLS .m3u8</option></select></div><div><label>Categoría</label><input id="newCategory" placeholder="playa, ciudad, montaña..."></div></div><label>URL o ID de YouTube</label><input id="newUrl" placeholder="https://www.youtube.com/watch?v=..."><div class="inline"><div><label>Latitud</label><input id="newLat" placeholder="41.38"></div><div><label>Longitud</label><input id="newLon" placeholder="2.17"></div></div><button id="addCamBtn" class="wide" type="button">Añadir cámara</button></div>
-        <div class="section"><h2>Importar / exportar</h2><label>Importar JSON</label><textarea id="jsonImport" placeholder='{"title":"Vigo","country":"España","city":"Vigo","lat":42.24,"lon":-8.72,"type":"youtube","videoId":"..."}'></textarea><div class="inline actions"><button id="importBtn" type="button">Importar</button><button id="exportBtn" type="button">Exportar catálogo</button><button id="resetCatalogBtn" class="bad" type="button">Restaurar base</button></div></div>
-      </div></div>
-    </section>
-  </div>
-  <div id="drawerShade"></div>
-  <aside id="side" aria-label="Panel de control"><div id="sideHead"><strong>Cams</strong><button id="closeSide" class="ghost" type="button" aria-label="Cerrar menú">×</button></div><div id="sideBody"><nav class="nav" aria-label="Secciones"><button data-view="wallView" class="active" type="button">mosaico</button><button data-view="liveView" type="button">directo</button><button data-view="mapView" type="button">mapa</button><button data-view="catalogView" type="button">catálogo</button><button data-view="configView" type="button">config</button></nav><div class="section first"><h2>Explorar</h2><label>País</label><select id="countryFilter"></select><label>Categoría</label><select id="categoryFilter"></select><label>Texto</label><input id="textFilter" placeholder="ciudad, playa, volcán, airport..."></div><div class="section"><h2>Mosaico</h2><label>Número de cámaras en pantalla</label><select id="gridSelect"><option value="1">1 cámara</option><option value="2">2 cámaras</option><option value="4">4 cámaras</option><option value="6">6 cámaras</option><option value="9">9 cámaras</option><option value="12">12 cámaras</option><option value="16">16 cámaras</option><option value="20">20 cámaras</option><option value="25">25 cámaras</option><option value="30" selected>30 cámaras</option></select><div class="inline actions"><button id="prevBtn" type="button">←</button><button id="nextBtn" type="button">→</button><button id="shuffleBtn" type="button">azar</button></div><div class="toggle-line"><span>Rotación</span><button id="rotationBtn" class="mini" type="button">off</button></div><label>Intervalo</label><select id="rotationInterval"><option value="15000">15 s</option><option value="30000" selected>30 s</option><option value="60000">60 s</option><option value="120000">120 s</option></select></div><div class="section"><h2>Visual</h2><div class="toggle-line"><span>Etiquetas</span><button id="labelsBtn" class="mini good" type="button">on</button></div><div class="toggle-line"><span>Modo visual</span><button id="themeBtn" class="mini" type="button">noche</button></div><button id="fullscreenBtn" class="wide" type="button">Pantalla completa</button><button id="openSelectedBtn" class="wide" type="button">Abrir cámara seleccionada</button></div><div class="section"><h2>Catálogo</h2><label>Búsqueda técnica</label><input id="catalogSearch" placeholder="buscar en el catálogo..."><button id="checkVisibleBtn" class="wide" type="button">Comprobar visibles</button></div><div class="section"><small id="sideStats"></small></div></div></aside>
-  <div id="toast"></div>
-  <script src="https://unpkg.com/three/build/three.min.js"></script>
-  <script src="https://unpkg.com/globe.gl"></script>
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="assets/js/app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#020306" />
+    <meta name="description" content="Cams: visor mundial de webcams públicas, directos y snapshots." />
+    <link rel="icon" href="/Cams/icons/favicon.svg" type="image/svg+xml" />
+    <title>Cams · World Webcam Viewer</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
