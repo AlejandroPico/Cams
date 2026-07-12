@@ -1,0 +1,33 @@
+{
+  "sources": [
+    {
+      "name": "Ejemplo GeoJSON público",
+      "enabled": false,
+      "url": "https://example.org/webcams.geojson",
+      "type": "geojson",
+      "category": "paisaje",
+      "attribution": "Proveedor original",
+      "license": "Indicar licencia antes de activar"
+    },
+    {
+      "name": "Ejemplo JSON público",
+      "enabled": false,
+      "url": "https://example.org/webcams.json",
+      "itemPath": "cameras",
+      "mapping": {
+        "id": "id",
+        "title": "name",
+        "country": "country",
+        "city": "city",
+        "lat": "latitude",
+        "lon": "longitude",
+        "snapshotUrl": "image",
+        "sourceUrl": "url"
+      },
+      "type": "snapshot",
+      "refreshSeconds": 300,
+      "attribution": "Proveedor original",
+      "license": "Indicar licencia antes de activar"
+    }
+  ]
+}
