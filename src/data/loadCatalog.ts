@@ -1,7 +1,4 @@
 import type { Camera } from '../types';
-// Se conserva la semilla histórica durante la migración al nuevo pipeline gratuito.
-// @ts-expect-error El archivo antiguo es JavaScript y se reutiliza deliberadamente.
-import { DEFAULT_CAMS } from '../../assets/js/data/cameras.js';
 
 const normalise = (raw: Partial<Camera> & Record<string, unknown>, index: number): Camera | null => {
   const lat = Number(raw.lat);
@@ -35,19 +32,12 @@ const normalise = (raw: Partial<Camera> & Record<string, unknown>, index: number
 };
 
 export async function loadCatalog(): Promise<Camera[]> {
-  let remote: unknown[] = [];
-  try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/cameras.json`, { cache: 'no-store' });
-    if (response.ok) {
-      const payload = await response.json();
-      remote = Array.isArray(payload) ? payload : Array.isArray(payload.cameras) ? payload.cameras : [];
-    }
-  } catch {
-    // GitHub Pages puede servir brevemente la versión anterior mientras publica el nuevo catálogo.
-  }
-
-  const source: unknown[] = remote.length ? remote : (DEFAULT_CAMS as unknown[]);
+  const response = await fetch(`${import.meta.env.BASE_URL}data/cameras.json`, { cache: 'no-store' });
+  if (!response.ok) throw new Error(`Catálogo no disponible (${response.status})`);
+  const payload = await response.json();
+  const source: unknown[] = Array.isArray(payload) ? payload : Array.isArray(payload.cameras) ? payload.cameras : [];
   const deduped = new Map<string, Camera>();
+
   source.forEach((item: unknown, index: number) => {
     const camera = normalise(item as Record<string, unknown>, index);
     if (!camera) return;
