@@ -1,6 +1,6 @@
 # Cams
 
-**Cams** es un visor mundial de webcams públicas, directos y snapshots. La reconstrucción actual sustituye el prototipo HTML por una aplicación React + TypeScript orientada a funcionar sin servicios de pago.
+**Cams** es un visor mundial de webcams públicas, directos y snapshots. La aplicación está construida con React, TypeScript, Vite y MapLibre, y se publica sin servicios de pago mediante GitHub Pages.
 
 ## Principios
 
@@ -12,29 +12,53 @@
 - Catálogo ampliable mediante archivos locales y fuentes públicas autorizadas.
 - Sin extracción masiva de directorios comerciales ni copia de contenidos contra sus condiciones.
 
-## Qué cambia en esta versión
+## Estado de la reconstrucción
 
-- React 18, TypeScript y Vite.
-- MapLibre GL JS con proyección de globo.
+### Mapa
+
+- MapLibre GL JS como motor geoespacial.
+- Proyección de globo activada después de cargar el estilo principal.
 - Base satelital por teselas de Esri World Imagery, con atribución visible.
-- Capa de día/noche calculada localmente y atenuada al acercarse para conservar definición.
-- Iconos de cámara derivados del símbolo aportado al proyecto:
+- Mapa OpenStreetMap de respaldo si la fuente satelital no responde.
+- Inicialización desacoplada de iconos y etiquetas externas: el terreno puede aparecer aunque falle una capa secundaria.
+- Panel de diagnóstico cuando WebGL o el estilo cartográfico no pueden iniciarse.
+- Capa de día/noche calculada localmente y atenuada al acercarse.
+- Clustering nativo de MapLibre para evitar el retraso de marcadores HTML.
+- Etiquetas opcionales de localidades, sin carreteras ni fronteras resaltadas.
+- Iconos de cámara con estado lumínico:
   - amarillo: día;
   - naranja: amanecer o atardecer;
   - azul: noche.
-- Clustering nativo de MapLibre; los iconos ya no son elementos retardados que persiguen a la esfera.
-- Etiquetas de localidades sin carreteras ni fronteras destacadas.
-- Mapa como vista inicial y mosaico como segunda vista principal.
+
+### Mosaico
+
+- Parrillas de 1, 2, 4, 6, 9, 12, 16, 20, 25 o 30 cámaras.
+- Sin huecos ni marcos decorativos entre reproducciones.
+- Navegación anterior, siguiente y aleatoria.
+- Rotación automática configurable.
 - Filtros por país, categoría, tipo de medio y estado.
-- Ventana flotante para reproducir la cámara seleccionada.
-- Mosaicos de 1, 2, 4, 6, 9, 12, 16, 20, 25 o 30 cámaras.
-- Rotación automática y navegación por lotes.
-- Pipeline Python extensible para consolidar fuentes gratuitas.
-- GitHub Actions para desplegar y actualizar el catálogo sin servidor permanente.
+- Directos y snapshots proceden del mismo catálogo que alimenta el mapa.
+- Las cámaras confirmadas como caídas quedan ocultas por defecto.
+- Cada celda indica si está online, sin verificar o fuera de servicio.
+
+## Comprobación de cámaras
+
+El comando `npm run catalog:refresh`:
+
+1. consolida el catálogo histórico, el CSV manual y las fuentes JSON o GeoJSON activadas;
+2. deduplica registros;
+3. consulta endpoints públicos de YouTube para distinguir directos activos, grabaciones terminadas y fuentes no verificables;
+4. escribe el resultado en `public/data/cameras.json`;
+5. guarda estadísticas y fecha de comprobación en `public/data/catalog-meta.json`.
+
+La comprobación no utiliza credenciales, no descarga vídeos y no elude controles. Un resultado `unknown` significa que la disponibilidad no pudo determinarse con seguridad; no se presenta como directo verificado.
 
 ## Desarrollo local
 
+El proyecto fija **Node.js 24** mediante `.nvmrc`.
+
 ```bash
+nvm use
 npm install
 npm run catalog:refresh
 npm run dev
@@ -47,26 +71,43 @@ npm run build
 npm run preview
 ```
 
-## Publicación gratuita
+Para regenerar el catálogo sin comprobar YouTube:
 
-El workflow `.github/workflows/deploy.yml` compila la aplicación y la publica con GitHub Pages. Debe configurarse Pages con **Source: GitHub Actions**.
+```bash
+npm run catalog:fast
+```
 
-El workflow `.github/workflows/refresh-catalog.yml` reconstruye el catálogo cada seis horas y solo crea un commit cuando cambian los datos.
+## GitHub Actions y publicación
+
+Los workflows utilizan acciones basadas en Node.js 24:
+
+- `actions/checkout@v5`;
+- `actions/setup-node@v5` con Node 24;
+- `actions/setup-python@v6`;
+- `actions/configure-pages@v6`;
+- `actions/upload-pages-artifact@v5`;
+- `actions/deploy-pages@v5`.
+
+`.github/workflows/deploy.yml` reconstruye el catálogo, compila la aplicación y publica `dist` en GitHub Pages después de cada cambio en `main`.
+
+`.github/workflows/refresh-catalog.yml` comprueba y actualiza el catálogo cada seis horas. Solo crea un commit cuando cambian los archivos publicados.
+
+En **Settings → Pages**, la fuente debe ser **GitHub Actions**.
 
 ## Catálogo
 
-El catálogo resultante se publica en:
+Archivos publicados:
 
 ```text
 public/data/cameras.json
 public/data/catalog-meta.json
 ```
 
-Fuentes de entrada actuales:
+Fuentes de entrada:
 
-1. El catálogo heredado del prototipo.
-2. `data/manual/cameras.csv`.
-3. Fuentes JSON o GeoJSON declaradas y activadas en `data/sources.json`.
+1. catálogo heredado del prototipo;
+2. `data/manual/cameras.csv`;
+3. fuentes JSON o GeoJSON activadas en `data/sources.json`.
 
 Cada fuente debe indicar atribución y licencia. El agregador deduplica por identificador y URL de medio.
 
@@ -86,15 +127,15 @@ Edite `data/sources.json`:
 }
 ```
 
-Para formatos distintos se añadirá un adaptador específico dentro de `scripts/ingest/providers/`.
+Para formatos distintos se añadirá un adaptador específico dentro de `scripts/ingest/`.
 
 ## Límites reales
 
-“Sin límite de catálogo” no significa dibujar medio millón de reproductores a la vez. El navegador muestra clústeres y solo carga medios cuando son visibles o seleccionados. La evolución prevista para catálogos muy grandes es generar teselas vectoriales o PMTiles desde GitHub Actions, manteniendo el alojamiento estático.
+“Sin límite de catálogo” no significa dibujar medio millón de reproductores a la vez. El navegador muestra clústeres y solo carga medios cuando son visibles o seleccionados. Para catálogos muy grandes, la evolución prevista es generar teselas vectoriales o PMTiles desde GitHub Actions y mantener el alojamiento estático.
 
-La imagen satelital no se almacena en el repositorio. Se solicita al proveedor de teselas y su resolución final depende de la cobertura pública disponible. No se utilizan Google Maps ni servicios que requieran facturación.
+La imagen satelital no se almacena en el repositorio. Se solicita al proveedor de teselas y la resolución final depende de la cobertura disponible. No se utilizan Google Maps ni servicios que requieran facturación.
 
-## Estructura
+## Estructura principal
 
 ```text
 src/
@@ -114,12 +155,14 @@ src/
 │   └── mapStyle.ts
 ├── App.tsx
 ├── main.tsx
+├── map.css
 ├── styles.css
 └── types.ts
 
-scripts/ingest/aggregate.py
-data/manual/cameras.csv
-data/sources.json
+scripts/ingest/
+├── aggregate.py
+├── refresh.py
+└── youtube_health.py
 ```
 
 ## Política de cámaras
