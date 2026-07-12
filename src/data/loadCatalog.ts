@@ -1,7 +1,5 @@
 import type { Camera } from '../types';
 import bundledSeed from './catalog.seed.json';
-// El catálogo histórico permanece como último respaldo si GitHub Pages aún no ha publicado SQLite/JSON.
-// @ts-expect-error Módulo JavaScript heredado, normalizado inmediatamente después.
 import { DEFAULT_CAMS } from '../../assets/js/data/cameras.js';
 
 const normalise = (raw: Record<string, unknown>, index: number): Camera | null => {
