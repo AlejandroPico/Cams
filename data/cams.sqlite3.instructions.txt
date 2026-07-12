@@ -1,0 +1,1 @@
+Ejecute `python scripts/catalog/build_catalog.py` para crear la base binaria `data/cams.sqlite3` y exportar el catálogo público.
