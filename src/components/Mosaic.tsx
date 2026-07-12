@@ -14,11 +14,12 @@ const SHAPES: Record<number, [number, number]> = {
   12: [4, 3], 16: [4, 4], 20: [5, 4], 25: [5, 5], 30: [6, 5]
 };
 
-const STATUS_LABEL: Record<Camera['status'], string> = {
+const STATUS_LABEL = {
   online: 'online',
   unknown: 'sin verificar',
-  offline: 'fuera de servicio'
-};
+  offline: 'fuera de servicio',
+  blocked: 'bloqueada por el proveedor'
+} satisfies Record<Camera['status'], string>;
 
 function visibleBatch(cameras: Camera[], count: number, offset: number): Camera[] {
   if (!cameras.length) return [];
