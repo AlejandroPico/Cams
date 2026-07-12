@@ -1,138 +1,135 @@
 # Cams
 
-Mosaico minimalista de webcams públicas del mundo, preparado para publicarse directamente con **GitHub Pages**.
+**Cams** es un visor mundial de webcams públicas, directos y snapshots. La reconstrucción actual sustituye el prototipo HTML por una aplicación React + TypeScript orientada a funcionar sin servicios de pago.
 
-La versión actual recupera el enfoque de `worldcam_lite_v0_4.html`: pantalla completa, cámaras visibles desde el primer segundo y un único panel lateral tipo hamburguesa para navegación, filtros, mapa, catálogo técnico y configuración.
+## Principios
 
-## Estado actual
+- Coste operativo: **0 €**.
+- Pantalla inicial: **mapa mundial**.
+- Globo satelital con teselas progresivas y zoom hasta el nivel máximo disponible por la imagen base.
+- Mosaico sin separaciones visuales entre cámaras.
+- Directos, snapshots, imágenes refrescadas, HLS, MJPEG e iframes.
+- Catálogo ampliable mediante archivos locales y fuentes públicas autorizadas.
+- Sin extracción masiva de directorios comerciales ni copia de contenidos contra sus condiciones.
 
-- La página abre directamente en **Mosaico**, con cámaras en reproducción.
-- La pantalla principal ya no intenta mostrar todo el catálogo a la vez.
-- El máximo visible simultáneo es **30 cámaras**, distribuido como **6 columnas × 5 filas**.
-- El selector del panel hamburguesa permite elegir 1, 2, 4, 6, 9, 12, 16, 20, 25 o 30 cámaras, sin texto de multiplicaciones.
-- Los botones anterior, siguiente y azar paginan por lotes del tamaño elegido.
-- Se eliminan las miniaturas como vista principal: cada celda visible carga un reproductor real.
-- El mosaico queda con bordes rectos, sin redondeos y sin separación entre cámaras.
-- El control **Etiquetas** muestra u oculta los rótulos visuales superpuestos en cámaras y mosaicos.
-- El panel hamburguesa corrige la legibilidad de desplegables en modo nocturno.
-- No hay landing, hero ni tarjetas informativas externas ocupando la pantalla inicial.
-- El botón hamburguesa es la vía principal para acceder a opciones, filtros, mapa, directo, catálogo y configuración.
-- El catálogo base contiene **144 cámaras** procedentes de la versión WorldCam Minimal v0.4.
-- La vista **Directo** usa la misma cantidad seleccionada en el mosaico principal.
-- La vista **Mapa** muestra una **esfera terrestre 3D** con textura satelital estable, atmósfera, zoom ampliado, rotación, fronteras de países y marcadores de cámaras.
-- Los marcadores del globo son iconos de cámara con la silueta aportada por el usuario, no tubos 3D.
-- El borde del icono cambia por situación solar: amarillo en día, naranja en amanecer/anochecer y azul en noche.
-- La línea visual del terminador día/noche queda eliminada para no ensuciar el globo.
-- El doble clic sobre cámara o esfera ya no abre mapas ni cambia de modo.
-- La ventana flotante de cámara muestra hora local con huso horario IANA cuando el país se reconoce; España usa `Europe/Madrid` y aplica horario de verano.
-- El globo permite acercarse mucho más a la superficie mediante zoom óptico de la esfera.
-- Para detalle de alta resolución se mantiene el botón **zoom satélite** dentro de la ventana flotante.
-- Al pulsar una cámara en el globo se abre una ventana flotante dentro del propio mapa, sin cambiar a la vista 1×1.
-- La vista **Catálogo** permite ver, ocultar, comprobar o retirar cámaras del catálogo local.
-- La vista **Config** permite añadir cámaras, importar JSON, exportar el catálogo y restaurar la base.
+## Qué cambia en esta versión
 
-## Estructura del proyecto
+- React 18, TypeScript y Vite.
+- MapLibre GL JS con proyección de globo.
+- Base satelital por teselas de Esri World Imagery, con atribución visible.
+- Capa de día/noche calculada localmente y atenuada al acercarse para conservar definición.
+- Iconos de cámara derivados del símbolo aportado al proyecto:
+  - amarillo: día;
+  - naranja: amanecer o atardecer;
+  - azul: noche.
+- Clustering nativo de MapLibre; los iconos ya no son elementos retardados que persiguen a la esfera.
+- Etiquetas de localidades sin carreteras ni fronteras destacadas.
+- Mapa como vista inicial y mosaico como segunda vista principal.
+- Filtros por país, categoría, tipo de medio y estado.
+- Ventana flotante para reproducir la cámara seleccionada.
+- Mosaicos de 1, 2, 4, 6, 9, 12, 16, 20, 25 o 30 cámaras.
+- Rotación automática y navegación por lotes.
+- Pipeline Python extensible para consolidar fuentes gratuitas.
+- GitHub Actions para desplegar y actualizar el catálogo sin servidor permanente.
 
-```text
-.
-├── index.html
-├── README.md
-├── .nojekyll
-├── .gitignore
-├── assets/
-│   ├── css/
-│   │   ├── globe.css
-│   │   ├── map-markers.css
-│   │   ├── panel.css
-│   │   └── styles.css
-│   ├── img/
-│   │   └── favicon.svg
-│   └── js/
-│       ├── app.js
-│       ├── data/
-│       │   └── cameras.js
-│       └── modules/
-│           ├── filtering.js
-│           ├── map.js
-│           ├── player.js
-│           ├── state.js
-│           └── ui.js
-└── docs/
-    ├── ARCHITECTURE.md
-    └── CAMERA_DATA_MODEL.md
+## Desarrollo local
+
+```bash
+npm install
+npm run catalog:refresh
+npm run dev
 ```
 
-## Publicación en GitHub Pages
+Producción:
 
-1. Entra en **Settings → Pages**.
-2. En **Build and deployment**, selecciona:
-   - Source: `Deploy from a branch`
-   - Branch: `main`
-   - Folder: `/root`
-3. Guarda la configuración.
-4. GitHub Pages servirá directamente `index.html`.
+```bash
+npm run build
+npm run preview
+```
 
-## Funcionamiento
+## Publicación gratuita
 
-### Mosaico
+El workflow `.github/workflows/deploy.yml` compila la aplicación y la publica con GitHub Pages. Debe configurarse Pages con **Source: GitHub Actions**.
 
-Es la vista inicial. Muestra un lote de cámaras en reproducción directa. Por defecto carga 30 cámaras como máximo en una cuadrícula 6×5. El resto del catálogo no desaparece: se recorre con los botones anterior, siguiente o azar desde el panel hamburguesa.
+El workflow `.github/workflows/refresh-catalog.yml` reconstruye el catálogo cada seis horas y solo crea un commit cuando cambian los datos.
 
-### Directo
+## Catálogo
 
-Muestra el mismo lote de cámaras en un mosaico controlado de iframes, imágenes, MJPEG o HLS según el tipo de cámara. Sirve para usar el modo fullscreen o rotación con el tamaño de lote seleccionado.
+El catálogo resultante se publica en:
 
-### Mapa
+```text
+public/data/cameras.json
+public/data/catalog-meta.json
+```
 
-Muestra un globo 3D interactivo. La esfera usa textura satelital, relieve sutil, atmósfera, fondo espacial, fronteras nacionales y puntos de cámaras. El usuario puede rotar la Tierra y hacer zoom cerca de la superficie.
+Fuentes de entrada actuales:
 
-Los puntos de cámara se representan con iconos de cámara pequeños, basados en la silueta aportada por el usuario, con borde de alto contraste. El color del borde depende de la situación solar aproximada del punto: amarillo para día, naranja para amanecer/anochecer y azul para noche. No se dibuja ninguna línea de terminador ni capa de oscuridad sobre el globo.
+1. El catálogo heredado del prototipo.
+2. `data/manual/cameras.csv`.
+3. Fuentes JSON o GeoJSON declaradas y activadas en `data/sources.json`.
 
-Al pulsar un icono se abre una ventana flotante con el directo de esa cámara dentro del mismo escenario del globo, incluyendo hora local. El cálculo horario usa zona horaria IANA cuando el país se reconoce; si no, cae a una estimación por longitud. Desde esa ventana se puede abrir un **zoom satelital** con teselas de mayor detalle.
+Cada fuente debe indicar atribución y licencia. El agregador deduplica por identificador y URL de medio.
 
-### Panel hamburguesa
+## Añadir una fuente gratuita
 
-Todo lo que no sea la cámara/listado principal vive dentro del panel lateral:
+Edite `data/sources.json`:
 
-- navegación entre vistas;
-- filtros;
-- tamaño del mosaico;
-- paginación del mosaico;
-- rotación;
-- etiquetas;
-- modo visual;
-- pantalla completa;
-- búsqueda técnica;
-- comprobación de cámaras visibles.
+```json
+{
+  "name": "Red pública de webcams",
+  "enabled": true,
+  "url": "https://dominio-publico.example/cameras.geojson",
+  "type": "snapshot",
+  "refreshSeconds": 300,
+  "attribution": "Organismo propietario",
+  "license": "Licencia o condiciones de reutilización"
+}
+```
 
-## Nota sobre rendimiento
+Para formatos distintos se añadirá un adaptador específico dentro de `scripts/ingest/providers/`.
 
-La vista inicial no dispara todo el catálogo a la vez. Renderiza exclusivamente el lote visible, con un máximo de 30 reproductores simultáneos.
+## Límites reales
 
-En el globo 3D se evita recrear la escena si ya existe, se ajusta el tamaño sin recargar texturas, se limita el pixel ratio del render y se reducen resoluciones de puntos/fronteras para mejorar la fluidez.
+“Sin límite de catálogo” no significa dibujar medio millón de reproductores a la vez. El navegador muestra clústeres y solo carga medios cuando son visibles o seleccionados. La evolución prevista para catálogos muy grandes es generar teselas vectoriales o PMTiles desde GitHub Actions, manteniendo el alojamiento estático.
 
-## Dependencias externas de visualización
+La imagen satelital no se almacena en el repositorio. Se solicita al proveedor de teselas y su resolución final depende de la cobertura pública disponible. No se utilizan Google Maps ni servicios que requieran facturación.
 
-- D3 y TopoJSON para leer la geometría de países.
-- Globe.gl para la esfera 3D.
-- Leaflet para el visor de zoom satelital profundo.
-- Texturas públicas de `three-globe` para la visualización satelital y el fondo espacial.
-- Teselas satelitales externas para el detalle de aproximación.
+## Estructura
 
-## Nota sobre horas locales
+```text
+src/
+├── components/
+│   ├── CameraPanel.tsx
+│   ├── MediaPlayer.tsx
+│   ├── Mosaic.tsx
+│   ├── Sidebar.tsx
+│   └── WorldMap.tsx
+├── data/loadCatalog.ts
+├── lib/
+│   ├── catalog.ts
+│   └── time.ts
+├── map/
+│   ├── cameraIcon.ts
+│   ├── dayNight.ts
+│   └── mapStyle.ts
+├── App.tsx
+├── main.tsx
+├── styles.css
+└── types.ts
 
-La hora local intenta resolverse con husos horarios IANA para países reconocidos. España se resuelve como `Europe/Madrid` salvo islas Canarias, donde se usa `Atlantic/Canary`. En países muy grandes se aplica una heurística por longitud. Si no se puede determinar el huso, se usa una aproximación por longitud.
+scripts/ingest/aggregate.py
+data/manual/cameras.csv
+data/sources.json
+```
 
-## Nota sobre YouTube y embeds
+## Política de cámaras
 
-Muchas cámaras de YouTube pueden cambiar, dejar de emitir o bloquear inserción según el propietario del directo. Esta versión usa `youtube-nocookie.com/embed/ID` para la reproducción y evita miniaturas como vista principal.
+Cams solo debe integrar cámaras:
 
-## Próximos pasos
+- públicas y accesibles sin eludir controles;
+- con permiso de inserción o reutilización;
+- con atribución visible cuando sea obligatoria;
+- sin autenticación robada, scraping evasivo ni acceso a sistemas privados;
+- sin funciones de reconocimiento facial, seguimiento de personas o identificación.
 
-- Curar manualmente las cámaras que no sigan emitiendo.
-- Sustituir todas las heurísticas horarias por una base real de husos horarios por coordenadas.
-- Añadir más cámaras paisajísticas con prioridad a costas, montañas, volcanes, skylines y espacios naturales.
-- Separar el catálogo por regiones si supera varios cientos de entradas.
-- Añadir favoritos locales.
-- Añadir control de densidad del mosaico inicial.
-- Crear una validación automática del catálogo.
+Véase `docs/CAMERA_SOURCE_POLICY.md`.
