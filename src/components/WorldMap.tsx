@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import maplibregl, { type Map as MapLibreMap } from 'maplibre-gl';
+import maplibregl, { type Map as MapLibreMap, type MapLayerMouseEvent } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Camera } from '../types';
 import { buildNightGrid, lightState } from '../map/dayNight';
@@ -220,6 +220,7 @@ export function WorldMap({ cameras, selected, onSelect, showLabels, showDayNight
     let iconInteractionsBound = false;
     let satelliteLoaded = false;
     let satelliteErrors = 0;
+    let satelliteWatchdog: number | undefined;
 
     try {
       map = new maplibregl.Map({
@@ -249,7 +250,7 @@ export function WorldMap({ cameras, selected, onSelect, showLabels, showDayNight
     map.scrollZoom.setWheelZoomRate(1 / 280);
     map.touchZoomRotate.enable();
 
-    const selectCamera = (event: maplibregl.MapLayerMouseEvent) => {
+    const selectCamera = (event: MapLayerMouseEvent) => {
       const id = String(event.features?.[0]?.properties?.id || '');
       const camera = cameraIndexRef.current.get(id);
       if (camera) onSelect(camera);
@@ -258,6 +259,17 @@ export function WorldMap({ cameras, selected, onSelect, showLabels, showDayNight
     const bindPointerLayer = (layer: string) => {
       map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
+    };
+
+    const activateFallback = (reason: string) => {
+      if (disposed || !map.isStyleLoaded() || map.getLayer('fallback-map')) return;
+      try {
+        enableFallbackMap(map);
+        setStatus('mapa de respaldo activo');
+        setMapWarning(reason);
+      } catch (error) {
+        console.error('No se pudo activar el mapa de respaldo:', error);
+      }
     };
 
     const bindBaseInteractions = () => {
@@ -338,17 +350,25 @@ export function WorldMap({ cameras, selected, onSelect, showLabels, showDayNight
       bindBaseInteractions();
       void installOptionalLayers();
       window.setTimeout(() => map.resize(), 0);
+
+      if (satelliteWatchdog) window.clearTimeout(satelliteWatchdog);
+      satelliteWatchdog = window.setTimeout(() => {
+        if (!satelliteLoaded) {
+          activateFallback('Las teselas satelitales no respondieron a tiempo y se ha activado temporalmente el mapa cartográfico de respaldo.');
+        }
+      }, 12_000);
     });
 
     map.on('load', () => {
       if (disposed) return;
       setReady(true);
-      setStatus('satélite activo');
+      setStatus(satelliteLoaded ? 'satélite activo' : 'mapa listo');
     });
 
     map.on('sourcedata', (event) => {
       if (event.sourceId === 'satellite' && event.isSourceLoaded) {
         satelliteLoaded = true;
+        if (satelliteWatchdog) window.clearTimeout(satelliteWatchdog);
         setStatus('satélite activo');
       }
     });
@@ -360,14 +380,8 @@ export function WorldMap({ cameras, selected, onSelect, showLabels, showDayNight
 
       if (detail.sourceId === 'satellite' || message.includes('arcgisonline')) {
         satelliteErrors += 1;
-        if (!satelliteLoaded && satelliteErrors >= 5 && map.isStyleLoaded()) {
-          try {
-            enableFallbackMap(map);
-            setStatus('mapa de respaldo activo');
-            setMapWarning('Las teselas satelitales no respondieron y se ha activado temporalmente el mapa cartográfico de respaldo.');
-          } catch (fallbackError) {
-            console.error('No se pudo activar el mapa de respaldo:', fallbackError);
-          }
+        if (!satelliteLoaded && satelliteErrors >= 5) {
+          activateFallback('Las teselas satelitales no respondieron y se ha activado temporalmente el mapa cartográfico de respaldo.');
         }
       }
     });
@@ -396,6 +410,7 @@ export function WorldMap({ cameras, selected, onSelect, showLabels, showDayNight
     return () => {
       disposed = true;
       window.clearTimeout(watchdog);
+      if (satelliteWatchdog) window.clearTimeout(satelliteWatchdog);
       window.clearInterval(timer);
       observer.disconnect();
       map.remove();
