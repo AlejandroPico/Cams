@@ -1,22 +1,15 @@
-# Sistema operativo
-.DS_Store
-Thumbs.db
-
-# Editores
-.vscode/
-.idea/
-
-# Dependencias / builds futuros
 node_modules/
 dist/
-build/
-
-# Logs
+.vite/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Temporales
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
 *.tmp
 *.bak
