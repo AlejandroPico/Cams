@@ -1,178 +1,140 @@
 # Cams
 
-**Cams** es un visor mundial de webcams públicas, directos y snapshots. La aplicación está construida con React, TypeScript, Vite y MapLibre, y se publica sin servicios de pago mediante GitHub Pages.
+Cams es un visor mundial de webcams públicas, directos y snapshots. La aplicación abre en un globo interactivo, permite localizar cámaras por todo el mundo y ofrece una segunda vista de mosaico minimalista.
 
-## Principios
+## Reconstrucción v4
 
-- Coste operativo: **0 €**.
-- Pantalla inicial: **mapa mundial**.
-- Globo satelital con teselas progresivas y zoom hasta el nivel máximo disponible por la imagen base.
-- Mosaico sin separaciones visuales entre cámaras.
-- Directos, snapshots, imágenes refrescadas, HLS, MJPEG e iframes.
-- Catálogo ampliable mediante archivos locales y fuentes públicas autorizadas.
-- Sin extracción masiva de directorios comerciales ni copia de contenidos contra sus condiciones.
+Esta versión elimina dos causas concretas de los fallos anteriores:
 
-## Estado de la reconstrucción
+- El mapa ya no contiene un temporizador que declare fallida la inicialización por un simple retraso del estilo o de las teselas.
+- El catálogo ya no depende exclusivamente de una petición a `public/data/cameras.json`: también queda integrado dentro del bundle.
 
-### Mapa
+La arquitectura actual utiliza:
 
-- MapLibre GL JS como motor geoespacial.
-- Proyección de globo activada después de cargar el estilo principal.
-- Base satelital por teselas de Esri World Imagery, con atribución visible.
-- Mapa OpenStreetMap de respaldo si la fuente satelital no responde.
-- Inicialización desacoplada de iconos y etiquetas externas: el terreno puede aparecer aunque falle una capa secundaria.
-- Panel de diagnóstico cuando WebGL o el estilo cartográfico no pueden iniciarse.
-- Capa de día/noche calculada localmente y atenuada al acercarse.
-- Clustering nativo de MapLibre para evitar el retraso de marcadores HTML.
-- Etiquetas opcionales de localidades, sin carreteras ni fronteras resaltadas.
-- Iconos de cámara con estado lumínico:
-  - amarillo: día;
-  - naranja: amanecer o atardecer;
-  - azul: noche.
+- React, TypeScript y Vite.
+- MapLibre GL JS con proyección `globe`.
+- Un mapa cartográfico básico que se carga antes que las capas opcionales.
+- Fotografía satelital añadida después; si falla, el globo básico sigue funcionando.
+- Clustering de cámaras en la GPU.
+- SQLite como fuente maestra del catálogo.
+- Python para importar, normalizar y exportar datos.
+- Node.js 24 y Python 3.13 en GitHub Actions.
 
-### Mosaico
+## Catálogo SQLite
 
-- Parrillas de 1, 2, 4, 6, 9, 12, 16, 20, 25 o 30 cámaras.
-- Sin huecos ni marcos decorativos entre reproducciones.
-- Navegación anterior, siguiente y aleatoria.
-- Rotación automática configurable.
-- Filtros por país, categoría, tipo de medio y estado.
-- Directos y snapshots proceden del mismo catálogo que alimenta el mapa.
-- Las cámaras confirmadas como caídas quedan ocultas por defecto.
-- Cada celda indica si está online, sin verificar o fuera de servicio.
+La base principal se genera en:
 
-## Comprobación de cámaras
-
-El comando `npm run catalog:refresh`:
-
-1. consolida el catálogo histórico, el CSV manual y las fuentes JSON o GeoJSON activadas;
-2. deduplica registros;
-3. consulta endpoints públicos de YouTube para distinguir directos activos, grabaciones terminadas y fuentes no verificables;
-4. escribe el resultado en `public/data/cameras.json`;
-5. guarda estadísticas y fecha de comprobación en `public/data/catalog-meta.json`.
-
-La comprobación no utiliza credenciales, no descarga vídeos y no elude controles. Un resultado `unknown` significa que la disponibilidad no pudo determinarse con seguridad; no se presenta como directo verificado.
-
-## Desarrollo local
-
-El proyecto fija **Node.js 24** mediante `.nvmrc`.
-
-```bash
-nvm use
-npm install
-npm run catalog:refresh
-npm run dev
+```text
+data/cams.sqlite3
 ```
 
-Producción:
+El esquema completo está en:
 
-```bash
-npm run build
-npm run preview
+```text
+data/schema.sql
 ```
 
-Para regenerar el catálogo sin comprobar YouTube:
+El generador es:
 
-```bash
-npm run catalog:fast
+```text
+scripts/catalog/build_catalog.py
 ```
 
-## GitHub Actions y publicación
-
-Los workflows utilizan acciones basadas en Node.js 24:
-
-- `actions/checkout@v5`;
-- `actions/setup-node@v5` con Node 24;
-- `actions/setup-python@v6`;
-- `actions/configure-pages@v6`;
-- `actions/upload-pages-artifact@v5`;
-- `actions/deploy-pages@v5`.
-
-`.github/workflows/deploy.yml` reconstruye el catálogo, compila la aplicación y publica `dist` en GitHub Pages después de cada cambio en `main`.
-
-`.github/workflows/refresh-catalog.yml` comprueba y actualiza el catálogo cada seis horas. Solo crea un commit cuando cambian los archivos publicados.
-
-En **Settings → Pages**, la fuente debe ser **GitHub Actions**.
-
-## Catálogo
-
-Archivos publicados:
+Cada ejecución actualiza SQLite y exporta:
 
 ```text
 public/data/cameras.json
 public/data/catalog-meta.json
+public/data/cams.sqlite3
+src/data/catalog.seed.json
 ```
 
-Fuentes de entrada:
+El último archivo se compila dentro de la aplicación. Si GitHub Pages entrega un 404 temporal en `data/cameras.json`, Cams utiliza esa copia integrada y no se queda sin catálogo.
 
-1. catálogo heredado del prototipo;
-2. `data/manual/cameras.csv`;
-3. fuentes JSON o GeoJSON activadas en `data/sources.json`.
+La explicación campo por campo está en [docs/SQLITE_DATABASE.md](docs/SQLITE_DATABASE.md).
 
-Cada fuente debe indicar atribución y licencia. El agregador deduplica por identificador y URL de medio.
+## Fuentes gratuitas iniciales
 
-## Añadir una fuente gratuita
+El importador consulta de manera independiente:
 
-Edite `data/sources.json`:
+- Caltrans CWWP2, los doce distritos de California.
+- Transport for London JamCams.
+- Singapore LTA Traffic Images.
+- GeoNet New Zealand Volcano Cameras.
+- El catálogo histórico de Cams como candidatos de YouTube sin garantía de emisión actual.
 
-```json
-{
-  "name": "Red pública de webcams",
-  "enabled": true,
-  "url": "https://dominio-publico.example/cameras.geojson",
-  "type": "snapshot",
-  "refreshSeconds": 300,
-  "attribution": "Organismo propietario",
-  "license": "Licencia o condiciones de reutilización"
-}
+Los proveedores remotos aportan snapshots y streams geolocalizados. Un fallo temporal de una fuente no borra las cámaras ya almacenadas ni impide importar las demás.
+
+## Mapa
+
+La inicialización se realiza por fases:
+
+1. estilo cartográfico mínimo;
+2. proyección esférica;
+3. capa satelital;
+4. cámaras y clústeres;
+5. sombra día/noche;
+6. iconos y nombres de localidades como mejoras opcionales.
+
+Los recursos opcionales no pueden bloquear el globo. La base cartográfica permanece disponible aunque falle Esri, Natural Earth o el icono personalizado.
+
+Los puntos de cámara se colorean según la iluminación aproximada:
+
+- amarillo durante el día;
+- naranja en amanecer o atardecer;
+- azul durante la noche.
+
+## Mosaico
+
+El mosaico consume exactamente el mismo catálogo que el mapa y admite:
+
+- YouTube;
+- HLS;
+- MJPEG;
+- iframes autorizados;
+- vídeo directo;
+- snapshots con refresco periódico;
+- parrillas de 1 a 30 cámaras;
+- rotación y filtros.
+
+El filtro inicial es `Cualquier estado`, por lo que las cámaras `unknown` ya no desaparecen de la interfaz. El usuario puede seleccionar después solo verificadas, disponibles, caídas o bloqueadas.
+
+## Desarrollo
+
+```bash
+nvm use
+npm install
+python scripts/catalog/build_catalog.py
+npm run dev
 ```
 
-Para formatos distintos se añadirá un adaptador específico dentro de `scripts/ingest/`.
+Compilación:
 
-## Límites reales
-
-“Sin límite de catálogo” no significa dibujar medio millón de reproductores a la vez. El navegador muestra clústeres y solo carga medios cuando son visibles o seleccionados. Para catálogos muy grandes, la evolución prevista es generar teselas vectoriales o PMTiles desde GitHub Actions y mantener el alojamiento estático.
-
-La imagen satelital no se almacena en el repositorio. Se solicita al proveedor de teselas y la resolución final depende de la cobertura disponible. No se utilizan Google Maps ni servicios que requieran facturación.
-
-## Estructura principal
-
-```text
-src/
-├── components/
-│   ├── CameraPanel.tsx
-│   ├── MediaPlayer.tsx
-│   ├── Mosaic.tsx
-│   ├── Sidebar.tsx
-│   └── WorldMap.tsx
-├── data/loadCatalog.ts
-├── lib/
-│   ├── catalog.ts
-│   └── time.ts
-├── map/
-│   ├── cameraIcon.ts
-│   ├── dayNight.ts
-│   └── mapStyle.ts
-├── App.tsx
-├── main.tsx
-├── map.css
-├── styles.css
-└── types.ts
-
-scripts/ingest/
-├── aggregate.py
-├── refresh.py
-└── youtube_health.py
+```bash
+npm run build
 ```
 
-## Política de cámaras
+Regeneración sin Internet, utilizando lo que ya exista en SQLite:
 
-Cams solo debe integrar cámaras:
+```bash
+npm run catalog:offline
+```
 
-- públicas y accesibles sin eludir controles;
-- con permiso de inserción o reutilización;
-- con atribución visible cuando sea obligatoria;
-- sin autenticación robada, scraping evasivo ni acceso a sistemas privados;
-- sin funciones de reconocimiento facial, seguimiento de personas o identificación.
+## GitHub Actions
 
-Véase `docs/CAMERA_SOURCE_POLICY.md`.
+`.github/workflows/deploy.yml`:
+
+1. fuerza el runtime JavaScript compatible con Node.js 24;
+2. instala Node.js 24 y Python 3.13;
+3. actualiza SQLite y los JSON;
+4. compila la aplicación;
+5. persiste la base y el catálogo generado en `main` con `[skip ci]`;
+6. publica `dist` en GitHub Pages.
+
+`.github/workflows/refresh-catalog.yml` actualiza la base cada seis horas.
+
+En **Settings → Pages** debe estar seleccionada la fuente **GitHub Actions**.
+
+## Política
+
+Solo se integran cámaras públicas y fuentes cuya visualización o reutilización esté permitida. Cams no intenta acceder a cámaras privadas, eludir autenticación, sortear cuotas comerciales ni copiar catálogos protegidos.
