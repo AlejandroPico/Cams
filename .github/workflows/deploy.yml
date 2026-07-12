@@ -32,6 +32,49 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Rebuild SQLite and camera exports
         run: python scripts/catalog/build_catalog.py
+      - name: Validate SQLite and exported catalog
+        run: |
+          python - <<'PY'
+          import json
+          import sqlite3
+          from pathlib import Path
+
+          db_path = Path("data/cams.sqlite3")
+          json_path = Path("public/data/cameras.json")
+          seed_path = Path("src/data/catalog.seed.json")
+
+          for path in (db_path, json_path, seed_path):
+              if not path.is_file() or path.stat().st_size == 0:
+                  raise SystemExit(f"Required catalog artifact is missing or empty: {path}")
+
+          with sqlite3.connect(db_path) as connection:
+              integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
+              if integrity != "ok":
+                  raise SystemExit(f"SQLite integrity check failed: {integrity}")
+              database_count = connection.execute(
+                  "SELECT COUNT(*) FROM cameras WHERE active=1 AND is_public=1"
+              ).fetchone()[0]
+              provider_counts = connection.execute(
+                  "SELECT p.code, COUNT(*) FROM cameras c JOIN providers p ON p.id=c.provider_id "
+                  "WHERE c.active=1 AND c.is_public=1 GROUP BY p.code ORDER BY COUNT(*) DESC"
+              ).fetchall()
+
+          exported = json.loads(json_path.read_text(encoding="utf-8")).get("cameras", [])
+          bundled = json.loads(seed_path.read_text(encoding="utf-8")).get("cameras", [])
+
+          if database_count < 100:
+              raise SystemExit(f"Catalog regression: only {database_count} cameras were generated")
+          if len(exported) != database_count or len(bundled) != database_count:
+              raise SystemExit(
+                  f"Catalog mismatch: SQLite={database_count}, public JSON={len(exported)}, bundle={len(bundled)}"
+              )
+
+          print(f"Validated {database_count} cameras")
+          for provider, count in provider_counts:
+              print(f"  {provider}: {count}")
+          if database_count < 500:
+              print(f"::warning::The catalog contains {database_count} cameras; the current target is at least 500")
+          PY
       - name: Build production site
         run: npm run build
       - name: Persist SQLite and generated catalog
