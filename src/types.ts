@@ -1,5 +1,6 @@
 export type MediaKind = 'youtube' | 'iframe' | 'image' | 'snapshot' | 'mjpeg' | 'hls' | 'video';
 export type CameraStatus = 'online' | 'unknown' | 'offline';
+export type CameraStatusFilter = 'available' | 'all' | CameraStatus;
 
 export interface Camera {
   id: string;
@@ -30,7 +31,7 @@ export interface CameraFilters {
   country: string;
   category: string;
   mode: 'all' | 'live' | 'snapshot';
-  status: 'all' | CameraStatus;
+  status: CameraStatusFilter;
 }
 
 export type ViewMode = 'map' | 'mosaic';
