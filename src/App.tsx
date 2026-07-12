@@ -4,8 +4,8 @@ import { Mosaic } from './components/Mosaic';
 import { Sidebar } from './components/Sidebar';
 import { WorldMap } from './components/WorldMap';
 import { loadCatalog } from './data/loadCatalog';
-import { filterCameras, uniqueSorted } from './lib/catalog';
-import type { Camera, CameraFilters, ViewMode } from './types';
+import { filterCameras, isLiveCamera, isSnapshotCamera, uniqueSorted } from './lib/catalog';
+import type { Camera, CameraFilters, MapBaseMode, ViewMode } from './types';
 
 const DEFAULT_FILTERS: CameraFilters = {
   text: '',
@@ -14,6 +14,11 @@ const DEFAULT_FILTERS: CameraFilters = {
   mode: 'all',
   status: 'all'
 };
+
+function readMapMode(): MapBaseMode {
+  const value = window.localStorage.getItem('cams.mapMode');
+  return value === 'political' || value === 'relief' ? value : 'satellite';
+}
 
 export default function App() {
   const [catalog, setCatalog] = useState<Camera[]>([]);
@@ -30,6 +35,8 @@ export default function App() {
   const [mosaicLabels, setMosaicLabels] = useState(true);
   const [mapLabels, setMapLabels] = useState(true);
   const [dayNight, setDayNight] = useState(true);
+  const [mapMode, setMapMode] = useState<MapBaseMode>(readMapMode);
+  const [terrain3d, setTerrain3d] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,9 +56,18 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    window.localStorage.setItem('cams.mapMode', mapMode);
+  }, [mapMode]);
+
   const filtered = useMemo(() => filterCameras(catalog, filters), [catalog, filters]);
   const countries = useMemo(() => uniqueSorted(catalog.map((camera) => camera.country)), [catalog]);
   const categories = useMemo(() => uniqueSorted(catalog.map((camera) => camera.category)), [catalog]);
+  const catalogStats = useMemo(() => ({
+    live: catalog.filter(isLiveCamera).length,
+    snapshots: catalog.filter(isSnapshotCamera).length,
+    online: catalog.filter((camera) => camera.status === 'online').length
+  }), [catalog]);
 
   useEffect(() => {
     setMosaicOffset(0);
@@ -98,7 +114,15 @@ export default function App() {
       {error && <div className="fatal-error">{error}</div>}
 
       {!loading && !error && view === 'map' && (
-        <WorldMap cameras={filtered} selected={selected} onSelect={setSelected} showLabels={mapLabels} showDayNight={dayNight} />
+        <WorldMap
+          cameras={filtered}
+          selected={selected}
+          onSelect={setSelected}
+          showLabels={mapLabels}
+          showDayNight={dayNight}
+          mapMode={mapMode}
+          terrain3d={terrain3d}
+        />
       )}
 
       {!loading && !error && view === 'mosaic' && (
@@ -113,21 +137,29 @@ export default function App() {
         categories={categories}
         total={catalog.length}
         filtered={filtered.length}
+        liveCount={catalogStats.live}
+        snapshotCount={catalogStats.snapshots}
+        onlineCount={catalogStats.online}
         gridCount={gridCount}
         rotation={rotation}
         rotationInterval={rotationInterval}
         mosaicLabels={mosaicLabels}
         mapLabels={mapLabels}
         dayNight={dayNight}
+        mapMode={mapMode}
+        terrain3d={terrain3d}
         onClose={() => setDrawerOpen(false)}
         onView={chooseView}
         onFilters={setFilters}
+        onResetFilters={() => setFilters(DEFAULT_FILTERS)}
         onGridCount={(count) => { setGridCount(count); setMosaicOffset(0); }}
         onRotation={setRotation}
         onRotationInterval={setRotationInterval}
         onMosaicLabels={setMosaicLabels}
         onMapLabels={setMapLabels}
         onDayNight={setDayNight}
+        onMapMode={setMapMode}
+        onTerrain3d={setTerrain3d}
         onPrevious={previous}
         onNext={next}
         onRandom={random}
