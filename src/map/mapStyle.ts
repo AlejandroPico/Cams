@@ -1,11 +1,14 @@
-const WORLD_IMAGERY = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-const PLACES = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_populated_places_simple.geojson';
+import type { StyleSpecification } from 'maplibre-gl';
 
-export function createMapStyle(): any {
+export const WORLD_IMAGERY = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+export const FALLBACK_MAP = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+export const PLACES_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_populated_places_simple.geojson';
+export const GLYPHS_URL = 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf';
+
+export function createMapStyle(): StyleSpecification {
   return {
     version: 8,
-    projection: { type: 'globe' },
-    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    glyphs: GLYPHS_URL,
     sources: {
       satellite: {
         type: 'raster',
@@ -14,11 +17,6 @@ export function createMapStyle(): any {
         minzoom: 0,
         maxzoom: 19,
         attribution: 'Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community'
-      },
-      places: {
-        type: 'geojson',
-        data: PLACES,
-        attribution: 'Localidades © Natural Earth'
       },
       night: {
         type: 'geojson',
@@ -48,8 +46,8 @@ export function createMapStyle(): any {
           'raster-opacity': 1,
           'raster-resampling': 'linear',
           'raster-fade-duration': 80,
-          'raster-contrast': 0.05,
-          'raster-saturation': 0.06
+          'raster-contrast': 0.04,
+          'raster-saturation': 0.05
         }
       },
       {
@@ -68,87 +66,35 @@ export function createMapStyle(): any {
         }
       },
       {
-        id: 'place-labels-major',
-        type: 'symbol',
-        source: 'places',
-        minzoom: 2.2,
-        maxzoom: 24,
-        filter: ['<=', ['to-number', ['get', 'scalerank']], 4],
-        layout: {
-          'text-field': ['coalesce', ['get', 'name'], ['get', 'nameascii']],
-          'text-font': ['Noto Sans Regular'],
-          'text-size': ['interpolate', ['linear'], ['zoom'], 2, 10, 6, 13, 12, 16],
-          'text-allow-overlap': false,
-          'text-ignore-placement': false
-        },
-        paint: {
-          'text-color': '#f7f9ff',
-          'text-halo-color': 'rgba(0,0,0,0.92)',
-          'text-halo-width': 1.5,
-          'text-halo-blur': 0.35
-        }
-      },
-      {
-        id: 'place-labels-secondary',
-        type: 'symbol',
-        source: 'places',
-        minzoom: 5.4,
-        maxzoom: 24,
-        filter: ['all', ['>', ['to-number', ['get', 'scalerank']], 4], ['<=', ['to-number', ['get', 'scalerank']], 8]],
-        layout: {
-          'text-field': ['coalesce', ['get', 'name'], ['get', 'nameascii']],
-          'text-font': ['Noto Sans Regular'],
-          'text-size': ['interpolate', ['linear'], ['zoom'], 5, 9, 10, 12, 16, 14],
-          'text-allow-overlap': false,
-          'text-ignore-placement': false
-        },
-        paint: {
-          'text-color': '#edf3ff',
-          'text-halo-color': 'rgba(0,0,0,0.88)',
-          'text-halo-width': 1.25,
-          'text-halo-blur': 0.3
-        }
-      },
-      {
         id: 'clusters',
         type: 'circle',
         source: 'cameras',
         filter: ['has', 'point_count'],
         paint: {
-          'circle-color': ['step', ['get', 'point_count'], '#1f8cff', 50, '#ff9f1c', 250, '#ffdf40'],
+          'circle-color': ['step', ['get', 'point_count'], '#2e97ff', 50, '#ff911f', 250, '#ffe03f'],
           'circle-radius': ['step', ['get', 'point_count'], 15, 50, 20, 250, 27, 1000, 34],
-          'circle-stroke-color': 'rgba(0,0,0,0.88)',
+          'circle-stroke-color': 'rgba(0,0,0,0.9)',
           'circle-stroke-width': 3,
-          'circle-opacity': 0.94
+          'circle-opacity': 0.95
         }
       },
       {
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'cameras',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': ['get', 'point_count_abbreviated'],
-          'text-font': ['Noto Sans Regular'],
-          'text-size': 11
-        },
-        paint: {
-          'text-color': '#030405',
-          'text-halo-color': 'rgba(255,255,255,0.25)',
-          'text-halo-width': 0.5
-        }
-      },
-      {
-        id: 'camera-icons',
-        type: 'symbol',
+        id: 'camera-dots',
+        type: 'circle',
         source: 'cameras',
         filter: ['!', ['has', 'point_count']],
-        layout: {
-          'icon-image': ['concat', 'camera-', ['get', 'light']],
-          'icon-size': ['interpolate', ['linear'], ['zoom'], 1, 0.22, 5, 0.28, 12, 0.36, 18, 0.44],
-          'icon-allow-overlap': true,
-          'icon-ignore-placement': true,
-          'icon-anchor': 'center'
+        paint: {
+          'circle-color': [
+            'match',
+            ['get', 'light'],
+            'day', '#ffe03f',
+            'twilight', '#ff911f',
+            '#2e97ff'
+          ],
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 3.8, 5, 4.8, 12, 6, 18, 7.5],
+          'circle-stroke-color': '#050505',
+          'circle-stroke-width': 2,
+          'circle-opacity': 0.96
         }
       }
     ]
