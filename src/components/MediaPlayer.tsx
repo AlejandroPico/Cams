@@ -53,6 +53,10 @@ function HlsVideo({ camera, muted }: { camera: Camera; muted: boolean }) {
 }
 
 export function MediaPlayer({ camera, muted = true, compact = false }: Props) {
+  if (camera.status === 'offline') {
+    return <div className="media-error">Cámara fuera de servicio</div>;
+  }
+
   if (camera.type === 'youtube') {
     const src = youtubeEmbed(camera);
     return src ? (
