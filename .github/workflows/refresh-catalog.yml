@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - run: python scripts/ingest/aggregate.py
+      - run: python scripts/ingest/refresh.py
       - name: Commit catalog changes
         run: |
           if git diff --quiet -- public/data; then
