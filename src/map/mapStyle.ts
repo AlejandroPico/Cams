@@ -1,7 +1,10 @@
 import type { StyleSpecification } from 'maplibre-gl';
 
+export const POLITICAL_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 export const SATELLITE_TILES =
   'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+export const RELIEF_TILES = 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png';
+export const TERRAIN_TILEJSON = 'https://tiles.mapterhorn.com/tilejson.json';
 
 export const PLACES_URL =
   'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_populated_places_simple.geojson';
@@ -11,9 +14,9 @@ export function createBaseMapStyle(): StyleSpecification {
     version: 8,
     glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
     sources: {
-      cartographic: {
+      political: {
         type: 'raster',
-        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tiles: [POLITICAL_TILES],
         tileSize: 256,
         minzoom: 0,
         maxzoom: 19,
@@ -27,15 +30,18 @@ export function createBaseMapStyle(): StyleSpecification {
         paint: { 'background-color': '#010205' }
       },
       {
-        id: 'cartographic',
+        id: 'political-base',
         type: 'raster',
-        source: 'cartographic',
+        source: 'political',
         minzoom: 0,
         maxzoom: 24,
+        layout: { visibility: 'none' },
         paint: {
           'raster-opacity': 1,
           'raster-resampling': 'linear',
-          'raster-fade-duration': 80
+          'raster-fade-duration': 80,
+          'raster-saturation': -0.12,
+          'raster-contrast': 0.08
         }
       }
     ]
