@@ -31,7 +31,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm install --no-audit --no-fund
       - name: Rebuild SQLite and camera exports
-        run: python scripts/catalog/build_catalog.py
+        run: python scripts/catalog/run_catalog.py
       - name: Validate SQLite and exported catalog
         run: |
           python - <<'PY'
@@ -79,7 +79,7 @@ jobs:
         run: npm run build
       - name: Persist SQLite and generated catalog
         run: |
-          if git diff --quiet -- data/cams.sqlite3 public/data src/data/catalog.seed.json; then
+          if [ -z "$(git status --porcelain -- data/cams.sqlite3 public/data src/data/catalog.seed.json)" ]; then
             echo "Catalog already current"
           else
             git config user.name "cams-catalog-bot"
