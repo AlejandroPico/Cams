@@ -1,42 +1,47 @@
 {
-  "generatedAt": "2026-07-12T21:26:40.502863+00:00",
-  "count": 1928,
+  "generatedAt": "2026-07-12T21:33:00.413601+00:00",
+  "count": 4281,
   "providers": {
+    "BARCELONA_CITY": 27,
     "CALTRANS": 883,
+    "DGT_ES": 1932,
     "GEONET": 11,
     "LEGACY_YOUTUBE": 144,
+    "MADRID_CITY": 357,
+    "MADRID_M30": 37,
     "SG_LTA": 8,
     "TFL": 882
   },
   "statuses": {
-    "online": 1784,
-    "unknown": 144
+    "online": 4073,
+    "unknown": 208
   },
   "reports": [
     {
-      "provider": "LEGACY_YOUTUBE",
+      "provider": "DGT_ES",
       "status": "ok",
-      "count": 144
+      "count": 1932
     },
     {
-      "provider": "CALTRANS",
+      "provider": "MADRID_CITY",
       "status": "ok",
-      "count": 883
+      "count": 357
     },
     {
-      "provider": "TFL",
+      "provider": "MADRID_M30",
       "status": "ok",
-      "count": 882
+      "count": 37
     },
     {
-      "provider": "SG_LTA",
+      "provider": "BARCELONA_CITY",
       "status": "ok",
-      "count": 8
+      "count": 27
     },
     {
-      "provider": "GEONET",
-      "status": "ok",
-      "count": 12
+      "provider": "FINTRAFFIC_FI",
+      "status": "error",
+      "count": 0,
+      "error": "HTTP Error 406: Not Acceptable"
     }
   ],
   "database": "data/cams.sqlite3"
