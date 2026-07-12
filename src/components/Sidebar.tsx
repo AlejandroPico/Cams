@@ -72,10 +72,11 @@ export function Sidebar(props: Props) {
             </select>
             <label>Estado</label>
             <select value={props.filters.status} onChange={(event) => setFilter('status', event.target.value as CameraFilters['status'])}>
-              <option value="all">Cualquier estado</option>
-              <option value="online">Online</option>
+              <option value="available">Disponibles</option>
+              <option value="online">Solo verificadas online</option>
               <option value="unknown">Sin comprobar</option>
-              <option value="offline">Offline</option>
+              <option value="offline">Fuera de servicio</option>
+              <option value="all">Cualquier estado</option>
             </select>
           </section>
 
@@ -109,7 +110,7 @@ export function Sidebar(props: Props) {
 
           <footer>
             <strong>{props.filtered.toLocaleString('es-ES')}</strong> visibles de {props.total.toLocaleString('es-ES')}
-            <small>Catálogo estático y actualizable sin servicios de pago.</small>
+            <small>Por defecto se ocultan las cámaras confirmadas como caídas.</small>
           </footer>
         </div>
       </aside>
