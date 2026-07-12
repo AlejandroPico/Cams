@@ -14,6 +14,12 @@ const SHAPES: Record<number, [number, number]> = {
   12: [4, 3], 16: [4, 4], 20: [5, 4], 25: [5, 5], 30: [6, 5]
 };
 
+const STATUS_LABEL: Record<Camera['status'], string> = {
+  online: 'online',
+  unknown: 'sin verificar',
+  offline: 'fuera de servicio'
+};
+
 function visibleBatch(cameras: Camera[], count: number, offset: number): Camera[] {
   if (!cameras.length) return [];
   const size = Math.min(count, cameras.length);
@@ -25,7 +31,7 @@ export function Mosaic({ cameras, count, offset, labels, onSelect }: Props) {
   const batch = visibleBatch(cameras, count, offset);
 
   if (!batch.length) {
-    return <section className="mosaic-empty">No hay cámaras que coincidan con los filtros.</section>;
+    return <section className="mosaic-empty">No hay cámaras disponibles que coincidan con los filtros.</section>;
   }
 
   return (
@@ -37,15 +43,16 @@ export function Mosaic({ cameras, count, offset, labels, onSelect }: Props) {
       {batch.map((camera, index) => (
         <article
           className="mosaic-cell"
+          data-status={camera.status}
           key={`${camera.id}-${index}`}
           onClick={() => onSelect(camera)}
-          title={`${camera.title} · ${camera.city}, ${camera.country}`}
+          title={`${camera.title} · ${camera.city}, ${camera.country} · ${STATUS_LABEL[camera.status]}`}
         >
           <MediaPlayer camera={camera} compact />
           {labels && (
             <div className="mosaic-label">
               <strong>{camera.title}</strong>
-              <span>{camera.city} · {camera.country}</span>
+              <span>{camera.city} · {camera.country} · {camera.type} · {STATUS_LABEL[camera.status]}</span>
             </div>
           )}
         </article>
