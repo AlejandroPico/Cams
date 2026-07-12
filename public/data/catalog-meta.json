@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-12T21:33:00.413601+00:00",
+  "generatedAt": "2026-07-12T21:36:20.423289+00:00",
   "count": 4281,
   "providers": {
     "BARCELONA_CITY": 27,
@@ -17,26 +17,6 @@
     "unknown": 208
   },
   "reports": [
-    {
-      "provider": "DGT_ES",
-      "status": "ok",
-      "count": 1932
-    },
-    {
-      "provider": "MADRID_CITY",
-      "status": "ok",
-      "count": 357
-    },
-    {
-      "provider": "MADRID_M30",
-      "status": "ok",
-      "count": 37
-    },
-    {
-      "provider": "BARCELONA_CITY",
-      "status": "ok",
-      "count": 27
-    },
     {
       "provider": "FINTRAFFIC_FI",
       "status": "error",
