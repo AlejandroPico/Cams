@@ -12,7 +12,7 @@ const DEFAULT_FILTERS: CameraFilters = {
   country: 'all',
   category: 'all',
   mode: 'all',
-  status: 'all'
+  status: 'available'
 };
 
 export default function App() {
