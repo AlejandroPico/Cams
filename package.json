@@ -1,12 +1,13 @@
 {
   "name": "cams-world-viewer",
   "private": true,
-  "version": "4.0.0",
+  "version": "4.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "catalog:refresh": "python scripts/catalog/build_catalog.py",
-    "catalog:offline": "python scripts/catalog/build_catalog.py --offline",
+    "catalog:check": "python scripts/catalog/prepare_database.py",
+    "catalog:refresh": "python scripts/catalog/run_catalog.py",
+    "catalog:offline": "python scripts/catalog/run_catalog.py --offline",
     "build": "tsc --noEmit -p tsconfig.app.json && vite build",
     "preview": "vite preview"
   },
