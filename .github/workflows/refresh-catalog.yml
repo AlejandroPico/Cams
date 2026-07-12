@@ -1,12 +1,19 @@
-name: Refresh free camera catalog
+name: Refresh public camera database
 
 on:
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 permissions:
   contents: write
+
+concurrency:
+  group: camera-catalog
+  cancel-in-progress: true
 
 jobs:
   refresh:
@@ -16,15 +23,16 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - run: python scripts/ingest/refresh.py
-      - name: Commit catalog changes
+      - name: Refresh SQLite and JSON
+        run: python scripts/catalog/build_catalog.py
+      - name: Commit database changes
         run: |
-          if git diff --quiet -- public/data; then
+          if git diff --quiet -- data/cams.sqlite3 public/data src/data/catalog.seed.json; then
             echo "No catalog changes"
             exit 0
           fi
           git config user.name "cams-catalog-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add public/data
-          git commit -m "Actualizar catálogo gratuito de cámaras"
+          git add data/cams.sqlite3 public/data src/data/catalog.seed.json
+          git commit -m "Actualizar SQLite y catálogo público [skip ci]"
           git push
