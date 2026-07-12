@@ -2,6 +2,48 @@
 
 Cams importa exclusivamente fuentes gratuitas cuya consulta pública está documentada. Cada adaptador falla de forma independiente y conserva en SQLite los datos obtenidos en ejecuciones anteriores.
 
+## España: DGT National Access Point
+
+- Ámbito: red estatal española, excepto las redes gestionadas directamente por Cataluña y País Vasco.
+- Tipo: snapshots de información viaria.
+- Catálogo: DATEX II 3.7.
+- Endpoint: `https://nap.dgt.es/datex2/v3/dgt/DevicePublication/camaras_datex2_v37.xml`.
+- Imagen: URL publicada por DATEX II o patrón público de Infocar.
+- Frecuencia usada por Cams: 180 segundos.
+- Licencia registrada: Creative Commons Attribution.
+
+El parser no depende del prefijo XML concreto: identifica los elementos por su nombre local y recupera identificador, carretera, coordenadas y URL de imagen.
+
+## Madrid: cámaras urbanas y Calle 30
+
+Cams incorpora dos conjuntos abiertos del Ayuntamiento de Madrid:
+
+- cámaras urbanas de tráfico en KML;
+- cámaras de Calle 30 en XML.
+
+Se importan nombre, coordenadas, imagen pública cuando está incluida y enlace al conjunto original. Los snapshots urbanos se refrescan cada diez minutos y los de Calle 30 cada cinco minutos.
+
+## Barcelona: red municipal histórica
+
+- Ámbito: 27 intersecciones, plazas y tramos de las rondas de Barcelona.
+- Tipo: snapshot cuando la página municipal todavía devuelve una imagen; enlace público cuando no lo hace.
+- Coordenadas: una posición individual por cámara, no un único punto central de Barcelona.
+- Frecuencia usada por Cams: 300 segundos.
+- Atribución: Ajuntament de Barcelona.
+
+El adaptador prueba las páginas municipales históricas de `bcn.cat` y `transit.bcn.es`. Si una ubicación deja de proporcionar imagen, el registro se conserva como `unknown` para mantener la posición y la fuente, pero no se presenta falsamente como una cámara online.
+
+## Finlandia: Fintraffic Digitraffic
+
+- Ámbito: red viaria de Finlandia.
+- Tipo: cámaras meteorológicas de carretera, normalmente con varios encuadres por estación.
+- Endpoint: `https://tie.digitraffic.fi/api/weathercam/v1/stations`.
+- Imagen: `https://weathercam.digitraffic.fi/{presetId}.jpg`.
+- Frecuencia usada por Cams: 600 segundos.
+- Atribución: Fintraffic / Digitraffic.
+
+El adaptador envía la cabecera `Digitraffic-User`, importa cada preset como una cámara independiente y conserva el nombre de la estación y del encuadre.
+
 ## Caltrans CWWP2
 
 - Ámbito: doce distritos de California.
@@ -41,9 +83,20 @@ El importador consulta los doce endpoints `cctvStatusD01.json` a `cctvStatusD12.
 
 Los 144 registros originales de YouTube se conservan para no perder ubicaciones ya recopiladas. Se importan como `unknown`, no como directos verificados. La reproducción puede haber terminado o el propietario puede impedir la inserción.
 
-## Ampliación
+## Arquitectura de importación
 
-Para añadir otro proveedor se incorpora una función en `scripts/catalog/build_catalog.py` que produzca los campos normalizados del esquema SQLite. Antes de activarlo deben registrarse:
+El pipeline tiene dos fases:
+
+```text
+build_catalog.py   → fuentes base mundiales
+extend_catalog.py  → España, Barcelona, Madrid y Finlandia
+```
+
+`run_catalog.py` ejecuta ambas. Si la ampliación europea falla temporalmente, el catálogo base válido se conserva y el despliegue puede continuar.
+
+## Ampliación futura
+
+Antes de activar otro proveedor deben registrarse:
 
 - URL pública del proveedor;
 - atribución;
