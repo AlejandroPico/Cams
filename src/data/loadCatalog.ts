@@ -46,9 +46,9 @@ export async function loadCatalog(): Promise<Camera[]> {
     // GitHub Pages puede servir brevemente la versión anterior mientras publica el nuevo catálogo.
   }
 
-  const source = remote.length ? remote : DEFAULT_CAMS;
+  const source: unknown[] = remote.length ? remote : (DEFAULT_CAMS as unknown[]);
   const deduped = new Map<string, Camera>();
-  source.forEach((item, index) => {
+  source.forEach((item: unknown, index: number) => {
     const camera = normalise(item as Record<string, unknown>, index);
     if (!camera) return;
     const key = camera.id || `${camera.title}|${camera.lat.toFixed(5)}|${camera.lon.toFixed(5)}`;
