@@ -1,13 +1,14 @@
 {
   "name": "cams-world-viewer",
   "private": true,
-  "version": "3.0.0",
+  "version": "3.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.app.json && vite build",
     "preview": "vite preview",
-    "catalog:refresh": "python scripts/ingest/aggregate.py"
+    "catalog:refresh": "python scripts/ingest/refresh.py",
+    "catalog:fast": "python scripts/ingest/aggregate.py"
   },
   "dependencies": {
     "hls.js": "^1.5.18",
