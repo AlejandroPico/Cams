@@ -1,5 +1,8 @@
 import type { Camera } from '../types';
 import bundledSeed from './catalog.seed.json';
+// El catálogo histórico permanece como último respaldo si GitHub Pages aún no ha publicado SQLite/JSON.
+// @ts-expect-error Módulo JavaScript heredado, normalizado inmediatamente después.
+import { DEFAULT_CAMS } from '../../assets/js/data/cameras.js';
 
 const normalise = (raw: Record<string, unknown>, index: number): Camera | null => {
   const lat = Number(raw.lat);
@@ -8,7 +11,7 @@ const normalise = (raw: Record<string, unknown>, index: number): Camera | null =
 
   const type = String(
     raw.type ||
-    (raw.snapshotUrl ? 'snapshot' : raw.embedUrl ? 'iframe' : raw.url ? 'video' : 'image')
+    (raw.snapshotUrl ? 'snapshot' : raw.embedUrl ? 'iframe' : raw.videoId ? 'youtube' : raw.url ? 'video' : 'image')
   ) as Camera['type'];
 
   const status = raw.status === 'online' || raw.status === 'offline' || raw.status === 'blocked'
@@ -43,7 +46,7 @@ const normalise = (raw: Record<string, unknown>, index: number): Camera | null =
     sourceUrl: raw.sourceUrl ? String(raw.sourceUrl) : undefined,
     thumbnailUrl: raw.thumbnailUrl ? String(raw.thumbnailUrl) : undefined,
     refreshSeconds: Number.isFinite(Number(raw.refreshSeconds)) ? Number(raw.refreshSeconds) : undefined,
-    isLive: raw.isLive === true,
+    isLive: raw.isLive === true || raw.type === 'youtube',
     isEmbeddable: raw.isEmbeddable !== false,
     width: Number.isFinite(Number(raw.width)) ? Number(raw.width) : undefined,
     height: Number.isFinite(Number(raw.height)) ? Number(raw.height) : undefined,
@@ -65,7 +68,7 @@ const parsePayload = (payload: unknown): Camera[] => {
       : [];
 
   const deduped = new Map<string, Camera>();
-  source.forEach((item, index) => {
+  source.forEach((item: unknown, index: number) => {
     if (!item || typeof item !== 'object') return;
     const camera = normalise(item as Record<string, unknown>, index);
     if (!camera || !camera.active) return;
@@ -92,7 +95,11 @@ export async function loadCatalog(): Promise<Camera[]> {
     }
   }
 
-  const fallback = parsePayload(bundledSeed);
-  if (fallback.length) return fallback;
-  throw new Error('No se ha podido cargar ni el catálogo publicado ni la copia integrada.');
+  const integrated = parsePayload(bundledSeed);
+  if (integrated.length) return integrated;
+
+  const historical = parsePayload(DEFAULT_CAMS as unknown[]);
+  if (historical.length) return historical;
+
+  throw new Error('No se ha podido cargar ningún catálogo de cámaras.');
 }
