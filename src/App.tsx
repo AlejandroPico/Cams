@@ -12,7 +12,7 @@ const DEFAULT_FILTERS: CameraFilters = {
   country: 'all',
   category: 'all',
   mode: 'all',
-  status: 'available'
+  status: 'all'
 };
 
 export default function App() {
@@ -35,7 +35,10 @@ export default function App() {
     let cancelled = false;
     loadCatalog()
       .then((cameras) => {
-        if (!cancelled) setCatalog(cameras);
+        if (!cancelled) {
+          setCatalog(cameras);
+          setError('');
+        }
       })
       .catch((reason) => {
         if (!cancelled) setError(reason instanceof Error ? reason.message : 'No se pudo cargar el catálogo');
@@ -94,11 +97,11 @@ export default function App() {
       {loading && <div className="loading-screen"><span /><strong>Preparando el mundo</strong></div>}
       {error && <div className="fatal-error">{error}</div>}
 
-      {!loading && view === 'map' && (
+      {!loading && !error && view === 'map' && (
         <WorldMap cameras={filtered} selected={selected} onSelect={setSelected} showLabels={mapLabels} showDayNight={dayNight} />
       )}
 
-      {!loading && view === 'mosaic' && (
+      {!loading && !error && view === 'mosaic' && (
         <Mosaic cameras={filtered} count={gridCount} offset={mosaicOffset} labels={mosaicLabels} onSelect={setSelected} />
       )}
 
