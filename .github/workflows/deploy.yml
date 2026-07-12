@@ -25,14 +25,15 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: npm
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - run: npm ci --no-audit --no-fund
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
       - name: Rebuild SQLite and camera exports
         run: python scripts/catalog/build_catalog.py
-      - run: npm run build
+      - name: Build production site
+        run: npm run build
       - name: Persist SQLite and generated catalog
         run: |
           if git diff --quiet -- data/cams.sqlite3 public/data src/data/catalog.seed.json; then
