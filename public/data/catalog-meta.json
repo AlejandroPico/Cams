@@ -1,10 +1,43 @@
 {
-  "generatedAt": null,
-  "count": 0,
-  "sources": {
-    "legacy": 0,
-    "manual": 0,
-    "remote": 0
+  "generatedAt": "2026-07-12T20:19:16.294629+00:00",
+  "count": 1928,
+  "providers": {
+    "CALTRANS": 883,
+    "GEONET": 11,
+    "LEGACY_YOUTUBE": 144,
+    "SG_LTA": 8,
+    "TFL": 882
   },
-  "reports": []
+  "statuses": {
+    "online": 1784,
+    "unknown": 144
+  },
+  "reports": [
+    {
+      "provider": "LEGACY_YOUTUBE",
+      "status": "ok",
+      "count": 144
+    },
+    {
+      "provider": "CALTRANS",
+      "status": "ok",
+      "count": 883
+    },
+    {
+      "provider": "TFL",
+      "status": "ok",
+      "count": 882
+    },
+    {
+      "provider": "SG_LTA",
+      "status": "ok",
+      "count": 8
+    },
+    {
+      "provider": "GEONET",
+      "status": "ok",
+      "count": 12
+    }
+  ],
+  "database": "data/cams.sqlite3"
 }
