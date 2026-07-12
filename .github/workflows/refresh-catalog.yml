@@ -24,10 +24,28 @@ jobs:
         with:
           python-version: "3.13"
       - name: Refresh SQLite and JSON
-        run: python scripts/catalog/build_catalog.py
+        run: python scripts/catalog/run_catalog.py
+      - name: Verify SQLite integrity
+        run: |
+          python - <<'PY'
+          import sqlite3
+          from pathlib import Path
+
+          path = Path("data/cams.sqlite3")
+          if not path.is_file() or path.stat().st_size == 0:
+              raise SystemExit("data/cams.sqlite3 was not generated")
+          with sqlite3.connect(path) as connection:
+              result = connection.execute("PRAGMA integrity_check").fetchone()[0]
+              count = connection.execute("SELECT COUNT(*) FROM cameras WHERE active=1 AND is_public=1").fetchone()[0]
+          if result != "ok":
+              raise SystemExit(f"SQLite integrity check failed: {result}")
+          if count < 100:
+              raise SystemExit(f"Catalog regression: only {count} cameras")
+          print(f"SQLite valid: {count} public cameras")
+          PY
       - name: Commit database changes
         run: |
-          if git diff --quiet -- data/cams.sqlite3 public/data src/data/catalog.seed.json; then
+          if [ -z "$(git status --porcelain -- data/cams.sqlite3 public/data src/data/catalog.seed.json)" ]; then
             echo "No catalog changes"
             exit 0
           fi
