@@ -73,20 +73,20 @@ export function lightState(lat: number, lon: number, date = new Date()): LightSt
 
 export function buildNightGrid(date = new Date()): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
-  const step = 6;
+  const step = 4;
 
-  for (let south = -90; south < 90; south += step) {
-    const north = Math.min(90, south + step);
+  for (let south = -88; south < 88; south += step) {
+    const north = Math.min(88, south + step);
     for (let west = -180; west < 180; west += step) {
       const east = west + step;
       const lat = (south + north) / 2;
       const lon = (west + east) / 2;
       const value = illumination(lat, lon, date);
-      if (value > 0.16) continue;
+      if (value > 0.2) continue;
 
-      const shade = value < -0.18
-        ? Math.min(0.66, 0.34 + (-value * 0.32))
-        : Math.max(0.07, (0.16 - value) * 0.72);
+      const shade = value < -0.2
+        ? Math.min(0.82, 0.5 + (-value * 0.34))
+        : Math.max(0.08, (0.2 - value) * 0.95);
 
       features.push({
         type: 'Feature',
