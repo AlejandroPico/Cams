@@ -1,1 +1,0 @@
-La base inicial se genera de forma determinista desde cams.sqlite3.base64.txt. GitHub Actions la sustituye por el catálogo completo.
