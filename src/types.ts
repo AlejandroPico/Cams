@@ -1,6 +1,7 @@
 export type MediaKind = 'youtube' | 'iframe' | 'image' | 'snapshot' | 'mjpeg' | 'hls' | 'video' | 'link';
 export type CameraStatus = 'online' | 'unknown' | 'offline' | 'blocked';
 export type CameraStatusFilter = 'available' | 'all' | CameraStatus;
+export type MapBaseMode = 'satellite' | 'political' | 'relief';
 
 export interface Camera {
   id: string;
