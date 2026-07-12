@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Importador aislado de cámaras meteorológicas de Fintraffic.
 
-Digitraffic valida estrictamente las cabeceras de cliente. Este adaptador usa un Accept
-simple y la cabecera Digitraffic-User con aplicación, versión y contacto.
+Digitraffic valida estrictamente las cabeceras de cliente. Se prueban de forma ordenada
+los tipos de contenido aceptados y se decodifica gzip explícitamente.
 """
 from __future__ import annotations
 
+import gzip
 import json
 import sys
+import urllib.error
 import urllib.request
 from contextlib import closing
 from typing import Any, Iterable
@@ -17,20 +19,46 @@ import extend_catalog as extra
 
 STATIONS_URL = "https://tie.digitraffic.fi/api/weathercam/v1/stations"
 IMAGE_URL = "https://weathercam.digitraffic.fi/{preset_id}.jpg"
-CLIENT_ID = "Cams/4.1 alejandro.picoperez@gmail.com"
+CLIENT_ID = "Cams/4.1"
+CONTACT_ID = "Cams/4.1 (alejandro.picoperez@gmail.com)"
+
+HEADER_VARIANTS = [
+    {
+        "User-Agent": CLIENT_ID,
+        "Digitraffic-User": CLIENT_ID,
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip"
+    },
+    {
+        "User-Agent": CONTACT_ID,
+        "Digitraffic-User": CONTACT_ID,
+        "Accept": "application/geo+json, application/json;q=0.9, */*;q=0.1",
+        "Accept-Encoding": "gzip"
+    },
+    {
+        "User-Agent": CLIENT_ID,
+        "Digitraffic-User": CLIENT_ID,
+        "Accept": "*/*"
+    }
+]
+
+
+def decode_payload(data: bytes, content_encoding: str | None) -> dict[str, Any]:
+    if (content_encoding or "").lower() == "gzip" or data[:2] == b"\x1f\x8b":
+        data = gzip.decompress(data)
+    return json.loads(data.decode("utf-8-sig"))
 
 
 def fetch_stations(timeout: int = 35) -> dict[str, Any]:
-    request = urllib.request.Request(
-        STATIONS_URL,
-        headers={
-            "User-Agent": CLIENT_ID,
-            "Digitraffic-User": CLIENT_ID,
-            "Accept": "application/json"
-        }
-    )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return json.loads(response.read().decode("utf-8-sig"))
+    errors: list[str] = []
+    for headers in HEADER_VARIANTS:
+        request = urllib.request.Request(STATIONS_URL, headers=headers)
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return decode_payload(response.read(), response.headers.get("Content-Encoding"))
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError) as error:
+            errors.append(f"{headers.get('Accept')}: {error}")
+    raise RuntimeError("Fintraffic rejected all request variants: " + " | ".join(errors))
 
 
 def loader(timeout: int = 35) -> Iterable[dict[str, Any]]:
