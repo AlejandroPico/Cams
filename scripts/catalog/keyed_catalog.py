@@ -18,6 +18,7 @@ from typing import Any, Iterable
 import build_catalog as base
 
 TRAFIKVERKET_ENDPOINT = "https://api.trafikinfo.trafikverket.se/v2/data.json"
+KOREA_ITS_ENDPOINT = "https://openapi.its.go.kr/api/NCCTVInfo"
 
 IBI_SOURCES = [
     ("US_GA511", "Georgia 511", "Georgia", "https://511ga.org", "DOT_GA_API_KEY", "America/New_York"),
@@ -34,7 +35,7 @@ IBI_SOURCES = [
 
 def request_json(url: str, timeout: int = 35, method: str = "GET", body: bytes | None = None, headers: dict[str, str] | None = None) -> Any:
     request_headers = {
-        "User-Agent": "CamsCatalogBot/4.2 (+https://github.com/AlejandroPico/Cams)",
+        "User-Agent": "CamsCatalogBot/4.3 (+https://github.com/AlejandroPico/Cams)",
         "Accept": "application/json,*/*",
     }
     if headers:
@@ -130,6 +131,57 @@ def trafikverket_loader(key: str) -> Iterable[dict[str, Any]]:
         }
 
 
+def korea_loader(key: str) -> Iterable[dict[str, Any]]:
+    seen: set[str] = set()
+    for road_type, label in (("ex", "Expressway"), ("its", "National highway")):
+        query = urllib.parse.urlencode({
+            "apiKey": key,
+            "type": road_type,
+            "cctvType": 1,
+            "getType": "json",
+            "minX": 124,
+            "maxX": 132,
+            "minY": 33,
+            "maxY": 43,
+        })
+        payload = request_json(f"{KOREA_ITS_ENDPOINT}?{query}")
+        cameras = payload.get("response", {}).get("data", []) if isinstance(payload, dict) else []
+        for camera in cameras if isinstance(cameras, list) else []:
+            try:
+                latitude = float(camera.get("coordy"))
+                longitude = float(camera.get("coordx"))
+            except (TypeError, ValueError):
+                continue
+            stream = base.text(camera.get("cctvurl"))
+            if not stream:
+                continue
+            identifier = f"{road_type}:{latitude:.5f}:{longitude:.5f}"
+            if identifier in seen:
+                continue
+            seen.add(identifier)
+            yield {
+                "external_id": identifier,
+                "title": base.text(camera.get("cctvname"), f"Korea {label} camera"),
+                "description": label,
+                "country_code": "KR",
+                "country_name": "Corea del Sur",
+                "latitude": latitude,
+                "longitude": longitude,
+                "timezone": "Asia/Seoul",
+                "category": "traffic",
+                "media_type": "hls" if ".m3u8" in stream.lower() else "video",
+                "stream_url": stream,
+                "source_page_url": "https://www.its.go.kr/opendata/",
+                "refresh_seconds": 60,
+                "is_live": True,
+                "status": "online",
+                "attribution": "ITS National Transport Information Center Korea",
+                "license_name": "ITS Korea open API terms",
+                "privacy_level": "public-traffic",
+                "source_payload": camera,
+            }
+
+
 def ibi_loader(base_url: str, key: str, state: str, timezone_name: str) -> Iterable[dict[str, Any]]:
     url = f"{base_url}/api/v2/get/cameras?{urllib.parse.urlencode({'key': key, 'format': 'json'})}"
     payload = request_json(url)
@@ -179,6 +231,7 @@ def ibi_loader(base_url: str, key: str, state: str, timezone_name: str) -> Itera
 
 def main() -> int:
     configured: list[tuple[dict[str, Any], Any]] = []
+
     trafikverket_key = os.getenv("TRAFIKVERKET_KEY", "").strip()
     if trafikverket_key:
         provider = provider_payload(
@@ -186,6 +239,14 @@ def main() -> int:
             "API nacional sueca; requiere una clave gratuita guardada como TRAFIKVERKET_KEY.",
         )
         configured.append((provider, lambda key=trafikverket_key: trafikverket_loader(key)))
+
+    korea_key = os.getenv("ITS_KR_KEY", "").strip()
+    if korea_key:
+        provider = provider_payload(
+            "ITS_KR", "ITS Korea CCTV", "https://www.its.go.kr/opendata/", "KR",
+            "Autopistas y carreteras nacionales; clave gratuita guardada como ITS_KR_KEY.",
+        )
+        configured.append((provider, lambda key=korea_key: korea_loader(key)))
 
     for code, name, state, base_url, env_name, timezone_name in IBI_SOURCES:
         key = os.getenv(env_name, "").strip()
