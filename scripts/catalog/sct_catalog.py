@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Importador aislado del Servei Català de Trànsit.
 
-El WFS público de MCT/CIVICAT utiliza parámetros Diffie-Hellman que OpenSSL 3 rechaza
-con el nivel de seguridad predeterminado. La compatibilidad SECLEVEL=1 se aplica solo
-a este host y solo para descargar información pública; el resto de Cams conserva la
-configuración TLS normal.
+El WFS público de MCT/CIVICAT utiliza parámetros y firmas que OpenSSL 3 rechaza con
+su nivel normal. La compatibilidad SECLEVEL=0 se aplica únicamente a este host y solo
+para descargar información pública. La validación del certificado y del nombre del
+host permanece activada; el resto de Cams conserva la configuración TLS predeterminada.
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ BROWSER_HEADERS = {
 
 def legacy_context() -> ssl.SSLContext:
     context = ssl.create_default_context()
-    context.set_ciphers("DEFAULT:@SECLEVEL=1")
+    context.set_ciphers("DEFAULT:@SECLEVEL=0")
     context.check_hostname = True
     context.verify_mode = ssl.CERT_REQUIRED
     return context
@@ -53,7 +53,7 @@ def fetch_with_curl(url: str, timeout: int) -> bytes:
     command = [
         "curl", "--fail", "--silent", "--show-error", "--location",
         "--max-time", str(timeout),
-        "--ciphers", "DEFAULT@SECLEVEL=1",
+        "--ciphers", "DEFAULT:@SECLEVEL=0",
         "--header", f"User-Agent: {BROWSER_HEADERS['User-Agent']}",
         "--header", f"Accept: {BROWSER_HEADERS['Accept']}",
         "--header", f"Referer: {BROWSER_HEADERS['Referer']}",
