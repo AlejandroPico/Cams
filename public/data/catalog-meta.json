@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T00:28:17.246068+00:00",
+  "generatedAt": "2026-07-13T00:32:12.371077+00:00",
   "count": 11372,
   "providers": {
     "BARCELONA_CITY": 27,
@@ -25,32 +25,7 @@
       "provider": "SCT_CAT",
       "status": "error",
       "count": 0,
-      "error": "https://mct.gencat.cat/sct-gis/wfs: <urlopen error [SSL: DH_KEY_TOO_SMALL] dh key too small (_ssl.c:1032)>; http://mct.gencat.cat/sct-gis/wfs: HTTP Error 403: Forbidden"
-    },
-    {
-      "provider": "AUTOBAHN_DE",
-      "status": "ok",
-      "count": 0
-    },
-    {
-      "provider": "NY511_US",
-      "status": "ok",
-      "count": 1868
-    },
-    {
-      "provider": "OREGON_US",
-      "status": "ok",
-      "count": 1127
-    },
-    {
-      "provider": "DRIVEBC_CA",
-      "status": "ok",
-      "count": 1034
-    },
-    {
-      "provider": "ONTARIO511_CA",
-      "status": "ok",
-      "count": 934
+      "error": "fetch_with_urllib: <urlopen error [SSL: WRONG_SIGNATURE_TYPE] wrong signature type (_ssl.c:1032)>; fetch_with_curl: Command '['curl', '--fail', '--silent', '--show-error', '--location', '--max-time', '60', '--ciphers', 'DEFAULT@SECLEVEL=1', '--header', 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 CamsCatalogBot/4.2', '--header', 'Accept: application/json,application/geo+json,application/xml,text/xml,*/*', '--header', 'Referer: https://mct.gencat.cat/', 'https://mct.gencat.cat/sct-gis/wfs?service=WFS&version=1.0.0&request=GetCapabilities']' returned non-zero exit status 35."
     }
   ],
   "database": "data/cams.sqlite3"
