@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Aplica reglas de calidad antes de publicar el catálogo de Cams.
 
-Los vídeos históricos de YouTube se conservan en SQLite, pero quedan inactivos salvo
-que aparezcan explícitamente en data/verified_youtube.json. Esto evita publicar como
-cámara en directo una grabación terminada, un vídeo ajeno o un identificador reutilizado.
+- Archiva los vídeos históricos de YouTube salvo inclusión explícita en la lista blanca.
+- Normaliza nombres de país mediante ISO 3166 para evitar filtros y recuentos duplicados.
 """
 from __future__ import annotations
 
@@ -16,6 +15,47 @@ import build_catalog as base
 ROOT = Path(__file__).resolve().parents[2]
 ALLOWLIST_PATH = ROOT / "data" / "verified_youtube.json"
 
+COUNTRY_NAMES = {
+    "AD": "Andorra",
+    "AT": "Austria",
+    "AU": "Australia",
+    "BE": "Bélgica",
+    "CA": "Canadá",
+    "CH": "Suiza",
+    "CZ": "Chequia",
+    "DE": "Alemania",
+    "DK": "Dinamarca",
+    "EE": "Estonia",
+    "ES": "España",
+    "FI": "Finlandia",
+    "FR": "Francia",
+    "GB": "Reino Unido",
+    "GR": "Grecia",
+    "HR": "Croacia",
+    "HU": "Hungría",
+    "IE": "Irlanda",
+    "IS": "Islandia",
+    "IT": "Italia",
+    "JP": "Japón",
+    "KR": "Corea del Sur",
+    "LT": "Lituania",
+    "LU": "Luxemburgo",
+    "LV": "Letonia",
+    "NL": "Países Bajos",
+    "NO": "Noruega",
+    "NZ": "Nueva Zelanda",
+    "PL": "Polonia",
+    "PT": "Portugal",
+    "RO": "Rumanía",
+    "SE": "Suecia",
+    "SG": "Singapur",
+    "SI": "Eslovenia",
+    "SK": "Eslovaquia",
+    "TR": "Turquía",
+    "TW": "Taiwán",
+    "US": "Estados Unidos",
+}
+
 
 def read_allowlist() -> tuple[set[str], set[str]]:
     if not ALLOWLIST_PATH.exists():
@@ -27,6 +67,21 @@ def read_allowlist() -> tuple[set[str], set[str]]:
     videos = {str(value).strip() for value in payload.get("verifiedVideoIds", []) if str(value).strip()}
     external = {str(value).strip() for value in payload.get("verifiedExternalIds", []) if str(value).strip()}
     return videos, external
+
+
+def apply_country_normalization(connection) -> int:
+    changed = 0
+    now = base.NOW()
+    for code, name in COUNTRY_NAMES.items():
+        cursor = connection.execute(
+            "UPDATE cameras SET country_name=?,updated_at=? "
+            "WHERE UPPER(TRIM(COALESCE(country_code,'')))=? "
+            "AND COALESCE(country_name,'')<>?",
+            (name, now, code, name),
+        )
+        changed += cursor.rowcount
+    connection.commit()
+    return changed
 
 
 def apply_youtube_quality(connection) -> dict[str, object]:
@@ -78,7 +133,9 @@ def apply_youtube_quality(connection) -> dict[str, object]:
 
 def main() -> int:
     with closing(base.ensure_database()) as connection:
+        normalized = apply_country_normalization(connection)
         report = apply_youtube_quality(connection)
+        report["normalizedCountries"] = normalized
         base.export_catalog(connection, [report])
     print(json.dumps(report, ensure_ascii=False))
     return 0
