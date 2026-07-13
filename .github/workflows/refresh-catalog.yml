@@ -7,6 +7,16 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  TRAFIKVERKET_KEY: ${{ secrets.TRAFIKVERKET_KEY }}
+  DOT_GA_API_KEY: ${{ secrets.DOT_GA_API_KEY }}
+  DOT_FL_API_KEY: ${{ secrets.DOT_FL_API_KEY }}
+  DOT_AZ_API_KEY: ${{ secrets.DOT_AZ_API_KEY }}
+  DOT_ID_API_KEY: ${{ secrets.DOT_ID_API_KEY }}
+  DOT_UT_API_KEY: ${{ secrets.DOT_UT_API_KEY }}
+  DOT_LA_API_KEY: ${{ secrets.DOT_LA_API_KEY }}
+  DOT_PA_API_KEY: ${{ secrets.DOT_PA_API_KEY }}
+  DOT_SC_API_KEY: ${{ secrets.DOT_SC_API_KEY }}
+  DOT_MA_API_KEY: ${{ secrets.DOT_MA_API_KEY }}
 
 permissions:
   contents: write
