@@ -16,6 +16,7 @@ FINTRAFFIC = Path(__file__).with_name("fintraffic_catalog.py")
 INTERNATIONAL = Path(__file__).with_name("international_catalog.py")
 SCT = Path(__file__).with_name("sct_catalog.py")
 KEYED = Path(__file__).with_name("keyed_catalog.py")
+STATS = Path(__file__).with_name("catalog_stats.py")
 
 
 def run_optional(script: Path, arguments: list[str], warning: str) -> None:
@@ -33,14 +34,16 @@ def main() -> int:
 
     run_optional(QUALITY, [], "no se pudo aplicar el control de calidad de YouTube")
 
-    if "--offline" in arguments:
-        return 0
+    if "--offline" not in arguments:
+        run_optional(EXTENDER, arguments, "una parte de la ampliación española falló")
+        run_optional(FINTRAFFIC, [], "Fintraffic no respondió")
+        run_optional(INTERNATIONAL, arguments, "una parte de la ampliación internacional falló")
+        run_optional(SCT, [], "el WFS legado del Servei Català de Trànsit no respondió")
+        run_optional(KEYED, [], "una fuente configurada mediante clave gratuita no respondió")
 
-    run_optional(EXTENDER, arguments, "una parte de la ampliación española falló")
-    run_optional(FINTRAFFIC, [], "Fintraffic no respondió")
-    run_optional(INTERNATIONAL, arguments, "una parte de la ampliación internacional falló")
-    run_optional(SCT, [], "el WFS legado del Servei Català de Trànsit no respondió")
-    run_optional(KEYED, [], "una fuente configurada mediante clave gratuita no respondió")
+    stats_result = subprocess.call([sys.executable, str(STATS)], cwd=ROOT)
+    if stats_result != 0:
+        print("Advertencia: no se pudieron generar estadísticas de cobertura.", file=sys.stderr)
     return 0
 
 
