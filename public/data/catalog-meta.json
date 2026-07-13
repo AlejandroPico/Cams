@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-13T00:44:15.143627+00:00",
-  "count": 11372,
+  "generatedAt": "2026-07-13T00:49:56.039826+00:00",
+  "count": 11805,
   "providers": {
     "BARCELONA_CITY": 27,
     "CALTRANS": 883,
@@ -13,11 +13,14 @@
     "NY511_US": 1868,
     "ONTARIO511_CA": 934,
     "OREGON_US": 1127,
+    "RWS_NL": 26,
     "SG_LTA": 8,
-    "TFL": 882
+    "TFL": 882,
+    "TII_IE": 242,
+    "VEGAGERDIN_IS": 165
   },
   "statuses": {
-    "online": 11308,
+    "online": 11741,
     "unknown": 64
   },
   "reports": [
@@ -35,6 +38,9 @@
     "Finlandia": 2272,
     "Canadá": 1968,
     "Reino Unido": 882,
+    "Irlanda": 242,
+    "Islandia": 165,
+    "Países Bajos": 26,
     "Nueva Zelanda": 11,
     "Singapur": 8
   },
@@ -44,23 +50,26 @@
     "FI": 2272,
     "CA": 1968,
     "GB": 882,
+    "IE": 242,
+    "IS": 165,
+    "NL": 26,
     "NZ": 11,
     "SG": 8
   },
   "mediaTypes": {
-    "snapshot": 9751,
+    "snapshot": 10184,
     "hls": 1557,
     "link": 64
   },
   "categories": {
-    "traffic": 8055,
-    "weather-road": 3306,
+    "traffic": 8323,
+    "weather-road": 3471,
     "volcano": 11
   },
   "quality": {
-    "verifiedOnline": 11308,
+    "verifiedOnline": 11741,
     "unknown": 64,
     "archivedLegacyYouTube": 144
   },
-  "statisticsGeneratedAt": "2026-07-13T00:44:15.323755+00:00"
+  "statisticsGeneratedAt": "2026-07-13T00:49:56.281365+00:00"
 }
