@@ -14,6 +14,7 @@ QUALITY = Path(__file__).with_name("quality_catalog.py")
 EXTENDER = Path(__file__).with_name("extend_catalog.py")
 FINTRAFFIC = Path(__file__).with_name("fintraffic_catalog.py")
 INTERNATIONAL = Path(__file__).with_name("international_catalog.py")
+SCT = Path(__file__).with_name("sct_catalog.py")
 
 
 def run_optional(script: Path, arguments: list[str], warning: str) -> None:
@@ -37,6 +38,7 @@ def main() -> int:
     run_optional(EXTENDER, arguments, "una parte de la ampliación española falló")
     run_optional(FINTRAFFIC, [], "Fintraffic no respondió")
     run_optional(INTERNATIONAL, arguments, "una parte de la ampliación internacional falló")
+    run_optional(SCT, [], "el WFS legado del Servei Català de Trànsit no respondió")
     return 0
 
 
