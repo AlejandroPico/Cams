@@ -12,10 +12,26 @@ const youtubeEmbed = (camera: Camera) => camera.embedUrl || (camera.videoId
   ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(camera.videoId)}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`
   : camera.url || '');
 
+function sourceFor(camera: Camera): string {
+  return camera.sourceUrl || camera.snapshotUrl || camera.url || camera.embedUrl || '';
+}
+
+function MediaFallback({ camera, message }: { camera: Camera; message: string }) {
+  const source = sourceFor(camera);
+  return (
+    <div className="media-error" role="status">
+      <strong>{message}</strong>
+      <span>{camera.provider}{camera.statusReason ? ` · ${camera.statusReason}` : ''}</span>
+      {source && <a href={source} target="_blank" rel="noopener noreferrer">abrir fuente original</a>}
+    </div>
+  );
+}
+
 function Snapshot({ camera }: { camera: Camera }) {
   const base = camera.snapshotUrl || camera.url || '';
   const interval = Math.max(10, camera.refreshSeconds || 60) * 1000;
   const [tick, setTick] = useState(Date.now());
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const timer = window.setInterval(() => setTick(Date.now()), interval);
@@ -24,37 +40,66 @@ function Snapshot({ camera }: { camera: Camera }) {
 
   const src = useMemo(() => {
     if (!base) return '';
-    const joiner = base.includes('?') ? '&' : '?';
-    return `${base}${joiner}cams_refresh=${tick}`;
+    const upgraded = typeof window !== 'undefined' && window.location.protocol === 'https:' && base.startsWith('http://')
+      ? `https://${base.slice('http://'.length)}`
+      : base;
+    if (/[?&](?:token|sig|signature|expires|x-amz-)/i.test(upgraded)) return upgraded;
+    const joiner = upgraded.includes('?') ? '&' : '?';
+    return `${upgraded}${joiner}cams_refresh=${tick}`;
   }, [base, tick]);
 
-  return src ? <img src={src} alt={camera.title} loading="lazy" referrerPolicy="no-referrer" /> : <div className="media-error">Sin snapshot</div>;
+  useEffect(() => setFailed(false), [src, camera.id]);
+
+  if (!src) return <MediaFallback camera={camera} message="La fuente no publica un snapshot insertable" />;
+  if (failed) return <MediaFallback camera={camera} message="La imagen no ha respondido o impide su inserción" />;
+
+  return (
+    <img
+      src={src}
+      alt={camera.title}
+      loading="lazy"
+      referrerPolicy="strict-origin-when-cross-origin"
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 function HlsVideo({ camera, muted }: { camera: Camera; muted: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [failed, setFailed] = useState(false);
   const src = camera.url || camera.embedUrl || '';
 
   useEffect(() => {
     const video = videoRef.current;
+    setFailed(false);
     if (!video || !src) return;
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = src;
       return;
     }
-    if (!Hls.isSupported()) return;
+    if (!Hls.isSupported()) {
+      setFailed(true);
+      return;
+    }
     const hls = new Hls({ lowLatencyMode: true, backBufferLength: 30 });
+    hls.on(Hls.Events.ERROR, (_event, data) => {
+      if (data.fatal) setFailed(true);
+    });
     hls.loadSource(src);
     hls.attachMedia(video);
     return () => hls.destroy();
-  }, [src]);
+  }, [src, camera.id]);
 
-  return <video ref={videoRef} autoPlay playsInline controls muted={muted} />;
+  if (!src || failed) return <MediaFallback camera={camera} message="El directo HLS no está disponible en este navegador" />;
+  return <video ref={videoRef} autoPlay playsInline controls muted={muted} onError={() => setFailed(true)} />;
 }
 
 export function MediaPlayer({ camera, muted = true, compact = false }: Props) {
   if (camera.status === 'offline') {
-    return <div className="media-error">Cámara fuera de servicio</div>;
+    return <MediaFallback camera={camera} message="Cámara fuera de servicio" />;
+  }
+  if (camera.status === 'blocked') {
+    return <MediaFallback camera={camera} message="El proveedor bloquea la reproducción insertada" />;
   }
 
   if (camera.type === 'youtube') {
@@ -68,7 +113,7 @@ export function MediaPlayer({ camera, muted = true, compact = false }: Props) {
         allowFullScreen
         referrerPolicy="strict-origin-when-cross-origin"
       />
-    ) : <div className="media-error">Directo no disponible</div>;
+    ) : <MediaFallback camera={camera} message="Directo de YouTube no disponible" />;
   }
 
   if (camera.type === 'snapshot' || camera.type === 'image' || camera.type === 'mjpeg') {
@@ -78,14 +123,20 @@ export function MediaPlayer({ camera, muted = true, compact = false }: Props) {
   if (camera.type === 'hls') return <HlsVideo camera={camera} muted={muted} />;
 
   if (camera.type === 'video') {
-    return <video src={camera.url} autoPlay playsInline controls muted={muted} />;
+    return camera.url
+      ? <video src={camera.url} autoPlay playsInline controls muted={muted} />
+      : <MediaFallback camera={camera} message="Vídeo no disponible" />;
   }
 
   if (camera.type === 'iframe') {
     return camera.embedUrl || camera.url
       ? <iframe src={camera.embedUrl || camera.url} title={camera.title} loading="lazy" allowFullScreen />
-      : <div className="media-error">Fuente no disponible</div>;
+      : <MediaFallback camera={camera} message="Fuente no disponible" />;
   }
 
-  return <div className="media-error">Formato no compatible</div>;
+  if (camera.type === 'link') {
+    return <MediaFallback camera={camera} message="La red publica la ubicación, pero no ofrece una imagen insertable" />;
+  }
+
+  return <MediaFallback camera={camera} message="La fuente utiliza un formato todavía no integrado" />;
 }
