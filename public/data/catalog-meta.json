@@ -1,27 +1,56 @@
 {
-  "generatedAt": "2026-07-13T00:24:28.934214+00:00",
-  "count": 6553,
+  "generatedAt": "2026-07-13T00:28:17.246068+00:00",
+  "count": 11372,
   "providers": {
     "BARCELONA_CITY": 27,
     "CALTRANS": 883,
     "DGT_ES": 1932,
+    "DRIVEBC_CA": 1034,
     "FINTRAFFIC_FI": 2272,
     "GEONET": 11,
-    "LEGACY_YOUTUBE": 144,
     "MADRID_CITY": 357,
     "MADRID_M30": 37,
+    "NY511_US": 1868,
+    "ONTARIO511_CA": 934,
+    "OREGON_US": 1127,
     "SG_LTA": 8,
     "TFL": 882
   },
   "statuses": {
-    "online": 6345,
-    "unknown": 208
+    "online": 11308,
+    "unknown": 64
   },
   "reports": [
     {
-      "provider": "FINTRAFFIC_FI",
+      "provider": "SCT_CAT",
+      "status": "error",
+      "count": 0,
+      "error": "https://mct.gencat.cat/sct-gis/wfs: <urlopen error [SSL: DH_KEY_TOO_SMALL] dh key too small (_ssl.c:1032)>; http://mct.gencat.cat/sct-gis/wfs: HTTP Error 403: Forbidden"
+    },
+    {
+      "provider": "AUTOBAHN_DE",
       "status": "ok",
-      "count": 2272
+      "count": 0
+    },
+    {
+      "provider": "NY511_US",
+      "status": "ok",
+      "count": 1868
+    },
+    {
+      "provider": "OREGON_US",
+      "status": "ok",
+      "count": 1127
+    },
+    {
+      "provider": "DRIVEBC_CA",
+      "status": "ok",
+      "count": 1034
+    },
+    {
+      "provider": "ONTARIO511_CA",
+      "status": "ok",
+      "count": 934
     }
   ],
   "database": "data/cams.sqlite3"
