@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T00:32:12.371077+00:00",
+  "generatedAt": "2026-07-13T00:40:03.997141+00:00",
   "count": 11372,
   "providers": {
     "BARCELONA_CITY": 27,
@@ -28,5 +28,40 @@
       "error": "fetch_with_urllib: <urlopen error [SSL: WRONG_SIGNATURE_TYPE] wrong signature type (_ssl.c:1032)>; fetch_with_curl: Command '['curl', '--fail', '--silent', '--show-error', '--location', '--max-time', '60', '--ciphers', 'DEFAULT@SECLEVEL=1', '--header', 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 CamsCatalogBot/4.2', '--header', 'Accept: application/json,application/geo+json,application/xml,text/xml,*/*', '--header', 'Referer: https://mct.gencat.cat/', 'https://mct.gencat.cat/sct-gis/wfs?service=WFS&version=1.0.0&request=GetCapabilities']' returned non-zero exit status 35."
     }
   ],
-  "database": "data/cams.sqlite3"
+  "database": "data/cams.sqlite3",
+  "countries": {
+    "Estados Unidos": 2995,
+    "España": 2353,
+    "Finlandia": 2272,
+    "Canadá": 1968,
+    "United States": 883,
+    "United Kingdom": 882,
+    "New Zealand": 11,
+    "Singapore": 8
+  },
+  "countryCodes": {
+    "US": 3878,
+    "ES": 2353,
+    "FI": 2272,
+    "CA": 1968,
+    "GB": 882,
+    "NZ": 11,
+    "SG": 8
+  },
+  "mediaTypes": {
+    "snapshot": 9751,
+    "hls": 1557,
+    "link": 64
+  },
+  "categories": {
+    "traffic": 8055,
+    "weather-road": 3306,
+    "volcano": 11
+  },
+  "quality": {
+    "verifiedOnline": 11308,
+    "unknown": 64,
+    "archivedLegacyYouTube": 144
+  },
+  "statisticsGeneratedAt": "2026-07-13T00:40:04.154071+00:00"
 }
