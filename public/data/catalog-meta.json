@@ -1,7 +1,8 @@
 {
-  "generatedAt": "2026-07-13T00:49:56.039826+00:00",
-  "count": 11805,
+  "generatedAt": "2026-07-13T00:56:20.833507+00:00",
+  "count": 12508,
   "providers": {
+    "ALBERTA511_CA": 367,
     "BARCELONA_CITY": 27,
     "CALTRANS": 883,
     "DGT_ES": 1932,
@@ -17,10 +18,11 @@
     "SG_LTA": 8,
     "TFL": 882,
     "TII_IE": 242,
+    "TORONTO_CA": 336,
     "VEGAGERDIN_IS": 165
   },
   "statuses": {
-    "online": 11741,
+    "online": 12444,
     "unknown": 64
   },
   "reports": [
@@ -34,9 +36,9 @@
   "database": "data/cams.sqlite3",
   "countries": {
     "Estados Unidos": 3878,
+    "Canadá": 2671,
     "España": 2353,
     "Finlandia": 2272,
-    "Canadá": 1968,
     "Reino Unido": 882,
     "Irlanda": 242,
     "Islandia": 165,
@@ -46,9 +48,9 @@
   },
   "countryCodes": {
     "US": 3878,
+    "CA": 2671,
     "ES": 2353,
     "FI": 2272,
-    "CA": 1968,
     "GB": 882,
     "IE": 242,
     "IS": 165,
@@ -57,19 +59,19 @@
     "SG": 8
   },
   "mediaTypes": {
-    "snapshot": 10184,
+    "snapshot": 10887,
     "hls": 1557,
     "link": 64
   },
   "categories": {
-    "traffic": 8323,
-    "weather-road": 3471,
+    "traffic": 8659,
+    "weather-road": 3838,
     "volcano": 11
   },
   "quality": {
-    "verifiedOnline": 11741,
+    "verifiedOnline": 12444,
     "unknown": 64,
     "archivedLegacyYouTube": 144
   },
-  "statisticsGeneratedAt": "2026-07-13T00:49:56.281365+00:00"
+  "statisticsGeneratedAt": "2026-07-13T00:56:21.089719+00:00"
 }
