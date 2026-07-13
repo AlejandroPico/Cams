@@ -1,123 +1,143 @@
 # Fuentes de cámaras públicas
 
-Cams importa exclusivamente fuentes gratuitas cuya consulta pública está documentada. Cada adaptador falla de forma independiente y conserva en SQLite los datos obtenidos en ejecuciones anteriores.
+Cams importa exclusivamente fuentes gratuitas cuya consulta pública está documentada. Cada adaptador falla de forma independiente y conserva en SQLite los datos obtenidos por las demás redes.
 
-El recuento vigente por proveedor, país, tipo de medio, categoría y estado se publica automáticamente en:
+El recuento vigente se genera automáticamente en:
 
 ```text
 public/data/catalog-meta.json
 ```
 
-## España: DGT National Access Point
+La ejecución confirmada del 13 de julio de 2026 contiene **12.508 cámaras activas**, 12.444 online y 64 sin verificar.
 
-- Ámbito: red estatal española, excepto las redes gestionadas directamente por Cataluña y País Vasco.
-- Tipo: snapshots de información viaria.
-- Catálogo: DATEX II 3.7.
+## España
+
+### DGT National Access Point
+
+- Red estatal, excepto las redes gestionadas directamente por Cataluña y País Vasco.
+- Catálogo DATEX II 3.7.
 - Endpoint: `https://nap.dgt.es/datex2/v3/dgt/DevicePublication/camaras_datex2_v37.xml`.
-- Frecuencia usada por Cams: 180 segundos.
+- Snapshot y coordenadas oficiales.
+- Frecuencia: 180 segundos.
 - Licencia registrada: Creative Commons Attribution.
+- Recuento confirmado: 1.932.
 
-El parser identifica los elementos XML por su nombre local y recupera identificador, carretera, coordenadas y URL de imagen, aunque el proveedor cambie los prefijos de espacio de nombres.
+### Ayuntamiento de Madrid
 
-## Cataluña: Servei Català de Trànsit / CIVICAT
+- Cámaras urbanas: 357.
+- Madrid Calle 30: 37.
+- Coordenadas e imágenes obtenidas de los conjuntos municipales abiertos.
 
-El SCT mantiene su propia red, separada de la DGT. Cams incorpora un adaptador para el WFS público de MCT/CIVICAT:
+### Barcelona
+
+Cams conserva 27 ubicaciones municipales históricas con coordenadas individuales. Algunas páginas antiguas ya no exponen el JPG; esos registros quedan como `link` o `unknown` y el reproductor muestra **abrir fuente original** en vez de «formato no compatible».
+
+### Servei Català de Trànsit / CIVICAT
+
+El adaptador `sct_catalog.py` consulta:
 
 ```text
 https://mct.gencat.cat/sct-gis/wfs
 ```
 
-El importador:
+El servidor utiliza criptografía TLS antigua. Cams reduce el nivel criptográfico solo para ese host, pero mantiene la validación del certificado y del nombre. Después de negociar TLS, el servidor responde **HTTP 403 Forbidden** a GitHub Actions. Por tanto:
 
-1. consulta `GetCapabilities`;
-2. descubre capas cuyo nombre contiene `camera`, `càmera`, `cctv` o `webcam`;
-3. solicita las entidades en GeoJSON y EPSG:4326;
-4. extrae coordenadas, carretera, punto kilométrico, municipio e imagen cuando está publicada.
+- no se desactiva la validación TLS;
+- no se usan credenciales filtradas;
+- no se publican cámaras ficticias del SCT;
+- la integración queda pendiente de un feed moderno, una autorización o una cuenta oficial.
 
-El servidor utiliza parámetros Diffie-Hellman antiguos que OpenSSL 3 rechaza con su nivel de seguridad normal. `sct_catalog.py` aplica `SECLEVEL=1` únicamente a este host y conserva la validación del certificado. El nivel TLS del resto del proyecto no se modifica.
+## Europa
 
-Cuando el WFS solo publica la ubicación, la cámara se conserva como enlace `unknown`; no se marca falsamente como snapshot online.
+### Finlandia — Fintraffic
 
-## Madrid: cámaras urbanas y Calle 30
-
-Cams incorpora dos conjuntos abiertos del Ayuntamiento de Madrid:
-
-- cámaras urbanas de tráfico en KML;
-- cámaras de Calle 30 en XML.
-
-Se importan nombre, coordenadas, imagen pública cuando está incluida y enlace al conjunto original. Los snapshots urbanos se refrescan cada diez minutos y los de Calle 30 cada cinco minutos.
-
-## Barcelona: red municipal histórica
-
-- Ámbito: 27 intersecciones, plazas y tramos de las rondas de Barcelona.
-- Tipo: snapshot cuando la página municipal todavía devuelve una imagen; enlace público cuando no lo hace.
-- Coordenadas: una posición individual por cámara, no un único punto central de Barcelona.
-- Frecuencia usada por Cams: 300 segundos.
-- Atribución: Ajuntament de Barcelona.
-
-Las antiguas páginas municipales no siempre exponen ya la imagen directamente. En esos casos el reproductor muestra una explicación y un botón **abrir fuente original**, en lugar del mensaje genérico «formato no compatible».
-
-## Finlandia: Fintraffic Digitraffic
-
-- Ámbito: red viaria nacional.
-- Tipo: cámaras meteorológicas de carretera, normalmente con varios encuadres por estación.
 - Endpoint: `https://tie.digitraffic.fi/api/weathercam/v1/stations`.
 - Imagen: `https://weathercam.digitraffic.fi/{presetId}.jpg`.
-- Frecuencia usada por Cams: 600 segundos.
-- Atribución: Fintraffic / Digitraffic.
+- Se importa cada preset como una cámara independiente.
+- Recuento confirmado: 2.272.
 
-El adaptador envía la cabecera `Digitraffic-User`, negocia JSON comprimido con gzip e importa cada preset como una cámara independiente.
+### Reino Unido — Transport for London
 
-## Reino Unido: Transport for London
-
-- Ámbito: Greater London.
-- Tipo: snapshots de tráfico.
 - Endpoint: `https://api.tfl.gov.uk/Place/Type/JamCam`.
-- Frecuencia usada por Cams: 60 segundos.
-- Licencia registrada: Open Government Licence v3.0.
+- Licencia: Open Government Licence v3.0.
+- Cobertura: Greater London, no todo el Reino Unido.
+- Recuento confirmado: 882.
 
-Esta fuente cubre Londres, no todo el Reino Unido. Las redes de National Highways, Gales, Escocia e Irlanda del Norte se mantienen como líneas de trabajo separadas.
+### Irlanda — Transport Infrastructure Ireland
 
-## Alemania: Autobahn API
+- Endpoint GraphQL: `https://traffic.tii.ie/api/graphql`.
+- Capa: `normalCameras`.
+- Se exigen coordenadas reales, estado activo y una vista `IMAGE`.
+- Licencia registrada: CC BY 4.0.
+- Recuento confirmado: 242.
 
-Cams consulta la API oficial:
+### Islandia — Vegagerðin / umferdin.is
+
+- Página pública: `https://umferdin.is/en/cameras`.
+- El importador lee el catálogo SSR publicado por el propio portal.
+- Se extraen identificador, carretera, coordenadas e imágenes reales.
+- Recuento confirmado: 165.
+
+### Países Bajos — Rijkswaterstaat
+
+- Endpoint: `https://api.rwsverkeersinfo.nl/api/cameras/`.
+- Se utilizan `latitude`, `longitude` y `static_url`.
+- Recuento confirmado: 26.
+
+### Alemania — Autobahn API
 
 ```text
 https://verkehr.autobahn.de/o/autobahn/
 https://verkehr.autobahn.de/o/autobahn/{roadId}/services/webcam
 ```
 
-La API no requiere clave. El adaptador recorre las autopistas anunciadas y procesa `coordinate`, `imageurl` y `linkurl`. Si el servicio devuelve listas vacías, no se inventan registros ni se reutilizan imágenes antiguas.
+El adaptador recorre las autopistas anunciadas. En la ejecución actual la API devolvió colecciones de webcam vacías, por lo que Alemania no se contabiliza como cubierta.
+
+### Suecia — Trafikverket preparada
+
+Requiere una clave gratuita guardada como:
+
+```text
+TRAFIKVERKET_KEY
+```
+
+Cams consulta el objeto `Camera` en:
+
+```text
+POST https://api.trafikinfo.trafikverket.se/v2/data.json
+```
+
+Recupera `Id`, `Name`, `Geometry.WGS84` y `PhotoUrl`. Sin secreto, la etapa se omite sin error.
 
 ## Estados Unidos
 
-### Caltrans CWWP2
+### California — Caltrans
 
-- Doce distritos de California.
-- Snapshots y, cuando existe, stream.
-- Frecuencia: 60 segundos.
-- Página pública: `https://quickmap.dot.ca.gov/`.
+- Doce distritos de CWWP2.
+- Snapshots y algunos streams.
+- Recuento confirmado: 883.
 
-El fallo de un distrito no bloquea los otros once.
-
-### 511 New York
+### Nueva York — 511 New York
 
 - Endpoint: `https://511ny.org/api/getcameras?format=json`.
-- Sin credenciales.
-- Snapshots y `VideoUrl` cuando está disponible.
-- Se descartan registros marcados por el proveedor como deshabilitados o bloqueados.
+- Snapshots y `VideoUrl` cuando está publicado.
+- Se excluyen cámaras bloqueadas o deshabilitadas.
+- Recuento confirmado: 1.868.
 
-### Oregon TripCheck
+### Oregón — TripCheck
 
 - Inventario: `https://tripcheck.com/Scripts/map/data/cctvinventory.js`.
 - Imagen: `https://tripcheck.com/RoadCams/cams/{filename}`.
-- Sin credenciales.
+- Recuento confirmado: 1.127.
+
+### Washington State DOT
+
+- Endpoint preparado: `https://data.wsdot.wa.gov/log/public/cameras.json`.
+- La última ejecución no produjo registros válidos, por lo que no se cuenta como cobertura activa hasta revisar el formato o la disponibilidad del endpoint.
 
 ### Redes 511 con clave gratuita
 
-El adaptador `keyed_catalog.py` admite estas redes IBI 511:
-
-| Secreto de GitHub | Red |
+| Secreto | Red |
 |---|---|
 | `DOT_GA_API_KEY` | Georgia 511 |
 | `DOT_FL_API_KEY` | Florida 511 |
@@ -129,96 +149,99 @@ El adaptador `keyed_catalog.py` admite estas redes IBI 511:
 | `DOT_SC_API_KEY` | South Carolina 511 |
 | `DOT_MA_API_KEY` | Massachusetts 511 |
 
-Las claves se solicitan gratuitamente en el portal 511 correspondiente. Se guardan en **Settings → Secrets and variables → Actions** y nunca se escriben en SQLite, JSON o JavaScript.
-
 ## Canadá
 
-### DriveBC
+### Columbia Británica — DriveBC
 
-- Catálogo abierto CSV de Columbia Británica.
-- Dataset oficial de `catalogue.data.gov.bc.ca`.
-- Las imágenes se derivan del identificador oficial de cámara.
-- Frecuencia usada por Cams: 300 segundos.
+- Catálogo CSV abierto del Gobierno de British Columbia.
+- Recuento confirmado: 1.034.
 
-### Ontario 511
+### Ontario — Ontario 511
 
 - Endpoint: `https://511on.ca/api/v2/get/cameras?format=json`.
-- Sin credenciales en la integración actual.
-- Se utiliza la primera vista habilitada de cada cámara.
+- Recuento confirmado: 934.
 
-## Suecia: Trafikverket, preparada
+### Alberta — Alberta 511
 
-La API nacional requiere una clave gratuita. El secreto esperado es:
+- Endpoint: `https://511.alberta.ca/api/v2/get/cameras?format=json`.
+- Se usa la primera vista habilitada de cada cámara.
+- Recuento confirmado: 367.
+
+### Toronto Open Data
+
+- Catálogo municipal GeoJSON.
+- Coordenadas y `IMAGEURL` oficiales.
+- Recuento confirmado: 336.
+
+## Asia y Pacífico
+
+### Corea del Sur — ITS Korea preparada
+
+La API oficial devuelve coordenadas y streams HLS de autopistas y carreteras nacionales. Requiere una clave gratuita:
 
 ```text
-TRAFIKVERKET_KEY
+ITS_KR_KEY
 ```
 
 Endpoint:
 
 ```text
-POST https://api.trafikinfo.trafikverket.se/v2/data.json
+https://openapi.its.go.kr/api/NCCTVInfo
 ```
 
-Cams consulta el objeto `Camera` y recupera `Id`, `Name`, `Geometry.WGS84` y `PhotoUrl`. Sin el secreto, la etapa se omite sin producir error.
+El adaptador consulta los tipos `ex` e `its` para toda la península. Sin secreto, la fuente se omite limpiamente.
 
-## Singapur: LTA Traffic Images
+### Japón
+
+No se han activado las listas manuales encontradas porque son recopilaciones de YouTube sin garantía de emisión. La cobertura japonesa se incorporará mediante fuentes oficiales de MLIT, prefecturas, NEXCO, volcanes, puertos o meteorología cuando se verifiquen sus términos y formatos.
+
+### Singapur — LTA
 
 - Endpoint: `https://api.data.gov.sg/v1/transport/traffic-images`.
-- Snapshots de tráfico con coordenadas y dimensiones.
-- Frecuencia usada por Cams: 60 segundos.
-- Singapore Open Data Licence.
+- Recuento confirmado: 8.
 
-## Nueva Zelanda: GeoNet
+### Nueva Zelanda — GeoNet
 
-- Cámaras públicas de volcanes.
 - Endpoint: `https://images.geonet.org.nz/volcano/cameras/all.json`.
-- Frecuencia usada por Cams: 300 segundos.
 - Licencia: CC BY 3.0 NZ.
+- Recuento confirmado: 11.
 
 ## Política para YouTube
 
-Los 144 registros históricos continúan almacenados en SQLite para no perder el trabajo de catalogación, pero permanecen inactivos por defecto.
-
-Solo se publican los identificadores incluidos en:
+Los 144 registros históricos se conservan en SQLite, pero permanecen inactivos. Solo se publican los identificadores incluidos en:
 
 ```text
 data/verified_youtube.json
 ```
 
-Esto evita mostrar como cámara en directo:
-
-- emisiones terminadas;
-- vídeos grabados;
-- contenidos ajenos a la ubicación;
-- identificadores reutilizados;
-- canales que bloquean la inserción.
+Esto evita presentar como directo emisiones terminadas, grabaciones, vídeos ajenos a la ubicación o canales que bloquean la inserción.
 
 ## Arquitectura de importación
 
 ```text
-build_catalog.py          fuentes base
-quality_catalog.py        depuración y lista blanca de YouTube
-extend_catalog.py         DGT, Madrid y Barcelona
-fintraffic_catalog.py     Finlandia
-international_catalog.py  Alemania, Estados Unidos y Canadá
-sct_catalog.py            compatibilidad aislada con SCT/CIVICAT
-keyed_catalog.py          fuentes gratuitas con secreto opcional
-catalog_stats.py          recuentos por país, medio, categoría y estado
+build_catalog.py             fuentes base
+quality_catalog.py           países y control de calidad de YouTube
+extend_catalog.py            DGT, Madrid y Barcelona
+fintraffic_catalog.py        Finlandia
+europe_catalog.py            Irlanda, Islandia y Países Bajos
+international_catalog.py     EE. UU., Canadá y Autobahn
+north_america_catalog.py     Alberta, Toronto y Washington
+sct_catalog.py               compatibilidad aislada con SCT
+keyed_catalog.py             Suecia, Corea y redes 511 con clave
+catalog_stats.py             estadísticas de cobertura
 ```
-
-`run_catalog.py` ejecuta la cadena completa. Una fuente caída no elimina las cámaras almacenadas por las demás.
 
 ## Criterios de incorporación
 
-Antes de activar otro proveedor deben registrarse:
+Para publicar una cámara se exige:
 
-- URL pública del proveedor;
-- atribución;
-- licencia o términos;
-- intervalo razonable de actualización;
-- categoría;
-- política de inserción o enlace;
-- nivel de privacidad de la vista.
+- coordenadas válidas;
+- proveedor identificable;
+- URL de origen;
+- tipo de medio correcto;
+- estado diferenciado;
+- atribución y términos registrados;
+- ausencia de secretos en el navegador;
+- fallo aislado por proveedor.
 
-No se incorporan cámaras privadas, endpoints obtenidos mediante credenciales filtradas, fuentes que prohíban la redistribución ni mecanismos que eludan cuotas, autenticación o protecciones comerciales.
+No se incorporan cámaras privadas, credenciales filtradas, catálogos comerciales copiados, coordenadas inventadas ni mecanismos que eludan autenticación o cuotas.
