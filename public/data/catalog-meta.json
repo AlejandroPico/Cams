@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T00:40:03.997141+00:00",
+  "generatedAt": "2026-07-13T00:44:15.143627+00:00",
   "count": 11372,
   "providers": {
     "BARCELONA_CITY": 27,
@@ -25,19 +25,18 @@
       "provider": "SCT_CAT",
       "status": "error",
       "count": 0,
-      "error": "fetch_with_urllib: <urlopen error [SSL: WRONG_SIGNATURE_TYPE] wrong signature type (_ssl.c:1032)>; fetch_with_curl: Command '['curl', '--fail', '--silent', '--show-error', '--location', '--max-time', '60', '--ciphers', 'DEFAULT@SECLEVEL=1', '--header', 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 CamsCatalogBot/4.2', '--header', 'Accept: application/json,application/geo+json,application/xml,text/xml,*/*', '--header', 'Referer: https://mct.gencat.cat/', 'https://mct.gencat.cat/sct-gis/wfs?service=WFS&version=1.0.0&request=GetCapabilities']' returned non-zero exit status 35."
+      "error": "fetch_with_urllib: HTTP Error 403: Forbidden; fetch_with_curl: Command '['curl', '--fail', '--silent', '--show-error', '--location', '--max-time', '60', '--ciphers', 'DEFAULT:@SECLEVEL=0', '--header', 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 CamsCatalogBot/4.2', '--header', 'Accept: application/json,application/geo+json,application/xml,text/xml,*/*', '--header', 'Referer: https://mct.gencat.cat/', 'https://mct.gencat.cat/sct-gis/wfs?service=WFS&version=1.0.0&request=GetCapabilities']' returned non-zero exit status 22."
     }
   ],
   "database": "data/cams.sqlite3",
   "countries": {
-    "Estados Unidos": 2995,
+    "Estados Unidos": 3878,
     "España": 2353,
     "Finlandia": 2272,
     "Canadá": 1968,
-    "United States": 883,
-    "United Kingdom": 882,
-    "New Zealand": 11,
-    "Singapore": 8
+    "Reino Unido": 882,
+    "Nueva Zelanda": 11,
+    "Singapur": 8
   },
   "countryCodes": {
     "US": 3878,
@@ -63,5 +62,5 @@
     "unknown": 64,
     "archivedLegacyYouTube": 144
   },
-  "statisticsGeneratedAt": "2026-07-13T00:40:04.154071+00:00"
+  "statisticsGeneratedAt": "2026-07-13T00:44:15.323755+00:00"
 }
