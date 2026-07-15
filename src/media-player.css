@@ -1,3 +1,60 @@
+.media-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.media-frame > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.media-context {
+  position: absolute;
+  z-index: 3;
+  inset: auto 0 0;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 26px 12px 10px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, .9));
+  color: #fff;
+  text-shadow: 0 1px 4px #000;
+  pointer-events: none;
+}
+
+.media-context strong,
+.media-context span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-context strong {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .01em;
+}
+
+.media-context span {
+  color: rgba(255, 255, 255, .72);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.media-context[data-compact="true"] {
+  gap: 2px;
+  padding: 18px 8px 6px;
+}
+
+.media-context[data-compact="true"] strong { font-size: 9px; }
+.media-context[data-compact="true"] span { font-size: 8px; }
+
 .media-error {
   width: 100%;
   height: 100%;
