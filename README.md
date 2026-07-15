@@ -1,12 +1,12 @@
 # Cams
 
-Cams es un visor mundial de webcams públicas, directos y snapshots. La aplicación abre en un globo interactivo, permite localizar cámaras por todo el mundo y ofrece una segunda vista de mosaico minimalista.
+Cams es un visor mundial de webcams públicas, directos y snapshots. La aplicación abre en un globo interactivo, permite localizar cámaras y ofrece una segunda vista de mosaico minimalista.
 
 ## Estado actual
 
-La última ejecución confirmada ha generado **12.508 cámaras activas**:
+La última ejecución confirmada ha generado **15.351 cámaras activas**:
 
-- 12.444 marcadas online;
+- 15.287 marcadas online;
 - 64 ubicaciones o fuentes todavía sin verificar;
 - 144 vídeos históricos de YouTube archivados e inactivos.
 
@@ -14,18 +14,20 @@ Cobertura confirmada por país:
 
 | País | Cámaras |
 |---|---:|
-| Estados Unidos | 3.878 |
+| Estados Unidos | 3.892 |
+| Reino Unido | 3.705 |
 | Canadá | 2.671 |
-| España | 2.353 |
-| Finlandia | 2.272 |
-| Reino Unido | 882 |
+| España | 2.358 |
+| Finlandia | 2.273 |
 | Irlanda | 242 |
 | Islandia | 165 |
 | Países Bajos | 26 |
 | Nueva Zelanda | 11 |
 | Singapur | 8 |
 
-Los recuentos vigentes por país, proveedor, medio, categoría y estado se regeneran en:
+El incremento principal de esta iteración corresponde a **2.823 cámaras de National Highways en Inglaterra**, añadidas sobre las 882 JamCams de Londres.
+
+Los recuentos y el último diagnóstico de cada proveedor se regeneran en:
 
 ```text
 public/data/catalog-meta.json
@@ -38,48 +40,40 @@ public/data/catalog-meta.json
 - SQLite como fuente maestra del catálogo.
 - Python para importar, validar, depurar y exportar datos.
 - Node.js 24 y Python 3.13 en GitHub Actions.
-- Catálogo JSON integrado dentro del bundle como protección frente a errores 404.
+- Copia JSON integrada en el bundle como protección frente a errores 404.
 
 ## Mapa mundial
 
-El visor ofrece tres representaciones intercambiables sin reconstruir el mapa:
+El visor ofrece tres bases intercambiables:
 
-- **Satélite:** fotografía aérea de Esri World Imagery.
-- **Geográfico:** cartografía de OpenStreetMap.
-- **Relieve:** mapa topográfico de OpenTopoMap.
+- **Satélite:** Esri World Imagery.
+- **Geográfico:** OpenStreetMap.
+- **Relieve:** OpenTopoMap.
 
-El modo **Terreno 3D** añade elevación `raster-dem`, hillshade y cámara inclinada. El globo también ofrece zoom urbano, brújula, pantalla completa, clústeres numéricos, iconos individuales de cámara, estado solar por color, localidades opcionales y filtros compartidos con el mosaico.
+El modo **Terreno 3D** añade elevación, hillshade y cámara inclinada. El globo incluye zoom urbano, brújula, pantalla completa, clústeres numéricos, iconos individuales, estado solar por color, localidades opcionales y filtros compartidos con el mosaico.
 
-Al pulsar una cámara individual se abre una ventana flotante arrastrable con el medio, ubicación, hora local, proveedor, estado y enlace de origen. Puede minimizarse, cerrarse, abrirse a pantalla completa y recuperar su posición inicial con doble clic en la cabecera.
+Al pulsar una cámara se abre una ventana flotante arrastrable con medio, ubicación, hora local, proveedor, estado y enlace de origen. Puede minimizarse, cerrarse, abrirse a pantalla completa y restablecer su posición con doble clic en la cabecera.
+
+## Ubicación y antigüedad de las capturas
+
+Cada snapshot muestra ahora una banda inferior con:
+
+- ciudad, localidad, región y país disponibles;
+- proveedor de la cámara;
+- antigüedad actualizada cada quince segundos.
+
+Cams distingue dos casos:
+
+- **`captura hace…`**: el proveedor publicó una fecha real de la imagen;
+- **`imagen recibida hace…`**: la fuente no facilita la hora de exposición y solo puede indicarse cuándo cargó el fotograma en el navegador.
+
+La hora exacta aparece al mantener el cursor sobre el texto. No se presenta la hora de descarga como si fuera necesariamente la hora real de captura. Actualmente la marca temporal verificada se conserva para Singapore LTA; otros proveedores se añadirán únicamente cuando documenten un campo equivalente.
 
 ## Reproductor y fuentes no insertables
 
-No todas las administraciones publican un JPG o stream que pueda insertarse desde GitHub Pages. Algunas solo ofrecen una página de consulta, exigen una cabecera propia o bloquean el hotlink.
+No todas las administraciones publican un JPG o stream insertable desde GitHub Pages. Algunas solo ofrecen una página, exigen una cabecera propia o bloquean el hotlink.
 
-El reproductor distingue entre:
-
-- snapshot disponible;
-- HLS o vídeo;
-- iframe autorizado;
-- cámara offline;
-- reproducción bloqueada;
-- ubicación pública sin imagen insertable;
-- error temporal de la imagen.
-
-Cuando una cámara no puede reproducirse dentro de Cams, la ficha explica la causa y muestra **abrir fuente original**. Las cámaras de Barcelona que solo conservan una página pública ya no muestran el mensaje genérico «formato no compatible».
-
-## Menú lateral
-
-El panel hamburguesa está dividido en bloques plegables para:
-
-- resumen cuantitativo del catálogo;
-- búsqueda y filtros;
-- selección de base cartográfica;
-- terreno 3D, día/noche y localidades;
-- configuración del mosaico;
-- estado del catálogo SQLite.
-
-La interfaz mantiene la estética oscura, rectilínea y minimalista del proyecto.
+El reproductor distingue entre snapshot, HLS, vídeo, iframe autorizado, cámara offline, reproducción bloqueada, ubicación sin imagen insertable y error temporal. Cuando no puede reproducirse dentro de Cams, la ficha explica la causa y muestra **abrir fuente original**.
 
 ## Catálogo SQLite
 
@@ -101,7 +95,7 @@ Punto de entrada:
 scripts/catalog/run_catalog.py
 ```
 
-Cada ejecución actualiza y exporta:
+Cada ejecución exporta:
 
 ```text
 public/data/cameras.json
@@ -110,77 +104,77 @@ public/data/cams.sqlite3
 src/data/catalog.seed.json
 ```
 
-`src/data/catalog.seed.json` se compila dentro de la aplicación. Si GitHub Pages entrega un 404 temporal en `data/cameras.json`, Cams utiliza esa copia integrada.
-
-Antes de importar, `prepare_database.py` comprueba la cabecera SQLite y ejecuta `PRAGMA quick_check`. Una imagen malformada se elimina y reconstruye desde `data/schema.sql`.
-
 Documentación:
 
-- [Esquema y significado de columnas](docs/SQLITE_DATABASE.md)
-- [Recuperación de una base corrupta](docs/SQLITE_RECOVERY.md)
+- [Esquema y columnas](docs/SQLITE_DATABASE.md)
+- [Recuperación de SQLite](docs/SQLITE_RECOVERY.md)
 - [Fuentes y condiciones](docs/CAMERA_SOURCES.md)
-- [Cobertura por países y hoja de ruta](docs/COVERAGE_ROADMAP.md)
+- [Cobertura y hoja de ruta](docs/COVERAGE_ROADMAP.md)
 
 ## Pipeline de importación
 
 ```text
 build_catalog.py             fuentes base
-quality_catalog.py           depuración, países y lista blanca de YouTube
+quality_catalog.py           países y lista blanca de YouTube
 extend_catalog.py            DGT, Madrid y Barcelona
 fintraffic_catalog.py        Finlandia
 europe_catalog.py            Irlanda, Islandia y Países Bajos
+western_europe_catalog.py    Inglaterra y pruebas de Bruselas
 international_catalog.py     Estados Unidos, Canadá y Autobahn Alemania
 north_america_catalog.py     Alberta, Toronto y pruebas adicionales
 sct_catalog.py               compatibilidad aislada con SCT/CIVICAT
 keyed_catalog.py             fuentes gratuitas con secreto opcional
-catalog_stats.py             estadísticas territoriales y de calidad
+catalog_stats.py             estadísticas y salud por proveedor
+capture_metadata.py          fechas de captura verificadas
 ```
 
-Cada proveedor falla de forma independiente. Una red caída no elimina las cámaras de las demás ni impide conservar el último catálogo válido.
+Cada proveedor falla de forma independiente. Una red caída no elimina las cámaras válidas de las demás.
+
+## Europa occidental
+
+### Reino Unido
+
+- Transport for London: 882 cámaras de Londres.
+- National Highways: 2.823 cámaras de autopistas y carreteras principales de Inglaterra.
+- Total confirmado: 3.705.
+
+Traffic England ya no responde en su endpoint histórico. Cams utiliza como respaldo el resultado CC0 del recolector `traffic_england_gb` de All the Places, manteniendo las imágenes y páginas oficiales de National Highways.
+
+### Alemania
+
+La Autobahn API oficial continúa integrada, pero su colección `webcam` devuelve cero registros. No se publican puntos ficticios para compensarlo. La siguiente fase investigará BayernInfo y redes regionales.
+
+### Bélgica
+
+La prueba del endpoint histórico de Bruxelles Mobilité no se ha activado: el HTTPS presenta un certificado que no coincide con el dominio y el HTTP ya no devuelve JSON válido. Flandes y Valonia requieren adaptadores separados y no se copiarán desde agregadores comerciales.
+
+### Francia, Luxemburgo y Portugal
+
+No se ha encontrado todavía un inventario nacional anónimo, estable y reutilizable con coordenadas e imágenes directas. Francia está fragmentada entre DIR y concesionarias; Luxemburgo muestra cámaras mediante CITA sin exponer un catálogo abierto documentado; Portugal requiere revisar Infraestruturas de Portugal y operadores. Permanecen como prioridad de la siguiente ampliación.
 
 ## Control de calidad de YouTube
 
-Los 144 vídeos de la semilla histórica siguen almacenados en SQLite, pero están inactivos. Muchos habían terminado, eran grabaciones o no correspondían realmente con la ubicación.
-
-Solo se publican identificadores incluidos expresamente en:
+Los 144 vídeos históricos permanecen en SQLite, pero están inactivos. Solo se publican identificadores incluidos expresamente en:
 
 ```text
 data/verified_youtube.json
 ```
 
-Así, una cifra alta de cámaras no se consigue presentando vídeos antiguos como directos.
+Así, una cifra elevada no se consigue presentando grabaciones o emisiones terminadas como directos.
 
 ## Fuentes gratuitas activas
 
-- DGT National Access Point DATEX II 3.7.
-- Ayuntamiento de Madrid y Madrid Calle 30.
-- Red histórica municipal de Barcelona.
-- Fintraffic Digitraffic.
-- Transport for London JamCams.
+- DGT DATEX II, Ayuntamiento de Madrid, Madrid Calle 30 y Barcelona histórica.
+- Fintraffic.
+- Transport for London y National Highways.
 - Transport Infrastructure Ireland.
-- Vegagerðin / umferdin.is de Islandia.
+- Vegagerðin de Islandia.
 - Rijkswaterstaat de Países Bajos.
-- Caltrans CWWP2.
-- 511 New York.
-- Oregon TripCheck.
-- DriveBC.
-- Ontario 511.
-- Alberta 511.
-- City of Toronto Open Data.
-- Singapore LTA Traffic Images.
-- GeoNet New Zealand.
-
-La Autobahn API alemana está integrada, pero actualmente devuelve una colección de webcams vacía. Washington State DOT está preparado, pero su fuente no produjo registros en la última ejecución y no se cuenta como cobertura activa.
-
-### Cataluña y SCT/CIVICAT
-
-El adaptador específico del Servei Català de Trànsit consigue negociar el TLS antiguo del servidor de MCT/CIVICAT manteniendo la validación del certificado. La petición automatizada termina, sin embargo, en **HTTP 403 Forbidden** desde GitHub Actions. Por eso todavía no se publican cámaras del SCT como si se hubieran importado correctamente.
-
-Las 27 ubicaciones municipales históricas de Barcelona permanecen diferenciadas: muestran imagen cuando existe y, en caso contrario, enlace a la fuente con estado `unknown`.
+- Caltrans, 511 New York y Oregon TripCheck.
+- DriveBC, Ontario 511, Alberta 511 y Toronto Open Data.
+- Singapore LTA y GeoNet New Zealand.
 
 ## Fuentes gratuitas con clave preparada
-
-Cams admite secretos opcionales de GitHub Actions. Si no existen, la fuente se omite sin error:
 
 ```text
 TRAFIKVERKET_KEY
@@ -196,33 +190,17 @@ DOT_SC_API_KEY
 DOT_MA_API_KEY
 ```
 
-- `TRAFIKVERKET_KEY`: cámaras nacionales suecas.
-- `ITS_KR_KEY`: streams HLS de autopistas y carreteras nacionales de Corea del Sur.
-- `DOT_*`: redes 511 estadounidenses con registro gratuito.
+- `TRAFIKVERKET_KEY`: red nacional de Suecia.
+- `ITS_KR_KEY`: streams HLS de Corea del Sur.
+- `DOT_*`: redes 511 estadounidenses.
 
-Las claves se guardan en:
+Se guardan en:
 
 ```text
 Settings → Secrets and variables → Actions
 ```
 
-Nunca se escriben en SQLite, JSON, commits o JavaScript del navegador.
-
-## Japón
-
-No se han activado las listas localizadas hasta ahora porque son recopilaciones manuales de YouTube sin garantía de emisión, justo el tipo de contenido retirado por el control de calidad. La futura cobertura japonesa se incorporará mediante feeds oficiales del MLIT, prefecturas, NEXCO, volcanes o puertos cuando sus términos y formatos estén verificados.
-
-## Mosaico
-
-El mosaico consume exactamente el mismo catálogo que el mapa y admite YouTube verificado, HLS, MJPEG, iframe autorizado, vídeo directo y snapshots con refresco periódico. Permite parrillas de 1 a 30 cámaras, rotación, lotes aleatorios y filtros.
-
-## Favicon
-
-El favicon combina una cámara y un globo:
-
-```text
-public/icons/favicon.svg
-```
+Nunca se escriben en SQLite, JSON, commits o JavaScript.
 
 ## Desarrollo
 
@@ -233,15 +211,10 @@ npm run catalog:refresh
 npm run dev
 ```
 
-Comprobación aislada de SQLite:
+Comprobación y compilación:
 
 ```bash
 npm run catalog:check
-```
-
-Compilación:
-
-```bash
 npm run build
 ```
 
@@ -253,19 +226,9 @@ npm run catalog:offline
 
 ## GitHub Actions
 
-`.github/workflows/deploy.yml`:
+`deploy.yml` valida SQLite, ejecuta los proveedores, archiva YouTube no verificado, genera estadísticas y fechas verificadas, compila, persiste el catálogo y publica GitHub Pages.
 
-1. utiliza Node.js 24 y Python 3.13;
-2. valida o reconstruye SQLite;
-3. ejecuta las fuentes públicas y los secretos opcionales disponibles;
-4. archiva los YouTube no verificados;
-5. genera estadísticas por país, proveedor, medio, categoría y estado;
-6. comprueba integridad y coincidencia de exportaciones;
-7. compila la aplicación;
-8. persiste la base y el catálogo en `main` con `[skip ci]`;
-9. publica `dist` en GitHub Pages.
-
-`.github/workflows/refresh-catalog.yml` actualiza la base cada seis horas.
+`refresh-catalog.yml` actualiza la base cada seis horas.
 
 En **Settings → Pages** debe estar seleccionada la fuente **GitHub Actions**.
 
