@@ -41,6 +41,9 @@ export interface Camera {
   license?: string;
   licenseUrl?: string;
   termsUrl?: string;
+  /** Instante publicado por la fuente para la imagen, cuando existe. */
+  capturedAt?: string;
+  /** Instante en que el catálogo comprobó la cámara; no implica exposición fotográfica. */
   lastCheckedAt?: string;
 }
 
