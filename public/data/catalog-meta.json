@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-07-15T14:10:00.803869+00:00",
-  "count": 12515,
+  "generatedAt": "2026-07-15T19:37:12.121489+00:00",
+  "count": 12521,
   "providers": {
     "ALBERTA511_CA": 367,
     "BARCELONA_CITY": 27,
-    "CALTRANS": 883,
+    "CALTRANS": 889,
     "DGT_ES": 1937,
     "DRIVEBC_CA": 1034,
     "FINTRAFFIC_FI": 2273,
@@ -22,7 +22,7 @@
     "VEGAGERDIN_IS": 165
   },
   "statuses": {
-    "online": 12451,
+    "online": 12457,
     "unknown": 64
   },
   "reports": [
@@ -35,7 +35,7 @@
   ],
   "database": "data/cams.sqlite3",
   "countries": {
-    "Estados Unidos": 3879,
+    "Estados Unidos": 3885,
     "Canadá": 2671,
     "España": 2358,
     "Finlandia": 2273,
@@ -47,7 +47,7 @@
     "Singapur": 8
   },
   "countryCodes": {
-    "US": 3879,
+    "US": 3885,
     "CA": 2671,
     "ES": 2358,
     "FI": 2273,
@@ -59,19 +59,19 @@
     "SG": 8
   },
   "mediaTypes": {
-    "snapshot": 10893,
+    "snapshot": 10899,
     "hls": 1558,
     "link": 64
   },
   "categories": {
-    "traffic": 8665,
+    "traffic": 8671,
     "weather-road": 3839,
     "volcano": 11
   },
   "quality": {
-    "verifiedOnline": 12451,
+    "verifiedOnline": 12457,
     "unknown": 64,
     "archivedLegacyYouTube": 144
   },
-  "statisticsGeneratedAt": "2026-07-15T14:10:01.055724+00:00"
+  "statisticsGeneratedAt": "2026-07-15T19:37:12.360397+00:00"
 }
