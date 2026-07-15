@@ -3,11 +3,13 @@
 
 Fuentes actuales:
 - National Highways / Traffic England: inventario geolocalizado de Inglaterra.
+- All the Places: respaldo CC0 del inventario Traffic England, manteniendo las
+  imágenes y páginas oficiales de National Highways.
 - Bruxelles Mobilité: inventario regional de cámaras, con compatibilidad para el
   endpoint histórico mientras siga publicando GeoJSON utilizable.
 
 Cada proveedor se ejecuta de forma independiente. No se publican puntos sin
-coordenadas reales ni se copian catálogos de agregadores comerciales.
+coordenadas reales ni se copian catálogos comerciales.
 """
 from __future__ import annotations
 
@@ -22,8 +24,9 @@ from typing import Any, Iterable
 
 import build_catalog as base
 
-USER_AGENT = "CamsCatalogBot/4.4 (+https://github.com/AlejandroPico/Cams)"
+USER_AGENT = "CamsCatalogBot/4.5 (+https://github.com/AlejandroPico/Cams)"
 ENGLAND_ENDPOINT = "https://www.trafficengland.com/api/cctv/getToBounds?bbox=-7.0,49.0,5.0,56.0"
+ENGLAND_ATP_ENDPOINT = "https://data.alltheplaces.xyz/runs/latest/output/traffic_england_gb.geojson"
 ENGLAND_IMAGE_BASE = "https://public.highwaystrafficcameras.co.uk/cctvpublicaccess/images/"
 BRUSSELS_ENDPOINTS = (
     "https://www.bruxellesmobilite.irisnet.be/cameras/json/fr/",
@@ -37,8 +40,9 @@ PROVIDERS = [
         "homepage_url": "https://www.trafficengland.com/",
         "api_url": ENGLAND_ENDPOINT,
         "country_code": "GB",
-        "attribution": "National Highways",
-        "license_name": "Official public traffic information terms",
+        "attribution": "National Highways; location metadata via All the Places when required",
+        "license_name": "CC0 metadata / official image terms",
+        "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
         "refresh_seconds": 60,
         "notes": "Cámaras de autopistas y carreteras principales de Inglaterra.",
     },
@@ -62,7 +66,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def request_json(url: str, timeout: int, referer: str | None = None) -> Any:
+def request_bytes(url: str, timeout: int, referer: str | None = None) -> bytes:
     headers = {
         "User-Agent": USER_AGENT,
         "Accept": "application/json,application/geo+json,text/plain,*/*",
@@ -71,8 +75,32 @@ def request_json(url: str, timeout: int, referer: str | None = None) -> Any:
         headers["Referer"] = referer
     request = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(request, timeout=timeout) as response:
-        raw = response.read()
-    return json.loads(raw.decode("utf-8-sig"))
+        return response.read()
+
+
+def decode_geojson(raw: bytes) -> Any:
+    text = raw.decode("utf-8-sig", errors="replace").strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        features: list[dict[str, Any]] = []
+        for line in text.splitlines():
+            line = line.strip().rstrip(",")
+            if not line:
+                continue
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(item, dict):
+                features.append(item)
+        if features:
+            return {"type": "FeatureCollection", "features": features}
+        raise
+
+
+def request_json(url: str, timeout: int, referer: str | None = None) -> Any:
+    return decode_geojson(request_bytes(url, timeout, referer))
 
 
 def register_providers(connection: sqlite3.Connection) -> None:
@@ -135,8 +163,24 @@ def coordinates(feature: dict[str, Any], properties: dict[str, Any]) -> tuple[fl
     return longitude, latitude
 
 
+def england_payload(timeout: int) -> tuple[Any, str]:
+    errors: list[str] = []
+    for endpoint, referer in (
+        (ENGLAND_ENDPOINT, "https://www.trafficengland.com/"),
+        (ENGLAND_ATP_ENDPOINT, "https://www.alltheplaces.xyz/"),
+    ):
+        try:
+            payload = request_json(endpoint, timeout, referer)
+            if features_from(payload):
+                return payload, endpoint
+            errors.append(f"{endpoint}: colección vacía")
+        except Exception as error:
+            errors.append(f"{endpoint}: {error}")
+    raise RuntimeError("; ".join(errors))
+
+
 def national_highways_loader(timeout: int) -> Iterable[dict[str, Any]]:
-    payload = request_json(ENGLAND_ENDPOINT, timeout, "https://www.trafficengland.com/")
+    payload, inventory_endpoint = england_payload(timeout)
     seen: set[str] = set()
     for feature in features_from(payload):
         properties = feature.get("properties") if isinstance(feature.get("properties"), dict) else feature
@@ -157,7 +201,19 @@ def national_highways_loader(timeout: int) -> Iterable[dict[str, Any]]:
         page_id = page_match.group(1) if page_match else base.text(
             properties.get("id") or properties.get("cameraId") or feature.get("id")
         )
-        if not page_id or not re.fullmatch(r"\d+", page_id) or page_id in seen:
+        snapshot = base.text(
+            properties.get("image")
+            or properties.get("image_url")
+            or properties.get("snapshot")
+        )
+        if not page_id and snapshot:
+            image_match = re.search(r"/([^/]+)\.jpg(?:[?#].*)?$", snapshot, re.I)
+            page_id = image_match.group(1) if image_match else ""
+        if not page_id or page_id in seen:
+            continue
+        if not snapshot and re.fullmatch(r"\d+", page_id):
+            snapshot = f"{ENGLAND_IMAGE_BASE}{page_id}.jpg"
+        if not snapshot:
             continue
         seen.add(page_id)
         title = base.text(
@@ -181,12 +237,21 @@ def national_highways_loader(timeout: int) -> Iterable[dict[str, Any]]:
             "timezone": "Europe/London",
             "category": "traffic",
             "media_type": "snapshot",
-            "snapshot_url": f"{ENGLAND_IMAGE_BASE}{page_id}.jpg",
+            "snapshot_url": snapshot,
             "source_page_url": website or "https://www.trafficengland.com/",
             "refresh_seconds": 60,
             "status": "online",
             "attribution": "National Highways",
-            "license_name": "Official public traffic information terms",
+            "license_name": (
+                "CC0 location metadata / official National Highways image terms"
+                if inventory_endpoint == ENGLAND_ATP_ENDPOINT
+                else "Official public traffic information terms"
+            ),
+            "license_url": (
+                "https://creativecommons.org/publicdomain/zero/1.0/"
+                if inventory_endpoint == ENGLAND_ATP_ENDPOINT
+                else None
+            ),
             "privacy_level": "public-traffic",
             "source_payload": feature,
         }
