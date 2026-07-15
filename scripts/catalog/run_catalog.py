@@ -19,6 +19,7 @@ NORTH_AMERICA = Path(__file__).with_name("north_america_catalog.py")
 SCT = Path(__file__).with_name("sct_catalog.py")
 KEYED = Path(__file__).with_name("keyed_catalog.py")
 STATS = Path(__file__).with_name("catalog_stats.py")
+CAPTURE_METADATA = Path(__file__).with_name("capture_metadata.py")
 
 
 def run_optional(script: Path, arguments: list[str], warning: str) -> None:
@@ -48,6 +49,11 @@ def main() -> int:
     stats_result = subprocess.call([sys.executable, str(STATS)], cwd=ROOT)
     if stats_result != 0:
         print("Advertencia: no se pudieron generar estadísticas de cobertura.", file=sys.stderr)
+    run_optional(
+        CAPTURE_METADATA,
+        [],
+        "no se pudieron conservar las fechas de captura publicadas por las fuentes",
+    )
     return 0
 
 
