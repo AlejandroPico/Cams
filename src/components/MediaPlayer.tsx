@@ -16,6 +16,58 @@ function sourceFor(camera: Camera): string {
   return camera.sourceUrl || camera.snapshotUrl || camera.url || camera.embedUrl || '';
 }
 
+function cameraPlace(camera: Camera): string {
+  const values = [camera.city, camera.locality, camera.region, camera.country]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+  return [...new Set(values)].slice(0, 3).join(' · ') || camera.title;
+}
+
+function validTimestamp(value?: string): number | null {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function relativeAge(timestamp: number, now: number): string {
+  const seconds = Math.max(0, Math.round((now - timestamp) / 1000));
+  if (seconds < 10) return 'ahora';
+  if (seconds < 60) return `hace ${seconds} s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  return `hace ${days} d`;
+}
+
+function MediaContext({ camera, receivedAt, compact }: { camera: Camera; receivedAt: number; compact: boolean }) {
+  const [now, setNow] = useState(Date.now());
+  const publishedAt = validTimestamp(camera.capturedAt);
+  const timestamp = publishedAt ?? receivedAt;
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 15_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const exact = new Date(timestamp).toLocaleString('es-ES', {
+    dateStyle: 'short',
+    timeStyle: 'medium',
+    timeZone: camera.timezone || undefined,
+  });
+
+  return (
+    <div className="media-context" data-compact={compact ? 'true' : 'false'}>
+      <strong>{cameraPlace(camera)}</strong>
+      <span title={exact}>
+        {publishedAt ? 'captura' : 'imagen recibida'} {relativeAge(timestamp, now)}
+        {!compact && camera.provider ? ` · ${camera.provider}` : ''}
+      </span>
+    </div>
+  );
+}
+
 function MediaFallback({ camera, message }: { camera: Camera; message: string }) {
   const source = sourceFor(camera);
   return (
@@ -27,11 +79,12 @@ function MediaFallback({ camera, message }: { camera: Camera; message: string })
   );
 }
 
-function Snapshot({ camera }: { camera: Camera }) {
+function Snapshot({ camera, compact }: { camera: Camera; compact: boolean }) {
   const base = camera.snapshotUrl || camera.url || '';
   const interval = Math.max(10, camera.refreshSeconds || 60) * 1000;
   const [tick, setTick] = useState(Date.now());
   const [failed, setFailed] = useState(false);
+  const [receivedAt, setReceivedAt] = useState(Date.now());
 
   useEffect(() => {
     const timer = window.setInterval(() => setTick(Date.now()), interval);
@@ -54,13 +107,17 @@ function Snapshot({ camera }: { camera: Camera }) {
   if (failed) return <MediaFallback camera={camera} message="La imagen no ha respondido o impide su inserción" />;
 
   return (
-    <img
-      src={src}
-      alt={camera.title}
-      loading="lazy"
-      referrerPolicy="strict-origin-when-cross-origin"
-      onError={() => setFailed(true)}
-    />
+    <div className="media-frame">
+      <img
+        src={src}
+        alt={camera.title}
+        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+        onLoad={() => setReceivedAt(Date.now())}
+        onError={() => setFailed(true)}
+      />
+      <MediaContext camera={camera} receivedAt={receivedAt} compact={compact} />
+    </div>
   );
 }
 
@@ -117,7 +174,7 @@ export function MediaPlayer({ camera, muted = true, compact = false }: Props) {
   }
 
   if (camera.type === 'snapshot' || camera.type === 'image' || camera.type === 'mjpeg') {
-    return <Snapshot camera={camera} />;
+    return <Snapshot camera={camera} compact={compact} />;
   }
 
   if (camera.type === 'hls') return <HlsVideo camera={camera} muted={muted} />;
