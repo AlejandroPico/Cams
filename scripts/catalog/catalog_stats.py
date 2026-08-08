@@ -29,6 +29,10 @@ def provider_health(connection: sqlite3.Connection) -> list[dict[str, object]]:
         "r.inserted_count,r.skipped_count,r.error_count,r.message "
         "FROM providers p JOIN ingestion_runs r ON r.provider_id=p.id "
         "WHERE r.id=(SELECT MAX(r2.id) FROM ingestion_runs r2 WHERE r2.provider_id=p.id) "
+        # Los proveedores retirados conservan su ultima ejecucion, que quedo en error.
+        # Seguir publicandola hace creer que el pipeline falla cada noche cuando en
+        # realidad esa fuente ya no se consulta.
+        "AND p.enabled=1 "
         "ORDER BY p.code"
     ).fetchall()
     result: list[dict[str, object]] = []
