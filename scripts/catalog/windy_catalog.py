@@ -29,6 +29,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from contextlib import closing
+from pathlib import Path
 from typing import Any, Iterable
 
 import build_catalog as base
@@ -39,6 +40,16 @@ PAGE_LIMIT = 50
 MAX_OFFSET = 1000
 PAGE_PAUSE = float(os.getenv("WINDY_PAUSE", "0.10"))
 MAX_REQUESTS = int(os.getenv("WINDY_MAX_REQUESTS", "20000"))
+
+# Presupuesto de tiempo. El recorrido completo son del orden de 8.000 peticiones y
+# puede pasar de la hora. Si el trabajo se queda sin tiempo y lo mata el runner, se
+# pierde todo sin dejar rastro. Es preferible parar por las buenas, guardar lo
+# recogido y continuar en la siguiente pasada por donde se quedo.
+TIME_BUDGET_S = float(os.getenv("WINDY_TIME_BUDGET_MIN", "150")) * 60
+
+# Fichero con el pais por el que continuar. Permite que varias pasadas completen el
+# catalogo entre todas en lugar de reintentar siempre el mismo recorrido.
+RESUME_PATH = Path(__file__).resolve().parents[2] / "data" / "windy-resume.txt"
 
 # Categorias publicadas por la API. Se usan para subdividir los paises que no caben
 # en una sola consulta.
@@ -82,17 +93,24 @@ COUNTRIES = [
 ]
 
 
+class Incompleta(Exception):
+    """Se agoto el presupuesto de tiempo o de peticiones."""
+
+
 class Budget:
     """Cuenta las peticiones para no cargar la API mas de lo razonable."""
 
-    def __init__(self, maximum: int) -> None:
+    def __init__(self, maximum: int, deadline: float) -> None:  # noqa: F811
         self.maximum = maximum
         self.used = 0
+        self.deadline = deadline
 
     def spend(self) -> None:
         self.used += 1
         if self.used > self.maximum:
-            raise RuntimeError(f"Presupuesto de peticiones agotado ({self.maximum})")
+            raise Incompleta(f"presupuesto de peticiones agotado ({self.maximum})")
+        if time.monotonic() > self.deadline:
+            raise Incompleta(f"presupuesto de tiempo agotado tras {self.used} peticiones")
 
 
 def request(key: str, params: dict[str, str], budget: Budget, attempts: int = 3) -> dict[str, Any]:
@@ -229,32 +247,44 @@ def harvest(key: str, params: dict[str, str], budget: Budget, seen: set[str],
         truncated.append(str(params))
 
 
-def windy_loader(key: str) -> Iterable[dict[str, Any]]:
-    budget = Budget(MAX_REQUESTS)
+def orden_de_paises() -> list[str]:
+    """Paises a recorrer, empezando por donde se quedo la pasada anterior."""
+    try:
+        ultimo = RESUME_PATH.read_text(encoding="utf-8").strip()
+    except OSError:
+        ultimo = ""
+    if ultimo in COUNTRIES:
+        corte = COUNTRIES.index(ultimo)
+        return COUNTRIES[corte:] + COUNTRIES[:corte]
+    return list(COUNTRIES)
+
+
+def guardar_reanudacion(country: str | None) -> None:
+    RESUME_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RESUME_PATH.write_text((country or "") + "\n", encoding="utf-8")
+
+
+def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
+    budget = Budget(MAX_REQUESTS, time.monotonic() + TIME_BUDGET_S)
     seen: set[str] = set()
     truncated: list[str] = []
     CAP = MAX_OFFSET + PAGE_LIMIT
+    paises = orden_de_paises()
+    pendiente: str | None = None
 
-    for country in COUNTRIES:
-        try:
+    try:
+        for indice, country in enumerate(paises):
             total = count_for(key, {"countries": country}, budget)
-        except urllib.error.HTTPError as exc:
-            print(f"Windy: pais {country} descartado (HTTP {exc.code})", file=sys.stderr)
-            continue
-        except RuntimeError as exc:
-            print(f"Windy: {exc}", file=sys.stderr)
-            return
-        if total <= 0:
-            continue
-        print(f"Windy: {country} ({total}) | acumuladas {len(seen)} | peticiones {budget.used}", file=sys.stderr)
+            if total <= 0:
+                continue
+            print(f"Windy: {country} ({total}) | acumuladas {len(seen)} | peticiones {budget.used}",
+                  file=sys.stderr)
 
-        try:
             if total <= CAP:
                 yield from harvest(key, {"countries": country}, budget, seen, truncated)
                 continue
 
-            # El pais no cabe en una consulta: se trocea por categoria.
-            print(f"Windy: {country} declara {total}, troceando por categoria", file=sys.stderr)
+            print(f"Windy: {country} no cabe en una consulta, troceando por categoria", file=sys.stderr)
             for cat in WINDY_CATEGORIES:
                 n = count_for(key, {"countries": country, "categories": cat}, budget)
                 if n <= 0:
@@ -264,7 +294,6 @@ def windy_loader(key: str) -> Iterable[dict[str, Any]]:
                                        budget, seen, truncated)
                     continue
 
-                # La categoria tampoco cabe: se baja a nivel de region.
                 print(f"Windy: {country}/{cat} declara {n}, troceando por region", file=sys.stderr)
                 cubierto = 0
                 for rc in region_codes(country):
@@ -275,25 +304,31 @@ def windy_loader(key: str) -> Iterable[dict[str, Any]]:
                     yield from harvest(key, {"countries": country, "categories": cat, "regions": rc},
                                        budget, seen, truncated)
                 if cubierto < n:
-                    # Alguna camara de esa categoria no declara region conocida.
-                    truncated.append(f"{country}/{cat}: {cubierto} de {n} por region")
+                    truncated.append(f"{country}/{cat}: {cubierto} de {n} localizadas por region")
 
             # Repesca: una camara sin ninguna categoria no la devuelve ningun filtro
-            # de categoria, asi que se recorre tambien el pais a pelo. El dedupe por
-            # external_id evita contarla dos veces.
+            # de categoria. El dedupe por external_id evita contarla dos veces.
             yield from harvest(key, {"countries": country}, budget, seen, truncated)
-        except urllib.error.HTTPError as exc:
-            print(f"Windy: {country} interrumpido (HTTP {exc.code})", file=sys.stderr)
-        except RuntimeError as exc:
-            print(f"Windy: {exc}", file=sys.stderr)
-            return
-        time.sleep(PAGE_PAUSE)
+            pendiente = paises[indice + 1] if indice + 1 < len(paises) else None
 
+    except Incompleta as motivo:
+        # No es un error: se ha recogido lo que cabia en el presupuesto y la siguiente
+        # pasada continuara por aqui. Lo que no se puede hacer es podar, porque el
+        # recorrido esta a medias y parecerian retiradas camaras que si siguen vivas.
+        estado["completa"] = False
+        estado["motivo"] = str(motivo)
+        guardar_reanudacion(pendiente or country)
+        print(f"Windy: pasada incompleta ({motivo}); continuara por {pendiente or country}",
+              file=sys.stderr)
+    else:
+        estado["completa"] = True
+        guardar_reanudacion(None)
+        print("Windy: recorrido completo", file=sys.stderr)
+
+    estado["peticiones"] = budget.used
     print(f"Windy: {len(seen)} camaras unicas con {budget.used} peticiones", file=sys.stderr)
     for aviso in truncated:
         print(f"Windy: particion incompleta -> {aviso}", file=sys.stderr)
-    if not truncated:
-        print("Windy: ninguna particion toco el tope de paginacion", file=sys.stderr)
 
 
 def main() -> int:
@@ -326,7 +361,14 @@ def main() -> int:
         )
         connection.commit()
 
-        report = base.run_provider(connection, "WINDY_WEBCAMS", lambda: windy_loader(key))
+        estado: dict[str, Any] = {"completa": True}
+        report = base.run_provider(
+            connection, "WINDY_WEBCAMS",
+            lambda: windy_loader(key, estado),
+            should_prune=lambda: estado.get("completa", False),
+        )
+        report.update({k: v for k, v in estado.items() if k != "completa"})
+        report["recorridoCompleto"] = estado.get("completa", False)
         base.export_catalog(connection, [report])
         total = connection.execute(
             "SELECT COUNT(*) FROM cameras WHERE active=1 AND is_public=1"

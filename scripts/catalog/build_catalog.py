@@ -256,7 +256,13 @@ def deactivate_missing(connection: sqlite3.Connection, pid: int, run_started: st
     return {"pruned": cursor.rowcount}
 
 
-def run_provider(connection: sqlite3.Connection, code: str, loader) -> dict[str, Any]:
+def run_provider(connection: sqlite3.Connection, code: str, loader, should_prune=None) -> dict[str, Any]:
+    """Ejecuta un proveedor de forma aislada.
+
+    should_prune permite que un proveedor que recorre su fuente por tandas impida la
+    poda cuando la pasada ha quedado incompleta: si no, las camaras que no ha llegado
+    a visitar pareceria que el proveedor las ha retirado.
+    """
     pid = provider_id(connection, code)
     run_started = NOW()
     run_id = connection.execute(
@@ -269,7 +275,11 @@ def run_provider(connection: sqlite3.Connection, code: str, loader) -> dict[str,
         cameras = list(loader())
         for camera in cameras:
             upsert_camera(connection, code, camera)
-        pruning = deactivate_missing(connection, pid, run_started) if cameras else {"pruned": 0}
+        podar = bool(cameras) and (should_prune() if should_prune else True)
+        if cameras and not podar:
+            pruning = {"pruned": 0, "prune_skipped": "recorrido incompleto"}
+        else:
+            pruning = deactivate_missing(connection, pid, run_started) if cameras else {"pruned": 0}
         connection.execute(
             "UPDATE ingestion_runs SET finished_at=?,status='ok',fetched_count=?,inserted_count=?,message=? WHERE id=?",
             (NOW(), len(cameras), len(cameras), f"{time.monotonic()-started:.2f}s", run_id),
