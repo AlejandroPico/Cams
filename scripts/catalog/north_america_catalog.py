@@ -17,7 +17,14 @@ from typing import Any, Iterable
 import build_catalog as base
 
 USER_AGENT = "CamsCatalogBot/4.3 (+https://github.com/AlejandroPico/Cams)"
-WSDOT_URL = "https://data.wsdot.wa.gov/log/public/cameras.json"
+# El endpoint historico data.wsdot.wa.gov/log/public/cameras.json devuelve 404 desde
+# hace tiempo. WSDOT publica el mismo inventario en un servicio ArcGIS abierto que no
+# exige codigo de acceso. No se le pasa resultRecordCount: el servicio no admite
+# paginacion y responde 400 si se intenta.
+WSDOT_URL = (
+    "https://www.wsdot.wa.gov/arcgis/rest/services/Production/WSDOTTrafficCameras/"
+    "MapServer/0/query?where=1%3D1&outFields=*&outSR=4326&returnGeometry=true&f=json"
+)
 ALBERTA_URL = "https://511.alberta.ca/api/v2/get/cameras?format=json"
 TORONTO_URL = (
     "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/"
@@ -108,47 +115,51 @@ def nested(value: Any, *keys: str) -> Any:
 
 def wsdot_loader(timeout: int) -> Iterable[dict[str, Any]]:
     payload = request_json(WSDOT_URL, timeout)
-    if isinstance(payload, list):
-        cameras = payload
-    elif isinstance(payload, dict):
-        cameras = payload.get("Cameras") or payload.get("cameras") or payload.get("data") or []
-    else:
-        cameras = []
+    features = payload.get("features") if isinstance(payload, dict) else None
+    if not isinstance(features, list):
+        raise RuntimeError(f"WSDOT no devolvio features: {str(payload)[:200]}")
 
-    for camera in cameras if isinstance(cameras, list) else []:
-        if not isinstance(camera, dict):
+    for feature in features:
+        if not isinstance(feature, dict):
             continue
-        location = camera.get("CameraLocation") or camera.get("cameraLocation") or {}
-        latitude = scalar(location.get("Latitude") if isinstance(location, dict) else None)
-        longitude = scalar(location.get("Longitude") if isinstance(location, dict) else None)
-        if latitude is None:
-            latitude = scalar(camera.get("Latitude") or camera.get("latitude"))
-        if longitude is None:
-            longitude = scalar(camera.get("Longitude") or camera.get("longitude"))
-        snapshot = base.text(camera.get("ImageURL") or camera.get("ImageUrl") or camera.get("imageUrl"))
-        identifier = base.text(camera.get("CameraID") or camera.get("CameraId") or camera.get("id"))
+        camera = feature.get("attributes") or {}
+        geometry = feature.get("geometry") or {}
+
+        latitude = scalar(camera.get("Latitude"))
+        longitude = scalar(camera.get("Longitude"))
+        if latitude is None or longitude is None:
+            latitude, longitude = scalar(geometry.get("y")), scalar(geometry.get("x"))
+
+        snapshot = base.text(camera.get("ImageURL"))
+        identifier = base.text(camera.get("CameraID") or camera.get("OBJECTID"))
         if latitude is None or longitude is None or not snapshot or not identifier:
             continue
-        route = base.text(camera.get("RoadName") or camera.get("Route") or camera.get("roadName"))
-        title = base.text(camera.get("Title") or camera.get("Description"), f"WSDOT camera {identifier}")
+
+        # El inventario incluye camaras de agencias vecinas, sobre todo de Oregon
+        # via Tripcheck, que el catalogo ya importa de su fuente original.
+        owner = base.text(camera.get("CameraOwne"), "WSDOT")
+        route = base.text(camera.get("WSDOTSRID") or camera.get("StateRoute"))
+
         yield {
             "external_id": identifier,
-            "title": title,
-            "description": route or None,
+            "title": base.text(camera.get("CameraTitl"), f"WSDOT camera {identifier}"),
+            "description": f"SR {route}" if route and route != "NULL" else None,
             "country_code": "US",
             "country_name": "Estados Unidos",
             "region": "Washington",
-            "locality": route or None,
             "latitude": latitude,
             "longitude": longitude,
             "timezone": "America/Los_Angeles",
             "category": "traffic",
             "media_type": "snapshot",
             "snapshot_url": snapshot,
-            "source_page_url": "https://wsdot.com/Travel/Real-time/Map/",
+            "source_page_url": base.text(camera.get("CameraOw_1")) or "https://wsdot.com/Travel/Real-time/Map/",
+            "width_px": scalar(camera.get("ImageWidth")),
+            "height_px": scalar(camera.get("ImageHeigh")),
+            "view_direction": base.text(camera.get("CompassDir")) or None,
             "refresh_seconds": 300,
             "status": "online",
-            "attribution": "Washington State Department of Transportation",
+            "attribution": owner,
             "license_name": "Washington State public data terms",
             "privacy_level": "public-traffic",
             "source_payload": camera,

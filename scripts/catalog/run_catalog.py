@@ -46,7 +46,7 @@ def main() -> int:
         run_optional(EUROPE, arguments, "una red europea sin credenciales no respondió")
         run_optional(WESTERN_EUROPE, arguments, "una red de Europa occidental no respondió")
         run_optional(NORTH_AMERICA, arguments, "una red adicional de Norteamérica no respondió")
-        run_optional(SCT, [], "el WFS legado del Servei Català de Trànsit no respondió")
+        run_optional(SCT, [], "el fichero abierto del Servei Català de Trànsit no respondió")
         run_optional(KEYED, [], "una fuente configurada mediante clave gratuita no respondió")
 
     # Antes de las estadisticas: si no, los recuentos incluirian las copias.

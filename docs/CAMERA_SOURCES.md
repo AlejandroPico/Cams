@@ -286,3 +286,48 @@ cada pocas horas produciria imagenes rotas, y ademas chocaria con la regla de
 `CAMERA_SOURCE_POLICY.md` que prohibe copiar de forma permanente lo que la fuente solo
 autoriza de forma temporal. Se guarda `player.day`, que es un iframe estable y cumple
 por si mismo la condicion de enlazado.
+
+## Proveedores retirados
+
+Se documentan aqui para no volver a intentarlos sin motivo y para que la lista de
+fuentes no aparente funcionar mas de lo que funciona.
+
+### Autobahn GmbH (Alemania)
+
+Retirado. Su API responde 200 en `/{autopista}/services/webcam` pero devuelve
+`{"webcam": []}` en las 113 autopistas. No es un endpoint equivocado ni un fallo de
+red: ya no publican webcams. El adaptador se conserva por si vuelven a hacerlo. Las
+camaras alemanas del catalogo proceden de Windy.
+
+### Bruxelles Mobilite (Belgica)
+
+Retirado. Comprobado:
+
+| Endpoint | Resultado |
+|---|---|
+| `www.bruxellesmobilite.irisnet.be/cameras/json/fr/` | certificado que no coincide con el dominio; sin verificar devuelve HTML |
+| `mobilite-mobiliteit.brussels/cameras/json/fr/` | HTML, no JSON |
+| `data.mobility.brussels/traffic/api/camera/` | 404 |
+| GeoServer `bm_camera` | 404 |
+| `opendata.brussels.be` | ningun dataset de camaras |
+
+El problema no era el certificado sino que el API JSON ya no existe.
+
+### Servei Catala de Transit: cambio de fuente
+
+El WFS de `mct.gencat.cat/sct-gis/wfs` devuelve 403 a peticiones automatizadas. Se
+sustituye por el fichero abierto oficial de la Generalitat, que responde con
+normalidad y no exige artificios de TLS:
+
+    http://www.gencat.cat/transit/opendata/cameres.xml
+
+Es un FeatureCollection de WFS con 164 camaras y los campos geom, carretera,
+municipi, pk, link y font. Las coordenadas vienen proyectadas, asi que el adaptador
+incluye la conversion de UTM 31N a WGS84 y descarta cualquier punto que caiga fuera
+de Catalunya, en lugar de publicar ubicaciones absurdas.
+
+### WSDOT: cambio de fuente
+
+`data.wsdot.wa.gov/log/public/cameras.json` devuelve 404. Se sustituye por el
+servicio ArcGIS abierto de WSDOT, que no exige codigo de acceso y publica 1.533
+camaras. No admite paginacion: pasarle `resultRecordCount` provoca un 400.

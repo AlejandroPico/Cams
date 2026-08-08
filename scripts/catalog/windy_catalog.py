@@ -38,7 +38,7 @@ INCLUDE = "categories,location,player,urls"
 PAGE_LIMIT = 50
 MAX_OFFSET = 1000
 PAGE_PAUSE = float(os.getenv("WINDY_PAUSE", "0.20"))
-MAX_REQUESTS = int(os.getenv("WINDY_MAX_REQUESTS", "6000"))
+MAX_REQUESTS = int(os.getenv("WINDY_MAX_REQUESTS", "20000"))
 
 # Categorias publicadas por la API. Se usan para subdividir los paises que no caben
 # en una sola consulta.
@@ -204,10 +204,36 @@ def normalise(webcam: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def region_codes(country: str) -> list[str]:
+    """Codigos de region candidatos de un pais.
+
+    La API los expone como CC.NN (IT.05, ES.56). No hay endpoint que los liste, asi
+    que se generan y se descartan por conteo los que no existen. Solo se usa en los
+    pocos paises tan densos que ni pais ni categoria caben en una consulta.
+    """
+    return [f"{country}.{n:02d}" for n in range(1, 61)]
+
+
+def harvest(key: str, params: dict[str, str], budget: Budget, seen: set[str],
+            truncated: list[str]) -> Iterable[dict[str, Any]]:
+    """Recorre una particion y entrega sus camaras nuevas."""
+    contadas = 0
+    for webcam in page_through(key, params, budget):
+        contadas += 1
+        record = normalise(webcam)
+        if not record or record["external_id"] in seen:
+            continue
+        seen.add(record["external_id"])
+        yield record
+    if contadas >= MAX_OFFSET + PAGE_LIMIT:
+        truncated.append(str(params))
+
+
 def windy_loader(key: str) -> Iterable[dict[str, Any]]:
     budget = Budget(MAX_REQUESTS)
     seen: set[str] = set()
     truncated: list[str] = []
+    CAP = MAX_OFFSET + PAGE_LIMIT
 
     for country in COUNTRIES:
         try:
@@ -215,39 +241,56 @@ def windy_loader(key: str) -> Iterable[dict[str, Any]]:
         except urllib.error.HTTPError as exc:
             print(f"Windy: pais {country} descartado (HTTP {exc.code})", file=sys.stderr)
             continue
+        except RuntimeError as exc:
+            print(f"Windy: {exc}", file=sys.stderr)
+            return
         if total <= 0:
             continue
 
-        if total <= MAX_OFFSET + PAGE_LIMIT:
-            partitions = [{"countries": country}]
-        else:
-            # El pais no cabe en una sola consulta: se trocea por categoria.
-            partitions = [{"countries": country, "categories": c} for c in WINDY_CATEGORIES]
+        try:
+            if total <= CAP:
+                yield from harvest(key, {"countries": country}, budget, seen, truncated)
+                continue
 
-        for params in partitions:
-            try:
-                harvested = 0
-                for webcam in page_through(key, params, budget):
-                    record = normalise(webcam)
-                    if not record or record["external_id"] in seen:
+            # El pais no cabe en una consulta: se trocea por categoria.
+            print(f"Windy: {country} declara {total}, troceando por categoria", file=sys.stderr)
+            for cat in WINDY_CATEGORIES:
+                n = count_for(key, {"countries": country, "categories": cat}, budget)
+                if n <= 0:
+                    continue
+                if n <= CAP:
+                    yield from harvest(key, {"countries": country, "categories": cat},
+                                       budget, seen, truncated)
+                    continue
+
+                # La categoria tampoco cabe: se baja a nivel de region.
+                print(f"Windy: {country}/{cat} declara {n}, troceando por region", file=sys.stderr)
+                cubierto = 0
+                for rc in region_codes(country):
+                    m = count_for(key, {"countries": country, "categories": cat, "regions": rc}, budget)
+                    if m <= 0:
                         continue
-                    seen.add(record["external_id"])
-                    harvested += 1
-                    yield record
-                if harvested >= MAX_OFFSET + PAGE_LIMIT:
-                    truncated.append(f"{params.get('countries')}/{params.get('categories', 'todas')}")
-            except urllib.error.HTTPError as exc:
-                print(f"Windy: particion {params} descartada (HTTP {exc.code})", file=sys.stderr)
-            except RuntimeError as exc:
-                print(f"Windy: {exc}", file=sys.stderr)
-                return
+                    cubierto += m
+                    yield from harvest(key, {"countries": country, "categories": cat, "regions": rc},
+                                       budget, seen, truncated)
+                if cubierto < n:
+                    # Alguna camara de esa categoria no declara region conocida.
+                    truncated.append(f"{country}/{cat}: {cubierto} de {n} por region")
+
+            # Repesca: una camara sin ninguna categoria no la devuelve ningun filtro
+            # de categoria, asi que se recorre tambien el pais a pelo. El dedupe por
+            # external_id evita contarla dos veces.
+            yield from harvest(key, {"countries": country}, budget, seen, truncated)
+        except urllib.error.HTTPError as exc:
+            print(f"Windy: {country} interrumpido (HTTP {exc.code})", file=sys.stderr)
+        except RuntimeError as exc:
+            print(f"Windy: {exc}", file=sys.stderr)
+            return
         time.sleep(PAGE_PAUSE)
 
     print(f"Windy: {len(seen)} camaras unicas con {budget.used} peticiones", file=sys.stderr)
-    if truncated:
-        # No es un fallo, pero avisa de que esa particion pudo dejarse camaras fuera
-        # y conviene subdividirla mas en una revision posterior.
-        print(f"Windy: particiones en el tope de paginacion: {', '.join(truncated)}", file=sys.stderr)
+    for aviso in truncated:
+        print(f"Windy: particion incompleta -> {aviso}", file=sys.stderr)
 
 
 def main() -> int:

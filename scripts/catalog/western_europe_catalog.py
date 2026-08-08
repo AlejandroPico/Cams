@@ -337,11 +337,10 @@ def main() -> int:
                 "NATIONAL_HIGHWAYS_GB",
                 lambda: national_highways_loader(args.timeout),
             ),
-            base.run_provider(
-                connection,
-                "BRUSSELS_MOBILITY_BE",
-                lambda: brussels_loader(args.timeout),
-            ),
+            # BRUSSELS_MOBILITY_BE retirado: el endpoint JSON historico devuelve HTML,
+            # igual que el dominio nuevo mobilite-mobiliteit.brussels. El portal
+            # data.mobility.brussels responde 404 y opendata.brussels no publica
+            # ningun dataset de camaras. Su API ya no existe.
         ]
         base.export_catalog(connection, reports)
         count = connection.execute(

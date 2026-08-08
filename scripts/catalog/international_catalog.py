@@ -683,8 +683,12 @@ def main() -> int:
     with closing(base.ensure_database()) as connection:
         register_providers(connection)
         reports = [
-            base.run_provider(connection, "SCT_CAT", lambda: sct_loader(args.timeout)),
-            base.run_provider(connection, "AUTOBAHN_DE", lambda: autobahn_loader(args.timeout)),
+            # SCT_CAT se importa ahora desde sct_catalog.py, sobre el fichero abierto
+            # de gencat.cat, porque el WFS que usa este cargador devuelve 403.
+            # AUTOBAHN_DE retirado: la coleccion webcam de su API responde 200 pero
+            # devuelve {"webcam": []} en las 113 autopistas. No es un endpoint
+            # equivocado ni un fallo de red, sencillamente ya no publican webcams.
+            # El adaptador se conserva por si vuelven a hacerlo.
             base.run_provider(connection, "NY511_US", lambda: ny511_loader(args.timeout)),
             base.run_provider(connection, "OREGON_US", lambda: oregon_loader(args.timeout)),
             base.run_provider(connection, "DRIVEBC_CA", lambda: drivebc_loader(args.timeout)),
