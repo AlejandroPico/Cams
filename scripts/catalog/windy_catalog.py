@@ -37,7 +37,7 @@ ENDPOINT = "https://api.windy.com/webcams/api/v3/webcams"
 INCLUDE = "categories,location,player,urls"
 PAGE_LIMIT = 50
 MAX_OFFSET = 1000
-PAGE_PAUSE = float(os.getenv("WINDY_PAUSE", "0.20"))
+PAGE_PAUSE = float(os.getenv("WINDY_PAUSE", "0.10"))
 MAX_REQUESTS = int(os.getenv("WINDY_MAX_REQUESTS", "20000"))
 
 # Categorias publicadas por la API. Se usan para subdividir los paises que no caben
@@ -246,6 +246,7 @@ def windy_loader(key: str) -> Iterable[dict[str, Any]]:
             return
         if total <= 0:
             continue
+        print(f"Windy: {country} ({total}) | acumuladas {len(seen)} | peticiones {budget.used}", file=sys.stderr)
 
         try:
             if total <= CAP:

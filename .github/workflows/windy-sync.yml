@@ -27,7 +27,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -36,7 +36,12 @@ jobs:
       - name: Importar camaras de Windy
         env:
           WINDY_WEBCAMS_KEY: ${{ secrets.WINDY_WEBCAMS_KEY }}
-        run: python scripts/catalog/windy_catalog.py
+        run: python scripts/catalog/windy_catalog.py 2>&1 | tee /tmp/windy.txt
+      - name: Guardar el registro de la sincronizacion
+        if: always()
+        run: |
+          mkdir -p docs/diagnostics
+          tail -c 60000 /tmp/windy.txt > docs/diagnostics/windy-sync.txt || true
       - name: Ocultar camaras duplicadas de fuentes oficiales
         run: python scripts/catalog/dedupe_catalog.py
       - name: Regenerar estadisticas del catalogo
@@ -72,14 +77,15 @@ jobs:
           print(f"SQLite valido: {total} camaras publicas, {windy} de Windy, {countries} paises")
           PY
       - name: Guardar catalogo actualizado
+        if: always()
         run: |
-          if [ -z "$(git status --porcelain -- data/cams.sqlite3 public/data src/data/catalog.seed.json)" ]; then
+          if [ -z "$(git status --porcelain -- data/cams.sqlite3 public/data src/data/catalog.seed.json docs/diagnostics)" ]; then
             echo "Sin cambios en el catalogo"
             exit 0
           fi
           git config user.name "cams-catalog-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/cams.sqlite3 public/data src/data/catalog.seed.json
+          git add data/cams.sqlite3 public/data src/data/catalog.seed.json docs/diagnostics
           git commit -m "Sincronizar camaras de Windy Webcams"
           # El refresco de cada seis horas puede haber empujado mientras tanto.
           git pull --rebase origin main
