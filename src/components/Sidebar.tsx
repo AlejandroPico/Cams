@@ -1,4 +1,5 @@
 import type { CameraFilters, MapBaseMode, ViewMode } from '../types';
+import { GRID_COUNTS, ROTATION_INTERVALS } from '../App';
 
 interface Props {
   open: boolean;
@@ -19,6 +20,7 @@ interface Props {
   dayNight: boolean;
   mapMode: MapBaseMode;
   terrain3d: boolean;
+  fullscreen: boolean;
   onClose: () => void;
   onView: (view: ViewMode) => void;
   onFilters: (filters: CameraFilters) => void;
@@ -31,12 +33,16 @@ interface Props {
   onDayNight: (enabled: boolean) => void;
   onMapMode: (mode: MapBaseMode) => void;
   onTerrain3d: (enabled: boolean) => void;
+  onFullscreen: () => void;
   onPrevious: () => void;
   onNext: () => void;
   onRandom: () => void;
 }
 
-const GRID_COUNTS = [1, 2, 4, 6, 9, 12, 16, 20, 25, 30];
+const INTERVAL_LABELS: Record<number, string> = {
+  5000: '5 segundos', 10000: '10 segundos', 15000: '15 segundos',
+  30000: '30 segundos', 60000: '60 segundos', 120000: '120 segundos'
+};
 
 const MAP_MODES: Array<{ value: MapBaseMode; label: string; hint: string }> = [
   { value: 'satellite', label: 'Satélite', hint: 'Fotografía aérea' },
@@ -49,11 +55,14 @@ export function Sidebar(props: Props) {
     props.onFilters({ ...props.filters, [key]: value });
   };
 
-  const hasFilters = props.filters.text !== '' ||
-    props.filters.country !== 'all' ||
-    props.filters.category !== 'all' ||
-    props.filters.mode !== 'all' ||
-    props.filters.status !== 'all';
+  const activeFilters = [
+    props.filters.text !== '',
+    props.filters.country !== 'all',
+    props.filters.category !== 'all',
+    props.filters.mode !== 'all',
+    props.filters.status !== 'all'
+  ].filter(Boolean).length;
+  const hasFilters = activeFilters > 0;
 
   return (
     <>
@@ -61,7 +70,24 @@ export function Sidebar(props: Props) {
       <aside className="sidebar" data-open={props.open} aria-label="Panel de control">
         <header className="sidebar-head">
           <div className="sidebar-identity">
-            <span className="sidebar-logo" aria-hidden="true"><i /></span>
+            <span className="sidebar-logo" aria-hidden="true">
+              {/* Mismo dibujo que public/icons/favicon.svg, para que el menu y la
+                  pestana del navegador no muestren dos marcas distintas. */}
+              <svg viewBox="0 0 64 64" role="img">
+                <defs>
+                  <radialGradient id="sidebarOcean" cx="35%" cy="28%" r="72%">
+                    <stop offset="0" stopColor="#54b8ff" />
+                    <stop offset="1" stopColor="#064c91" />
+                  </radialGradient>
+                </defs>
+                <circle cx="32" cy="29" r="21" fill="url(#sidebarOcean)" stroke="#96d6ff" strokeWidth="2" />
+                <path d="M18 18l6 1 3 5-4 4-6-2-3 4m26-13l5 4-1 6-6 2-4-4 1-6m-7 17l5-3 7 3-1 7-7 5-6-4z" fill="#7bd58c" opacity=".95" />
+                <path d="M10 35h10l3-5h18l3 5h10a5 5 0 0 1 5 5v12a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V40a5 5 0 0 1 5-5z" fill="#030405" stroke="#2e97ff" strokeWidth="3" />
+                <circle cx="32" cy="46" r="9" fill="#111b28" stroke="#f5fbff" strokeWidth="2.5" />
+                <circle cx="32" cy="46" r="4" fill="#2e97ff" />
+                <circle cx="50" cy="40" r="2" fill="#ffe03f" />
+              </svg>
+            </span>
             <div><strong>Cams</strong><span>World camera explorer</span></div>
           </div>
           <button className="sidebar-close" type="button" onClick={props.onClose} aria-label="Cerrar menú">×</button>
@@ -85,7 +111,10 @@ export function Sidebar(props: Props) {
           </div>
 
           <details className="sidebar-group" open>
-            <summary><span>Explorar cámaras</span><small>{props.filtered.toLocaleString('es-ES')} visibles</small></summary>
+            <summary>
+              <span>Explorar cámaras</span>
+              <small>{hasFilters ? `${activeFilters} filtro${activeFilters > 1 ? 's' : ''} · ` : ''}{props.filtered.toLocaleString('es-ES')} visibles</small>
+            </summary>
             <div className="sidebar-group-body">
               <label>Buscar</label>
               <div className="search-field">
@@ -136,7 +165,8 @@ export function Sidebar(props: Props) {
             </div>
           </details>
 
-          <details className="sidebar-group" open={props.view === 'map'}>
+          {props.view === 'map' && (
+          <details className="sidebar-group" open>
             <summary><span>Visualización del mapa</span><small>{MAP_MODES.find((mode) => mode.value === props.mapMode)?.label}</small></summary>
             <div className="sidebar-group-body">
               <div className="map-mode-grid" role="radiogroup" aria-label="Tipo de mapa">
@@ -170,7 +200,10 @@ export function Sidebar(props: Props) {
             </div>
           </details>
 
-          <details className="sidebar-group" open={props.view === 'mosaic'}>
+          )}
+
+          {props.view === 'mosaic' && (
+          <details className="sidebar-group" open>
             <summary><span>Configuración del mosaico</span><small>{props.gridCount} cámaras</small></summary>
             <div className="sidebar-group-body">
               <label>Número de cámaras</label>
@@ -188,17 +221,24 @@ export function Sidebar(props: Props) {
               </div>
               <label>Intervalo</label>
               <select value={props.rotationInterval} onChange={(event) => props.onRotationInterval(Number(event.target.value))}>
-                <option value={15000}>15 segundos</option>
-                <option value={30000}>30 segundos</option>
-                <option value={60000}>60 segundos</option>
-                <option value={120000}>120 segundos</option>
+                {ROTATION_INTERVALS.map((ms) => <option value={ms} key={ms}>{INTERVAL_LABELS[ms]}</option>)}
               </select>
               <div className="toggle-row">
                 <div><strong>Etiquetas</strong><span>Nombre y procedencia</span></div>
                 <button type="button" data-on={props.mosaicLabels} onClick={() => props.onMosaicLabels(!props.mosaicLabels)}>{props.mosaicLabels ? 'on' : 'off'}</button>
               </div>
+              <div className="toggle-row">
+                <div><strong>Pantalla completa</strong><span>Oculta el navegador</span></div>
+                <button type="button" data-on={props.fullscreen} onClick={props.onFullscreen}>{props.fullscreen ? 'on' : 'off'}</button>
+              </div>
+
+              <div className="shortcut-hint">
+                <strong>Atajos</strong>
+                <span><kbd>←</kbd><kbd>→</kbd> lote · <kbd>espacio</kbd> rotación · <kbd>R</kbd> azar · <kbd>F</kbd> pantalla completa</span>
+              </div>
             </div>
           </details>
+          )}
 
           <footer className="sidebar-footer">
             <span className="status-dot" />

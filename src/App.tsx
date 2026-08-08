@@ -20,6 +20,23 @@ function readMapMode(): MapBaseMode {
   return value === 'political' || value === 'relief' ? value : 'satellite';
 }
 
+// Las preferencias del mosaico se conservan entre visitas: es una vista pensada para
+// dejarla puesta, y volver a configurarla cada vez rompe justo ese uso.
+function readStored(key: string, fallback: number, allowed?: number[]): number {
+  const value = Number(window.localStorage.getItem(`cams.${key}`));
+  if (!Number.isFinite(value)) return fallback;
+  if (allowed && !allowed.includes(value)) return fallback;
+  return value;
+}
+
+function readFlag(key: string, fallback: boolean): boolean {
+  const value = window.localStorage.getItem(`cams.${key}`);
+  return value === null ? fallback : value === '1';
+}
+
+export const GRID_COUNTS = [1, 2, 4, 6, 9, 12, 16, 20, 25, 30];
+export const ROTATION_INTERVALS = [5_000, 10_000, 15_000, 30_000, 60_000, 120_000];
+
 export default function App() {
   const [catalog, setCatalog] = useState<Camera[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,15 +45,16 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filters, setFilters] = useState<CameraFilters>(DEFAULT_FILTERS);
   const [selected, setSelected] = useState<Camera | null>(null);
-  const [gridCount, setGridCount] = useState(12);
+  const [gridCount, setGridCount] = useState(() => readStored('gridCount', 12, GRID_COUNTS));
   const [mosaicOffset, setMosaicOffset] = useState(0);
-  const [rotation, setRotation] = useState(false);
-  const [rotationInterval, setRotationInterval] = useState(30_000);
-  const [mosaicLabels, setMosaicLabels] = useState(true);
+  const [rotation, setRotation] = useState(() => readFlag('rotation', false));
+  const [rotationInterval, setRotationInterval] = useState(() => readStored('rotationInterval', 30_000, ROTATION_INTERVALS));
+  const [mosaicLabels, setMosaicLabels] = useState(() => readFlag('mosaicLabels', true));
   const [mapLabels, setMapLabels] = useState(true);
   const [dayNight, setDayNight] = useState(true);
   const [mapMode, setMapMode] = useState<MapBaseMode>(readMapMode);
   const [terrain3d, setTerrain3d] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,10 +110,51 @@ export default function App() {
     setMosaicOffset((offset) => (offset + gridCount) % filtered.length);
   };
 
+  useEffect(() => {
+    window.localStorage.setItem('cams.gridCount', String(gridCount));
+    window.localStorage.setItem('cams.rotationInterval', String(rotationInterval));
+    window.localStorage.setItem('cams.rotation', rotation ? '1' : '0');
+    window.localStorage.setItem('cams.mosaicLabels', mosaicLabels ? '1' : '0');
+  }, [gridCount, rotationInterval, rotation, mosaicLabels]);
+
+  // El navegador puede salir de pantalla completa por su cuenta (tecla Escape), asi
+  // que el estado se sincroniza con el evento en lugar de suponerlo.
+  useEffect(() => {
+    const sync = () => setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else {
+      document.documentElement.requestFullscreen?.().catch(() => undefined);
+    }
+  };
+
   const random = () => {
     if (!filtered.length) return;
     setMosaicOffset(Math.floor(Math.random() * filtered.length));
   };
+
+  // Atajos de teclado del mosaico: la vista esta pensada para dejarla puesta y
+  // manejarla de lejos, donde abrir el menu lateral resulta incomodo.
+  useEffect(() => {
+    if (view !== 'mosaic') return;
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return;
+      if (event.key === 'ArrowLeft') { previous(); }
+      else if (event.key === 'ArrowRight') { next(); }
+      else if (event.key === 'r' || event.key === 'R') { random(); }
+      else if (event.key === 'f' || event.key === 'F') { toggleFullscreen(); }
+      else if (event.key === ' ') { event.preventDefault(); setRotation((value) => !value); }
+      else return;
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [view, filtered.length, gridCount]);
 
   const chooseView = (nextView: ViewMode) => {
     setView(nextView);
@@ -160,6 +219,8 @@ export default function App() {
         onDayNight={setDayNight}
         onMapMode={setMapMode}
         onTerrain3d={setTerrain3d}
+        fullscreen={fullscreen}
+        onFullscreen={toggleFullscreen}
         onPrevious={previous}
         onNext={next}
         onRandom={random}
