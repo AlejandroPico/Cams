@@ -1,0 +1,19 @@
+name: Sonda Windy
+
+# Diagnostico manual. No toca el catalogo ni despliega nada: solo consulta la API
+# de Windy y muestra la forma de la respuesta en el registro de ejecucion.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Consultar la Webcams API
+        env:
+          WINDY_WEBCAMS_KEY: ${{ secrets.WINDY_WEBCAMS_KEY }}
+        run: python scripts/catalog/windy_probe.py
