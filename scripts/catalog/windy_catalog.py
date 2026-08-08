@@ -244,22 +244,35 @@ def normalise(webcam: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
-def region_codes(country: str) -> list[str]:
-    """Codigos de region candidatos de un pais.
+def region_codes(country: str, descubiertos: set[str]) -> list[str]:
+    """Codigos de region de un pais, priorizando los observados en los datos.
 
-    La API los expone como CC.NN (IT.05, ES.56). No hay endpoint que los liste, asi
-    que se generan y se descartan por conteo los que no existen. Solo se usa en los
-    pocos paises tan densos que ni pais ni categoria caben en una consulta.
+    Generarlos como CC.01..CC.60 solo funciona donde GeoNames usa codigos numericos.
+    En Estados Unidos son abreviaturas de estado (US.CA), asi que el troceado por
+    region no encontraba nada: 0 de 31.344 camaras de trafico. Los codigos reales
+    salen del campo region_code de las camaras ya vistas del mismo pais; los
+    numericos quedan solo como complemento para paises poco muestreados.
     """
-    return [f"{country}.{n:02d}" for n in range(1, 61)]
+    reales = sorted(c for c in descubiertos if c.startswith(f"{country}."))
+    numericos = [f"{country}.{n:02d}" for n in range(1, 61)]
+    return reales + [c for c in numericos if c not in descubiertos]
 
 
 def harvest(key: str, params: dict[str, str], budget: Budget, seen: set[str],
-            truncated: list[str]) -> Iterable[dict[str, Any]]:
-    """Recorre una particion y entrega sus camaras nuevas."""
+            truncated: list[str], regiones: set[str] | None = None) -> Iterable[dict[str, Any]]:
+    """Recorre una particion y entrega sus camaras nuevas.
+
+    De paso apunta los codigos de region que aparecen. La API no publica la lista y
+    no se pueden generar: usa codigos de GeoNames, que en unos paises son numericos
+    (IT.05) y en otros abreviaturas (US.CA). Los reales estan en los propios datos.
+    """
     contadas = 0
     for webcam in page_through(key, params, budget):
         contadas += 1
+        if regiones is not None:
+            codigo = ((webcam.get("location") or {}).get("region_code") or "").strip()
+            if codigo:
+                regiones.add(codigo)
         record = normalise(webcam)
         if not record or record["external_id"] in seen:
             continue
@@ -294,10 +307,12 @@ def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
     paises = orden_de_paises()
     pendiente: str | None = None
 
+    regiones: set[str] = set()
+
     def seguro(params: dict[str, str]):
         """Recorre una particion sin dejar que su fallo tumbe el proveedor entero."""
         try:
-            yield from harvest(key, params, budget, seen, truncated)
+            yield from harvest(key, params, budget, seen, truncated, regiones)
         except Incompleta:
             raise
         except urllib.error.HTTPError as exc:
@@ -318,8 +333,14 @@ def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
                 continue
 
             print(f"Windy: {country} no cabe en una consulta, troceando por categoria", file=sys.stderr)
+            tamanos = {}
             for cat in WINDY_CATEGORIES:
-                n = count_for(key, {"countries": country, "categories": cat}, budget)
+                tamanos[cat] = count_for(key, {"countries": country, "categories": cat}, budget)
+
+            # Primero las categorias que caben: ademas de traer sus camaras, revelan
+            # los codigos de region reales con los que trocear las que no caben.
+            for cat in sorted(tamanos, key=lambda c: tamanos[c]):
+                n = tamanos[cat]
                 if n <= 0:
                     continue
                 if n <= CAP:
@@ -328,7 +349,7 @@ def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
 
                 print(f"Windy: {country}/{cat} declara {n}, troceando por region", file=sys.stderr)
                 cubierto = 0
-                for rc in region_codes(country):
+                for rc in region_codes(country, regiones):
                     m = count_for(key, {"countries": country, "categories": cat, "regions": rc}, budget)
                     if m <= 0:
                         continue
