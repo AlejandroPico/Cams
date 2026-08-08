@@ -7,18 +7,27 @@ on:
   schedule:
     - cron: "40 3 * * *"
   workflow_dispatch:
+  # Tambien al tocar el adaptador, para que un cambio en el codigo se vea sin
+  # tener que lanzar el workflow a mano desde la interfaz.
+  push:
+    branches: [main]
+    paths:
+      - "scripts/catalog/windy_catalog.py"
+      - ".github/workflows/windy-sync.yml"
 
 permissions:
   contents: write
 
+# Grupo propio: el refresco general usa cancel-in-progress y cancelaria esta
+# sincronizacion a media ejecucion, que dura bastante mas que el resto.
 concurrency:
-  group: camera-catalog
+  group: windy-catalog
   cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -28,6 +37,11 @@ jobs:
         env:
           WINDY_WEBCAMS_KEY: ${{ secrets.WINDY_WEBCAMS_KEY }}
         run: python scripts/catalog/windy_catalog.py
+      - name: Regenerar estadisticas del catalogo
+        # windy_catalog.py exporta el catalogo con su propio informe, lo que dejaria
+        # catalog-meta.json sin providerHealth ni desglose por paises. Este paso lo
+        # reconstruye entero, igual que hace run_catalog.py.
+        run: python scripts/catalog/catalog_stats.py
       - name: Verificar integridad de SQLite
         run: |
           python - <<'PY'
@@ -48,9 +62,12 @@ jobs:
                   "SELECT COUNT(*) FROM cameras c JOIN providers p ON p.id=c.provider_id "
                   "WHERE p.code='WINDY_WEBCAMS' AND c.active=1"
               ).fetchone()[0]
+              countries = connection.execute(
+                  "SELECT COUNT(DISTINCT country_code) FROM cameras WHERE active=1"
+              ).fetchone()[0]
           if total < 100:
               raise SystemExit(f"Regresion del catalogo: solo {total} camaras")
-          print(f"SQLite valido: {total} camaras publicas, {windy} de Windy")
+          print(f"SQLite valido: {total} camaras publicas, {windy} de Windy, {countries} paises")
           PY
       - name: Guardar catalogo actualizado
         run: |
@@ -61,5 +78,7 @@ jobs:
           git config user.name "cams-catalog-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/cams.sqlite3 public/data src/data/catalog.seed.json
-          git commit -m "Sincronizar camaras de Windy Webcams [skip ci]"
+          git commit -m "Sincronizar camaras de Windy Webcams"
+          # El refresco de cada seis horas puede haber empujado mientras tanto.
+          git pull --rebase origin main
           git push
