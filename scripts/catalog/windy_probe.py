@@ -168,3 +168,5 @@ def probe_partitioning(key: str) -> None:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+# Resultado versionado en docs/diagnostics/
