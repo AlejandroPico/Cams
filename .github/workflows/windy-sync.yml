@@ -88,14 +88,53 @@ jobs:
       - name: Guardar catalogo actualizado
         if: always()
         run: |
-          if [ -z "$(git status --porcelain -- data/cams.sqlite3 data/windy-resume.txt public/data src/data/catalog.seed.json docs/diagnostics)" ]; then
+          set -e
+          GEN="data/cams.sqlite3 data/windy-resume.txt public/data src/data/catalog.seed.json docs/diagnostics"
+          if [ -z "$(git status --porcelain -- $GEN)" ]; then
             echo "Sin cambios en el catalogo"
             exit 0
           fi
+
           git config user.name "cams-catalog-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/cams.sqlite3 data/windy-resume.txt public/data src/data/catalog.seed.json docs/diagnostics
-          git commit -m "Sincronizar camaras de Windy Webcams"
-          # El refresco de cada seis horas puede haber empujado mientras tanto.
-          git pull --rebase origin main
-          git push
+
+          # Los ficheros generados no se pueden fusionar: son un SQLite binario y
+          # JSON de decenas de MB. Rebasar sobre lo que haya subido el deploy mientras
+          # tanto produce conflictos irresolubles. Se apartan, se sincroniza el codigo
+          # con el remoto y se vuelven a colocar: en lo generado manda siempre esta
+          # ejecucion, que es la que acaba de calcularlo.
+          for intento in 1 2 3 4 5; do
+            rm -rf /tmp/generado && mkdir -p /tmp/generado
+            for ruta in $GEN; do
+              if [ -e "$ruta" ]; then
+                mkdir -p "/tmp/generado/$(dirname "$ruta")"
+                cp -r "$ruta" "/tmp/generado/$(dirname "$ruta")/"
+              fi
+            done
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            for ruta in $GEN; do
+              if [ -e "/tmp/generado/$ruta" ]; then
+                mkdir -p "$(dirname "$ruta")"
+                rm -rf "$ruta"
+                cp -r "/tmp/generado/$ruta" "$ruta"
+              fi
+            done
+
+            git add $GEN
+            if git diff --cached --quiet; then
+              echo "El remoto ya contiene este catalogo"
+              exit 0
+            fi
+            git commit -m "Sincronizar camaras de Windy Webcams"
+            if git push origin HEAD:main; then
+              echo "Catalogo publicado en el intento $intento"
+              exit 0
+            fi
+            echo "El remoto se movio durante el envio; reintentando"
+            sleep 10
+          done
+          echo "No se pudo publicar el catalogo tras varios intentos" >&2
+          exit 1

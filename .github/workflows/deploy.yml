@@ -98,10 +98,15 @@ jobs:
             git config user.email "actions@users.noreply.github.com"
             git add data/cams.sqlite3 public/data src/data/catalog.seed.json
             git commit -m "Actualizar SQLite y catálogo desplegado [skip ci]"
-            # La sincronizacion de Windy escribe los mismos ficheros. Sin rebase, el
-            # que llegue segundo falla el push y su trabajo se pierde en silencio.
-            git pull --rebase origin main
-            git push
+            # Reintento sin rebase: los ficheros generados no se pueden fusionar.
+            for intento in 1 2 3 4 5; do
+              git push origin HEAD:main && break
+              git fetch origin main
+              git reset --soft origin/main
+              git add data/cams.sqlite3 public/data src/data/catalog.seed.json
+              git commit -m "Actualizar SQLite y catálogo desplegado [skip ci]" || true
+              sleep 8
+            done
           fi
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
