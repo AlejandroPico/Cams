@@ -68,12 +68,17 @@ def show_xml(body: bytes) -> None:
         print("      crudo:", body[:400])
         return
     print(f"      raiz: <{root.tag}> con {len(root)} hijos")
-    if len(root):
-        first = root[0]
-        print(f"      primer hijo: <{first.tag}> con {len(first)} campos")
-        for child in list(first)[:20]:
-            texto = (child.text or "").strip()[:70]
-            print(f"        {child.tag}: {texto!r} {child.attrib if child.attrib else ''}")
+    # En un FeatureCollection de WFS el primer hijo es boundedBy, no una camara.
+    miembros = [c for c in root if not c.tag.endswith("boundedBy")]
+    print(f"      elementos utiles: {len(miembros)}")
+    for miembro in miembros[:2]:
+        objetivo = miembro[0] if len(miembro) else miembro
+        print(f"      <{objetivo.tag}> con {len(objetivo)} campos:")
+        for child in list(objetivo)[:25]:
+            texto = " ".join((child.text or "").split())[:80]
+            hijos = f" [{len(child)} subelementos: {[g.tag.split('}')[-1] for g in child][:4]}]" if len(child) else ""
+            print(f"        {child.tag.split('}')[-1]}: {texto!r}{hijos}")
+        print()
 
 
 def main() -> int:
@@ -95,7 +100,7 @@ def main() -> int:
     body = try_endpoint(
         "ArcGIS publico sin clave",
         "https://www.wsdot.wa.gov/arcgis/rest/services/Production/WSDOTTrafficCameras/MapServer/0/"
-        "query?where=1%3D1&outFields=*&outSR=4326&returnGeometry=true&f=json&resultRecordCount=3",
+        "query?where=1%3D1&outFields=*&outSR=4326&returnGeometry=true&f=json",
     )
     if body:
         show_json(body)
@@ -108,7 +113,9 @@ def main() -> int:
     for label, url in [
         ("dominio actual, HTTPS estricto", "https://www.bruxellesmobilite.irisnet.be/cameras/json/fr/"),
         ("dominio nuevo mobilite.brussels", "https://mobilite-mobiliteit.brussels/cameras/json/fr/"),
-        ("portal open data de Bruselas", "https://data.mobility.brussels/traffic/api/camera/?request=list"),
+        ("data.mobility.brussels devices", "https://data.mobility.brussels/traffic/api/camera/?request=devices"),
+        ("data.mobility.brussels geoserver", "https://data.mobility.brussels/geoserver/bm_camera/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=bm_camera:camera&outputFormat=application/json&count=3"),
+        ("opendata.brussels dataset", "https://opendata.brussels.be/api/explore/v2.1/catalog/datasets?limit=100&where=search(dataset_id%2C%22camera%22)"),
     ]:
         b = try_endpoint(label, url)
         if b:

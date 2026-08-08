@@ -114,10 +114,6 @@ def main() -> int:
     return 0
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
-
-
 def probe_partitioning(key: str) -> None:
     """Busca una forma de subdividir por zona los paises que no caben por categoria."""
     print()
@@ -168,3 +164,7 @@ def probe_partitioning(key: str) -> None:
             print(f"  {nombre:22} HTTP {exc.code}")
         except Exception as exc:
             print(f"  {nombre:22} {type(exc).__name__}")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
