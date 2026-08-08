@@ -1,0 +1,35 @@
+==========================================================================
+FUENTES AUTONOMICAS ESPANOLAS DE CAMARAS
+==========================================================================
+  [HTTP 404] MeteoGalicia camaras JSON
+
+  [HTTP 404] MeteoGalicia camaras (alt)
+
+  [FALLO] Open Data Euskadi camaras trafico: URLError: <urlopen error timed out>
+
+  [FALLO] Open Data Euskadi camaras paginado: URLError: <urlopen error timed out>
+
+  [FALLO] Euskalmet estaciones: URLError: <urlopen error timed out>
+
+  [OK] Navarra open data camaras
+       https://datosabiertos.navarra.es/api/3/action/package_search?q=camaras
+       application/json;charset=utf-8 | 9749 bytes
+       claves: ['help', 'success', 'result']
+       result: dict con ['count', 'facets', 'results', 'sort', 'search_facets']
+       muestra: {"help": "https://datosabiertos.navarra.es/api/3/action/help_show?name=package_search", "success": true, "result": {"count": 2, "facets": {}, "results": [{"author": null, "author_email": null, "conforms_to": ["https://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=OJ:L:2008:326:0012:0030:ES:PDF"], "contact_email": "sig.info@pamplona.es", "coverage": {}, "creator_user_id": "7f125a4e-256c-4a16-89e0-19e795bf7909", "department": {"eu": "Ayuntamiento de Pamplona / Iruñeko Udala", "es": "Ayuntamiento 
+
+  [OK] Aragon camaras trafico
+       https://opendata.aragon.es/GA_OD_Core/download?view_id=97&formato=json
+       application/json | 1172445 bytes
+       lista de 4305
+       ejemplo: {"nombre_elec": "Cortes de Aragón 1987", "nombre_o": "BAJO ARAGON-CASPE / BAIX ARAGO-CASP", "nombre_par": "PARTIDO SOCIALISTA OBRERO ESPAÑOL", "cod_elec": "CA1987", "cod_comarca": 19, "cod_par": 9, "votos_o": 3815, "votos_p_o": 48.09, "electos_o": null, "electos_p_o": null, "consejeros_o": null, "consejeros_p_o": null}
+
+  [HTTP 404] Illes Balears camaras
+
+  [OK] datos.gob.es catalogo camaras
+       https://datos.gob.es/apidata/catalog/dataset/title/camaras?_pageSize=20&_page=0
+       application/json | 931 bytes
+       claves: ['format', 'version', 'result']
+       result: dict con ['_about', 'definition', 'extendedMetadataVersion', 'first', 'isPartOf', 'items', 'itemsPerPage', 'page']
+       muestra: {"format": "linked-data-api", "version": "0.2", "result": {"_about": "http://datos.gob.es/apidata/catalog/dataset/title/camaras.json?_pageSize=20&_page=0", "definition": "http://datos.gob.es/apidata/catalog/meta/dataset/title/_varTitle.json", "extendedMetadataVersion": "http://datos.gob.es/apidata/catalog/dataset/title/camaras.json?_pageSize=20&_page=0&_metadata=all", "first": "http://datos.gob.es/apidata/catalog/dataset/title/camaras.json?_page=0", "isPartOf": {"_about": "http://datos.gob.es/ap
+
