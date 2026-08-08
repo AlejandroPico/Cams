@@ -1,0 +1,108 @@
+==========================================================================
+SCT / Transit Catalunya  (ahora da 403 en el WFS de mct.gencat.cat)
+==========================================================================
+  [OK 200] XML oficial de dades obertes
+      http://www.gencat.cat/transit/opendata/cameres.xml
+      Content-Type: application/xml | 91222 bytes
+      raiz: <{http://www.opengis.net/wfs}FeatureCollection> con 165 hijos
+      elementos utiles: 164
+      <{http://www.opengeospatial.net/cite}cameres> con 6 campos:
+        geom: '' [1 subelementos: ['Point']]
+        carretera: 'C-58'
+        municipi: 'Nus Trinitat'
+        pk: '0.50'
+        link: 'http://mct.gencat.cat/mct2bo/RenderService?sctidcam=nc87.gif'
+        font: 'SCT'
+
+      <{http://www.opengeospatial.net/cite}cameres> con 6 campos:
+        geom: '' [1 subelementos: ['Point']]
+        carretera: 'C-58'
+        municipi: 'MONTCADA I REIXAC'
+        pk: '1.82'
+        link: 'http://mct.gencat.cat/mct2bo/RenderService?sctidcam=nc85.gif'
+        font: 'SCT'
+
+  [OK 200] XML por HTTPS
+      https://www.gencat.cat/transit/opendata/cameres.xml
+      Content-Type: application/xml | 91222 bytes
+      raiz: <{http://www.opengis.net/wfs}FeatureCollection> con 165 hijos
+      elementos utiles: 164
+      <{http://www.opengeospatial.net/cite}cameres> con 6 campos:
+        geom: '' [1 subelementos: ['Point']]
+        carretera: 'C-58'
+        municipi: 'Nus Trinitat'
+        pk: '0.50'
+        link: 'http://mct.gencat.cat/mct2bo/RenderService?sctidcam=nc87.gif'
+        font: 'SCT'
+
+      <{http://www.opengeospatial.net/cite}cameres> con 6 campos:
+        geom: '' [1 subelementos: ['Point']]
+        carretera: 'C-58'
+        municipi: 'MONTCADA I REIXAC'
+        pk: '1.82'
+        link: 'http://mct.gencat.cat/mct2bo/RenderService?sctidcam=nc85.gif'
+        font: 'SCT'
+
+  [OK 200] KML oficial
+      http://www.gencat.cat/transit/opendata/cameres.kml
+      Content-Type: application/vnd.google-earth.kml+xml | 199136 bytes
+
+==========================================================================
+WSDOT Washington  (ahora da 404)
+==========================================================================
+  [OK 200] ArcGIS publico sin clave
+      https://www.wsdot.wa.gov/arcgis/rest/services/Production/WSDOTTrafficCameras/MapServer/0/query?where=1%3D1&outFields=*&o
+      Content-Type: application/json;charset=UTF-8 | 634817 bytes
+      claves: ['displayFieldName', 'fieldAliases', 'geometryType', 'spatialReference', 'fields', 'features']
+      features: 1533 elementos
+      ejemplo: {"attributes": {"FID": 0, "ImageURL": "https://www.tripcheck.com/RoadCams/cams/i5brnbs_pid553.jpg", "OBJECTID": 1, "CameraID": 1001, "CameraTitl": "I-5 at Interstate Bridge SB, north end", "WSDOTSRID": "5", "StateRoute": "NULL", "CompassDir": "S", "Latitude": 45.620483, "Longitude": -122.673999, "CameraOwne": "Tripcheck (ODOT)", "CameraOw_1": "http://www.tripcheck.com", "ImageWidth": 328, "ImageHeigh": 314}, "geometry": {"x": -122.67399899999998, "y": 45.62048299905704}}
+  [HTTP 404] Endpoint antiguo del adaptador -> https://data.wsdot.wa.gov/log/public/cameras.json
+
+==========================================================================
+Bruxelles Mobilite  (certificado que no coincide con el dominio)
+==========================================================================
+  [FALLO] dominio actual, HTTPS estricto: URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'www.br
+      https://www.bruxellesmobilite.irisnet.be/cameras/json/fr/
+  [OK 200] dominio nuevo mobilite.brussels
+      https://mobilite-mobiliteit.brussels/cameras/json/fr/
+      Content-Type: text/html; charset=utf-8 | 112085 bytes
+      (no es JSON valido: Expecting value: line 1 column 1 (char 0))
+  [HTTP 404] data.mobility.brussels devices -> https://data.mobility.brussels/traffic/api/camera/?request=devices
+  [HTTP 404] data.mobility.brussels geoserver -> https://data.mobility.brussels/geoserver/bm_camera/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=b
+  [OK 200] opendata.brussels dataset
+      https://opendata.brussels.be/api/explore/v2.1/catalog/datasets?limit=100&where=search(dataset_id%2C%22camera%22)
+      Content-Type: application/json; charset=utf-8 | 33 bytes
+      claves: ['total_count', 'results']
+      ejemplo: {"total_count": 0, "results": []}
+  [OK 200] dominio actual, sin verificar certificado
+      https://www.bruxellesmobilite.irisnet.be/cameras/json/fr/
+      Content-Type: text/html; charset=utf-8 | 112085 bytes
+      (no es JSON valido: Expecting value: line 1 column 1 (char 0))
+
+==========================================================================
+Autobahn Alemania  (responde 200 pero con cero webcams)
+==========================================================================
+  [OK 200] lista de autopistas
+      https://verkehr.autobahn.de/o/autobahn/
+      Content-Type: application/json; charset=utf-8 | 730 bytes
+      autopistas: 113, muestra ['A1', 'A2', 'A3', 'A4']
+  [OK 200] webcams de A1
+      https://verkehr.autobahn.de/o/autobahn/A1/services/webcam
+      Content-Type: application/json; charset=utf-8 | 13 bytes
+      claves: ['webcam']
+      ejemplo: {"webcam": []}
+  [OK 200] webcams de A2
+      https://verkehr.autobahn.de/o/autobahn/A2/services/webcam
+      Content-Type: application/json; charset=utf-8 | 13 bytes
+      claves: ['webcam']
+      ejemplo: {"webcam": []}
+  [OK 200] webcams de A3
+      https://verkehr.autobahn.de/o/autobahn/A3/services/webcam
+      Content-Type: application/json; charset=utf-8 | 13 bytes
+      claves: ['webcam']
+      ejemplo: {"webcam": []}
+  [OK 200] webcams de A4
+      https://verkehr.autobahn.de/o/autobahn/A4/services/webcam
+      Content-Type: application/json; charset=utf-8 | 13 bytes
+      claves: ['webcam']
+      ejemplo: {"webcam": []}
