@@ -19,6 +19,7 @@ WESTERN_EUROPE = Path(__file__).with_name("western_europe_catalog.py")
 NORTH_AMERICA = Path(__file__).with_name("north_america_catalog.py")
 SCT = Path(__file__).with_name("sct_catalog.py")
 KEYED = Path(__file__).with_name("keyed_catalog.py")
+DEDUPE = Path(__file__).with_name("dedupe_catalog.py")
 STATS = Path(__file__).with_name("catalog_stats.py")
 CAPTURE_METADATA = Path(__file__).with_name("capture_metadata.py")
 
@@ -47,6 +48,9 @@ def main() -> int:
         run_optional(NORTH_AMERICA, arguments, "una red adicional de Norteamérica no respondió")
         run_optional(SCT, [], "el WFS legado del Servei Català de Trànsit no respondió")
         run_optional(KEYED, [], "una fuente configurada mediante clave gratuita no respondió")
+
+    # Antes de las estadisticas: si no, los recuentos incluirian las copias.
+    run_optional(DEDUPE, [], "no se pudieron ocultar las camaras duplicadas")
 
     stats_result = subprocess.call([sys.executable, str(STATS)], cwd=ROOT)
     if stats_result != 0:

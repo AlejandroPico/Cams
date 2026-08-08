@@ -37,6 +37,8 @@ jobs:
         env:
           WINDY_WEBCAMS_KEY: ${{ secrets.WINDY_WEBCAMS_KEY }}
         run: python scripts/catalog/windy_catalog.py
+      - name: Ocultar camaras duplicadas de fuentes oficiales
+        run: python scripts/catalog/dedupe_catalog.py
       - name: Regenerar estadisticas del catalogo
         # windy_catalog.py exporta el catalogo con su propio informe, lo que dejaria
         # catalog-meta.json sin providerHealth ni desglose por paises. Este paso lo
