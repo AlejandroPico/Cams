@@ -1,0 +1,35 @@
+name: Sonda de fuentes espanolas
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/catalog/spain_probe.py"
+      - ".github/workflows/spain-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Probar endpoints espanoles
+        run: python scripts/catalog/spain_probe.py 2>&1 | tee /tmp/salida.txt
+      - name: Guardar el resultado en el repositorio
+        if: always()
+        run: |
+          mkdir -p docs/diagnostics
+          mv /tmp/salida.txt docs/diagnostics/spain-probe.txt
+          if [ -z "$(git status --porcelain -- docs/diagnostics)" ]; then exit 0; fi
+          git config user.name "cams-catalog-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/diagnostics
+          git commit -m "Guardar diagnostico de fuentes espanolas [skip ci]"
+          git pull --rebase origin main
+          git push
