@@ -110,8 +110,61 @@ def main() -> int:
     except Exception as exc:
         print(f"No disponible: {type(exc).__name__}: {exc}")
 
+    probe_partitioning(key)
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+def probe_partitioning(key: str) -> None:
+    """Busca una forma de subdividir por zona los paises que no caben por categoria."""
+    print()
+    print("=" * 70)
+    print("5) Cuanto se pierde con el troceado actual")
+    print("=" * 70)
+    for country in ("US", "IT", "AT", "DE", "FR", "GB", "ES"):
+        try:
+            total = request(key, {"limit": "1", "countries": country})["total"]
+        except Exception as exc:
+            print(f"{country}: fallo {exc}")
+            continue
+        suma = 0
+        topes = []
+        for cat in ["airport","beach","building","city","coast","forest","indoor","lake",
+                    "landscape","meteo","mountain","observatory","port","river","sportArea",
+                    "square","traffic","village"]:
+            try:
+                n = request(key, {"limit": "1", "countries": country, "categories": cat})["total"]
+            except Exception:
+                continue
+            suma += n
+            if n > 1050:
+                topes.append(f"{cat}={n}")
+        print(f"{country}: total={total}  suma por categoria={suma}  categorias que revientan el tope: {topes or 'ninguna'}")
+
+    print()
+    print("=" * 70)
+    print("6) Parametros de area admitidos")
+    print("=" * 70)
+    candidatos = [
+        ("nearby", "41.39,2.16,50"),
+        ("bbox", "40.0,1.0,42.0,3.0"),
+        ("northEast,southWest", None),
+        ("region", "ES.56"),
+        ("regions", "ES.56"),
+        ("continents", "EU"),
+    ]
+    for nombre, valor in candidatos:
+        if nombre == "northEast,southWest":
+            params = {"limit": "1", "northEast": "42.0,3.0", "southWest": "40.0,1.0"}
+        else:
+            params = {"limit": "1", nombre: valor}
+        try:
+            r = request(key, params)
+            print(f"  {nombre:22} ACEPTADO  total={r.get('total')}")
+        except urllib.error.HTTPError as exc:
+            print(f"  {nombre:22} HTTP {exc.code}")
+        except Exception as exc:
+            print(f"  {nombre:22} {type(exc).__name__}")
