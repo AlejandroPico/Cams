@@ -1,5 +1,4 @@
 import type { Camera } from '../types';
-import bundledSeed from './catalog.seed.json';
 import { DEFAULT_CAMS } from '../../assets/js/data/cameras.js';
 
 const normalise = (raw: Record<string, unknown>, index: number): Camera | null => {
@@ -93,8 +92,16 @@ export async function loadCatalog(): Promise<Camera[]> {
     }
   }
 
-  const integrated = parsePayload(bundledSeed);
-  if (integrated.length) return integrated;
+  // El catalogo integrado es solo una red de seguridad frente a un 404 de Pages.
+  // Se carga bajo demanda: importarlo de forma estatica metia los 19,5 MB del catalogo
+  // dentro del bundle principal y obligaba a descargarlo dos veces en cada visita.
+  try {
+    const { default: bundledSeed } = await import('./catalog.seed.json');
+    const integrated = parsePayload(bundledSeed);
+    if (integrated.length) return integrated;
+  } catch {
+    // Se recurre al catalogo historico minimo.
+  }
 
   const historical = parsePayload(DEFAULT_CAMS as unknown[]);
   if (historical.length) return historical;

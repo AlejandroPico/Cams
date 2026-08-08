@@ -138,17 +138,34 @@ def upsert_camera(connection: sqlite3.Connection, provider_code: str, camera: di
     if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
         return
     external_id = text(camera.get("external_id"))
+    pid = provider_id(connection, provider_code)
     camera_id = text(camera.get("id"))
     if not camera_id:
-        raw = f"{provider_code}|{external_id}|{camera.get('title')}|{latitude:.6f}|{longitude:.6f}"
+        # La identidad depende solo de (proveedor, external_id) cuando la fuente publica
+        # un identificador propio. Incluir titulo o coordenadas hacia que cualquier retoque
+        # del proveedor generase un id nuevo y chocase con UNIQUE(provider_id, external_id),
+        # abortando el proveedor entero.
+        if external_id:
+            raw = f"{provider_code}|{external_id}"
+        else:
+            raw = f"{provider_code}||{camera.get('title')}|{latitude:.6f}|{longitude:.6f}"
         camera_id = f"cam:{hashlib.sha1(raw.encode()).hexdigest()[:20]}"
+    if external_id:
+        # Compatibilidad con filas historicas cuyo id se calculo con el esquema antiguo:
+        # se reutiliza el id ya almacenado para esa pareja (provider_id, external_id).
+        existing = connection.execute(
+            "SELECT id FROM cameras WHERE provider_id=? AND external_id=?",
+            (pid, external_id),
+        ).fetchone()
+        if existing and existing["id"] != camera_id:
+            camera_id = existing["id"]
     now = NOW()
     checksum_source = "|".join(text(camera.get(key)) for key in (
         "title", "snapshot_url", "stream_url", "embed_url", "source_page_url"
     ))
     values = {
         "id": camera_id,
-        "provider_id": provider_id(connection, provider_code),
+        "provider_id": pid,
         "external_id": external_id or None,
         "title": text(camera.get("title"), "Public camera"),
         "description": text(camera.get("description")) or None,
@@ -206,11 +223,44 @@ def upsert_camera(connection: sqlite3.Connection, provider_code: str, camera: di
     )
 
 
+# Fraccion minima del catalogo previo que debe devolver un proveedor para considerar
+# la lectura completa. Por debajo se asume caida parcial de la fuente y no se retira
+# nada: es preferible una camara caduca que borrar media red por un fallo transitorio.
+PRUNE_MIN_RATIO = 0.5
+
+
+def deactivate_missing(connection: sqlite3.Connection, pid: int, run_started: str) -> dict[str, Any]:
+    """Marca como inactivas las camaras que el proveedor ha dejado de publicar.
+
+    Sin esto el catalogo solo crece: una camara retirada por el organismo permanece
+    para siempre marcada como online y el visor muestra una imagen rota.
+    """
+    previous = connection.execute(
+        "SELECT COUNT(*) FROM cameras WHERE provider_id=? AND active=1", (pid,)
+    ).fetchone()[0]
+    seen = connection.execute(
+        "SELECT COUNT(*) FROM cameras WHERE provider_id=? AND active=1 AND last_checked_at>=?",
+        (pid, run_started),
+    ).fetchone()[0]
+    if not previous or not seen:
+        return {"pruned": 0, "prune_skipped": "sin datos previos o lectura vacia"}
+    if seen < previous * PRUNE_MIN_RATIO:
+        return {"pruned": 0, "prune_skipped": f"lectura parcial sospechosa: {seen} de {previous}"}
+    cursor = connection.execute(
+        "UPDATE cameras SET active=0,status='offline',"
+        "status_reason='Retirada del feed del proveedor',updated_at=? "
+        "WHERE provider_id=? AND active=1 AND (last_checked_at IS NULL OR last_checked_at<?)",
+        (NOW(), pid, run_started),
+    )
+    return {"pruned": cursor.rowcount}
+
+
 def run_provider(connection: sqlite3.Connection, code: str, loader) -> dict[str, Any]:
     pid = provider_id(connection, code)
+    run_started = NOW()
     run_id = connection.execute(
         "INSERT INTO ingestion_runs(provider_id,started_at,status) VALUES(?,?,'running')",
-        (pid, NOW()),
+        (pid, run_started),
     ).lastrowid
     connection.commit()
     started = time.monotonic()
@@ -218,12 +268,13 @@ def run_provider(connection: sqlite3.Connection, code: str, loader) -> dict[str,
         cameras = list(loader())
         for camera in cameras:
             upsert_camera(connection, code, camera)
+        pruning = deactivate_missing(connection, pid, run_started) if cameras else {"pruned": 0}
         connection.execute(
             "UPDATE ingestion_runs SET finished_at=?,status='ok',fetched_count=?,inserted_count=?,message=? WHERE id=?",
             (NOW(), len(cameras), len(cameras), f"{time.monotonic()-started:.2f}s", run_id),
         )
         connection.commit()
-        return {"provider": code, "status": "ok", "count": len(cameras)}
+        return {"provider": code, "status": "ok", "count": len(cameras), **pruning}
     except Exception as exc:  # cada proveedor falla de forma independiente
         connection.rollback()
         connection.execute(
