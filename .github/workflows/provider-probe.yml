@@ -1,0 +1,21 @@
+name: Sonda de proveedores caidos
+
+# Diagnostico manual. No toca el catalogo ni despliega: prueba endpoints candidatos
+# de los proveedores rotos y muestra la forma de su respuesta.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/catalog/provider_probe.py"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Probar endpoints
+        run: python scripts/catalog/provider_probe.py
