@@ -20,14 +20,17 @@ permissions:
 
 # Grupo propio: el refresco general usa cancel-in-progress y cancelaria esta
 # sincronizacion a media ejecucion, que dura bastante mas que el resto.
+# Grupo versionado a proposito: una ejecucion anterior con un limite de 330 minutos
+# se quedo ocupando el grupo antiguo, y todo lo que se enviaba despues se encolaba
+# detras sin llegar a ejecutarse. Cambiar el nombre libera la cola.
 concurrency:
-  group: windy-catalog
-  cancel-in-progress: false
+  group: windy-sync-v2
+  cancel-in-progress: true
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -38,7 +41,10 @@ jobs:
           WINDY_WEBCAMS_KEY: ${{ secrets.WINDY_WEBCAMS_KEY }}
           # Por debajo del timeout del trabajo, para que pare por las buenas, guarde
           # lo recogido y anote por donde continuar, en vez de morir sin dejar rastro.
-          WINDY_TIME_BUDGET_MIN: "150"
+          # Corto a proposito: interesa mas tener respuesta en minutos y que la
+          # reanudacion vaya completando el catalogo entre varias pasadas, que
+          # una unica ejecucion larga de la que no sabemos nada hasta el final.
+          WINDY_TIME_BUDGET_MIN: "25"
         run: python scripts/catalog/windy_catalog.py 2>&1 | tee /tmp/windy.txt
       - name: Guardar el registro de la sincronizacion
         if: always()
