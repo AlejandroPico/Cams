@@ -468,3 +468,15 @@ button { color: inherit; }
   }
   .camera-panel-drag { cursor: default; }
 }
+
+/* Cortesia obligatoria de la Webcams API de Windy. Sus condiciones piden que
+   aparezca con el tamano y el color de texto habituales del sitio. */
+.camera-courtesy {
+  margin-top: 0.45rem;
+  opacity: 0.75;
+}
+
+.camera-courtesy a {
+  color: inherit;
+  text-decoration: underline;
+}

@@ -1,0 +1,65 @@
+name: Sincronizar Windy Webcams
+
+# Recorrido completo de la Webcams API de Windy. Va aparte del refresco general
+# porque son unas 1.700 peticiones y las camaras de paisaje y turismo cambian mucho
+# mas despacio que las de trafico: no tiene sentido repetirlo cada seis horas.
+on:
+  schedule:
+    - cron: "40 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: camera-catalog
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Importar camaras de Windy
+        env:
+          WINDY_WEBCAMS_KEY: ${{ secrets.WINDY_WEBCAMS_KEY }}
+        run: python scripts/catalog/windy_catalog.py
+      - name: Verificar integridad de SQLite
+        run: |
+          python - <<'PY'
+          import sqlite3
+          from pathlib import Path
+
+          path = Path("data/cams.sqlite3")
+          if not path.is_file() or path.stat().st_size == 0:
+              raise SystemExit("data/cams.sqlite3 no se ha generado")
+          with sqlite3.connect(path) as connection:
+              result = connection.execute("PRAGMA integrity_check").fetchone()[0]
+              if result != "ok":
+                  raise SystemExit(f"Integridad de SQLite fallida: {result}")
+              total = connection.execute(
+                  "SELECT COUNT(*) FROM cameras WHERE active=1 AND is_public=1"
+              ).fetchone()[0]
+              windy = connection.execute(
+                  "SELECT COUNT(*) FROM cameras c JOIN providers p ON p.id=c.provider_id "
+                  "WHERE p.code='WINDY_WEBCAMS' AND c.active=1"
+              ).fetchone()[0]
+          if total < 100:
+              raise SystemExit(f"Regresion del catalogo: solo {total} camaras")
+          print(f"SQLite valido: {total} camaras publicas, {windy} de Windy")
+          PY
+      - name: Guardar catalogo actualizado
+        run: |
+          if [ -z "$(git status --porcelain -- data/cams.sqlite3 public/data src/data/catalog.seed.json)" ]; then
+            echo "Sin cambios en el catalogo"
+            exit 0
+          fi
+          git config user.name "cams-catalog-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/cams.sqlite3 public/data src/data/catalog.seed.json
+          git commit -m "Sincronizar camaras de Windy Webcams [skip ci]"
+          git push

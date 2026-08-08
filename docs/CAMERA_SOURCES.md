@@ -245,3 +245,44 @@ Para publicar una cámara se exige:
 - fallo aislado por proveedor.
 
 No se incorporan cámaras privadas, credenciales filtradas, catálogos comerciales copiados, coordenadas inventadas ni mecanismos que eludan autenticación o cuotas.
+
+## Windy Webcams
+
+Camaras de calle, paisaje, costa, montana y turismo de todo el mundo. Complementa las
+redes de trafico oficiales, que solo cubren carreteras.
+
+- Endpoint: `https://api.windy.com/webcams/api/v3/webcams`
+- Clave gratuita: secreto `WINDY_WEBCAMS_KEY`
+- Adaptador: `scripts/catalog/windy_catalog.py`
+- Diagnostico: `scripts/catalog/windy_probe.py`
+- Sincronizacion: `.github/workflows/windy-sync.yml`, diaria
+
+### Limites medidos del plan gratuito
+
+| Parametro | Valor |
+|---|---|
+| `limit` maximo por pagina | 50 |
+| `offset` maximo | 1000 |
+| Registros por consulta | 1050 |
+| Catalogo declarado | 71.565 |
+
+Hay paises que superan el tope por si solos, asi que se trocea primero por pais y,
+cuando el pais no cabe, por pais y categoria. Las particiones que aun asi tocan techo
+se registran en el log para poder subdividirlas mas adelante.
+
+### Condiciones que impone Windy
+
+1. Cada imagen debe enlazar con la ficha (`urls.detail`) o el reproductor (`player`).
+2. Debe mostrarse la cortesia *Webcams provided by windy.com - add a webcam* en el
+   contexto donde aparecen sus camaras. Implementada en `CameraPanel` y limitada a
+   las camaras cuyo `providerCode` es `WINDY_WEBCAMS`.
+3. Solo se pueden usar las URLs que entrega la API, sin ampliar las imagenes.
+
+### Por que no se guardan las imagenes
+
+Las URLs de imagen estan protegidas por tokens que caducan a los diez minutos en el
+plan gratuito y despues devuelven 401. Guardarlas en un catalogo estatico regenerado
+cada pocas horas produciria imagenes rotas, y ademas chocaria con la regla de
+`CAMERA_SOURCE_POLICY.md` que prohibe copiar de forma permanente lo que la fuente solo
+autoriza de forma temporal. Se guarda `player.day`, que es un iframe estable y cumple
+por si mismo la condicion de enlazado.

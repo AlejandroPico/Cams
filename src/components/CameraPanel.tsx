@@ -137,6 +137,15 @@ export function CameraPanel({ camera, onClose }: Props) {
             <button type="button" onClick={() => hostRef.current?.requestFullscreen?.()}>pantalla completa</button>
             {source && <a href={source} target="_blank" rel="noopener noreferrer">fuente</a>}
           </div>
+          {camera.providerCode === 'WINDY_WEBCAMS' && (
+            // Cortesia exigida por las condiciones de uso de la Webcams API de Windy.
+            // Debe aparecer en el contexto donde se muestran sus camaras.
+            <div className="camera-courtesy">
+              Webcams provided by <a href="https://www.windy.com/" target="_blank" rel="noopener noreferrer">windy.com</a>
+              {' — '}
+              <a href="https://www.windy.com/webcams/add" target="_blank" rel="noopener noreferrer">add a webcam</a>
+            </div>
+          )}
         </footer>
       )}
     </aside>
