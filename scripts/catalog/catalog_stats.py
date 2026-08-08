@@ -88,6 +88,21 @@ def main() -> int:
     metadata["statisticsGeneratedAt"] = datetime.now(timezone.utc).isoformat()
     META_PATH.parent.mkdir(parents=True, exist_ok=True)
     META_PATH.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    # Mantenimiento: el historial de ejecuciones crece sin limite y la base se
+    # commitea entera en cada pasada, asi que conviene no arrastrar peso muerto.
+    connection.execute(
+        "DELETE FROM ingestion_runs WHERE id NOT IN ("
+        " SELECT id FROM ingestion_runs r WHERE r.id IN ("
+        "  SELECT id FROM ingestion_runs r2 WHERE r2.provider_id=r.provider_id"
+        "  ORDER BY r2.id DESC LIMIT 5))"
+    )
+    connection.execute(
+        "UPDATE cameras SET source_payload_json=NULL "
+        "WHERE active=0 AND source_payload_json IS NOT NULL"
+    )
+    connection.commit()
+    connection.execute("VACUUM")
     print(
         f"Catalog statistics ready for {metadata['count']} cameras in "
         f"{len(metadata['countries'])} countries and {len(metadata['providerHealth'])} providers"

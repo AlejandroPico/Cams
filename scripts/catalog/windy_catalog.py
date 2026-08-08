@@ -291,6 +291,8 @@ def windy_loader(key: str) -> Iterable[dict[str, Any]]:
     print(f"Windy: {len(seen)} camaras unicas con {budget.used} peticiones", file=sys.stderr)
     for aviso in truncated:
         print(f"Windy: particion incompleta -> {aviso}", file=sys.stderr)
+    if not truncated:
+        print("Windy: ninguna particion toco el tope de paginacion", file=sys.stderr)
 
 
 def main() -> int:

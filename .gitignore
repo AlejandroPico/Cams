@@ -13,3 +13,6 @@ __pycache__/
 *.pyc
 *.tmp
 *.bak
+
+# Copia redundante: nadie la descarga, el visor lee el JSON
+public/data/cams.sqlite3

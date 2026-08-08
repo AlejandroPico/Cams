@@ -75,10 +75,13 @@ jobs:
 
           if database_count < 100:
               raise SystemExit(f"Catalog regression: only {database_count} cameras were generated")
-          if len(exported) != database_count or len(bundled) != database_count:
+          if len(exported) != database_count:
               raise SystemExit(
-                  f"Catalog mismatch: SQLite={database_count}, public JSON={len(exported)}, bundle={len(bundled)}"
+                  f"Catalog mismatch: SQLite={database_count}, public JSON={len(exported)}"
               )
+          # El catalogo integrado es solo una muestra de emergencia, no una copia.
+          if not bundled or len(bundled) > database_count:
+              raise SystemExit(f"Fallback invalido: {len(bundled)} sobre {database_count}")
 
           print(f"Validated {database_count} cameras")
           for provider, count in provider_counts:

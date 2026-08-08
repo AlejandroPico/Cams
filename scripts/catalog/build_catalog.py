@@ -35,6 +35,7 @@ PUBLIC_META = PUBLIC_DIR / "catalog-meta.json"
 PUBLIC_DB = PUBLIC_DIR / "cams.sqlite3"
 BUNDLED_FALLBACK = ROOT / "src" / "data" / "catalog.seed.json"
 USER_AGENT = "CamsCatalogBot/4.0 (+https://github.com/AlejandroPico/Cams)"
+FALLBACK_LIMIT = 3000
 NOW = lambda: datetime.now(timezone.utc).isoformat()
 
 CALTRANS_URLS = [
@@ -442,13 +443,30 @@ def export_catalog(connection: sqlite3.Connection, reports: list[dict[str, Any]]
             "license": row["license_name"], "licenseUrl": row["license_url"],
             "termsUrl": row["terms_url"], "lastCheckedAt": row["last_checked_at"],
         })
-    serialized = json.dumps({"cameras": cameras}, ensure_ascii=False, indent=2) + "\n"
+    # Se omiten los campos vacios y se serializa sin sangrado. Con 51.000 camaras,
+    # indent=2 y los nulos suponian 25 MB de espacios y de "campo": null repetidos,
+    # que ademas se commitean por duplicado en cada ejecucion del catalogo.
+    compactadas = [{k: v for k, v in camera.items() if v is not None and v != ""} for camera in cameras]
+    serialized = json.dumps({"cameras": compactadas}, ensure_ascii=False, separators=(",", ":")) + "\n"
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
     PUBLIC_JSON.write_text(serialized, encoding="utf-8")
+
+    # El catalogo integrado solo se usa si el fetch del JSON publico falla, algo
+    # excepcional. Duplicar entero el catalogo para ese caso engordaba el repositorio
+    # y el bundle sin motivo: basta una muestra de emergencia, priorizando las
+    # camaras en linea y de mayor prioridad, que es el orden en que ya llegan.
+    muestra = compactadas[:FALLBACK_LIMIT]
     BUNDLED_FALLBACK.parent.mkdir(parents=True, exist_ok=True)
-    BUNDLED_FALLBACK.write_text(serialized, encoding="utf-8")
+    BUNDLED_FALLBACK.write_text(
+        json.dumps({"cameras": muestra}, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
     connection.commit()
-    shutil.copy2(DB_PATH, PUBLIC_DB)
+
+    # Nadie descarga public/data/cams.sqlite3: el visor lee el JSON. Era una copia
+    # exacta de data/cams.sqlite3 que anadia 55 MB a cada commit.
+    if PUBLIC_DB.exists():
+        PUBLIC_DB.unlink()
     provider_counts = connection.execute(
         "SELECT provider_code,COUNT(*) AS count FROM camera_catalog WHERE active=1 GROUP BY provider_code"
     ).fetchall()
