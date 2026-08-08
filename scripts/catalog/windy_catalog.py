@@ -129,7 +129,18 @@ def request(key: str, params: dict[str, str], budget: Budget, attempts: int = 3)
                 return json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             if exc.code in (400, 401, 403):
-                raise  # error de peticion o de clave: reintentar no arregla nada
+                raise  # peticion mal formada o clave invalida: reintentar no arregla nada
+            if exc.code == 429:
+                # Limite de peticiones. Se respeta Retry-After si lo envian.
+                espera = exc.headers.get("Retry-After") if exc.headers else None
+                try:
+                    pausa = float(espera) if espera else 5.0 * (attempt + 1)
+                except ValueError:
+                    pausa = 5.0 * (attempt + 1)
+                print(f"Windy: limite de peticiones, esperando {pausa:.0f}s", file=sys.stderr)
+                time.sleep(min(pausa, 60))
+                last = exc
+                continue
             last = exc
         except Exception as exc:  # noqa: BLE001 - red inestable
             last = exc
@@ -138,7 +149,18 @@ def request(key: str, params: dict[str, str], budget: Budget, attempts: int = 3)
 
 
 def count_for(key: str, params: dict[str, str], budget: Budget) -> int:
-    payload = request(key, {**params, "limit": "1", "include": "location"}, budget)
+    """Numero de camaras de una particion. Devuelve 0 si la particion no existe.
+
+    Los codigos de region se generan (CC.01 a CC.60) porque la API no publica la
+    lista, asi que la mayoria no corresponden a ninguna region real y responden 400.
+    Eso no es un error: significa que ahi no hay nada.
+    """
+    try:
+        payload = request(key, {**params, "limit": "1", "include": "location"}, budget)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 400:
+            return 0
+        raise
     return int(payload.get("total") or 0)
 
 
@@ -272,6 +294,17 @@ def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
     paises = orden_de_paises()
     pendiente: str | None = None
 
+    def seguro(params: dict[str, str]):
+        """Recorre una particion sin dejar que su fallo tumbe el proveedor entero."""
+        try:
+            yield from harvest(key, params, budget, seen, truncated)
+        except Incompleta:
+            raise
+        except urllib.error.HTTPError as exc:
+            print(f"Windy: particion {params} descartada (HTTP {exc.code})", file=sys.stderr)
+        except RuntimeError as exc:
+            print(f"Windy: particion {params} descartada ({exc})", file=sys.stderr)
+
     try:
         for indice, country in enumerate(paises):
             total = count_for(key, {"countries": country}, budget)
@@ -281,7 +314,7 @@ def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
                   file=sys.stderr)
 
             if total <= CAP:
-                yield from harvest(key, {"countries": country}, budget, seen, truncated)
+                yield from seguro({"countries": country})
                 continue
 
             print(f"Windy: {country} no cabe en una consulta, troceando por categoria", file=sys.stderr)
@@ -290,8 +323,7 @@ def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
                 if n <= 0:
                     continue
                 if n <= CAP:
-                    yield from harvest(key, {"countries": country, "categories": cat},
-                                       budget, seen, truncated)
+                    yield from seguro({"countries": country, "categories": cat})
                     continue
 
                 print(f"Windy: {country}/{cat} declara {n}, troceando por region", file=sys.stderr)
@@ -301,16 +333,22 @@ def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
                     if m <= 0:
                         continue
                     cubierto += m
-                    yield from harvest(key, {"countries": country, "categories": cat, "regions": rc},
-                                       budget, seen, truncated)
+                    yield from seguro({"countries": country, "categories": cat, "regions": rc})
                 if cubierto < n:
                     truncated.append(f"{country}/{cat}: {cubierto} de {n} localizadas por region")
 
             # Repesca: una camara sin ninguna categoria no la devuelve ningun filtro
             # de categoria. El dedupe por external_id evita contarla dos veces.
-            yield from harvest(key, {"countries": country}, budget, seen, truncated)
+            yield from seguro({"countries": country})
             pendiente = paises[indice + 1] if indice + 1 < len(paises) else None
 
+    except (urllib.error.HTTPError, RuntimeError) as exc:
+        # Un fallo que escapa a las guardas anteriores deja el recorrido a medias,
+        # pero lo ya recogido es valido: se entrega y se anota donde continuar.
+        estado["completa"] = False
+        estado["motivo"] = f"{type(exc).__name__}: {exc}"
+        guardar_reanudacion(pendiente or country)
+        print(f"Windy: recorrido interrumpido ({exc})", file=sys.stderr)
     except Incompleta as motivo:
         # No es un error: se ha recogido lo que cabia en el presupuesto y la siguiente
         # pasada continuara por aqui. Lo que no se puede hacer es podar, porque el
@@ -376,7 +414,11 @@ def main() -> int:
 
     print(json.dumps(report, ensure_ascii=False))
     print(f"Windy catalog ready: {total} public records")
-    return 0 if report.get("status") == "ok" else 1
+    # Una pasada parcial no es un fallo: lo recogido es valido y la siguiente
+    # continuara donde esta se quedo. Solo se considera error no traer nada.
+    if report.get("status") != "ok" and not report.get("count"):
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
