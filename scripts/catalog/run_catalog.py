@@ -19,6 +19,7 @@ WESTERN_EUROPE = Path(__file__).with_name("western_europe_catalog.py")
 NORTH_AMERICA = Path(__file__).with_name("north_america_catalog.py")
 SCT = Path(__file__).with_name("sct_catalog.py")
 KEYED = Path(__file__).with_name("keyed_catalog.py")
+SPAIN = Path(__file__).with_name("spain_catalog.py")
 MANUAL = Path(__file__).with_name("manual_catalog.py")
 DEDUPE = Path(__file__).with_name("dedupe_catalog.py")
 STATS = Path(__file__).with_name("catalog_stats.py")
@@ -49,6 +50,7 @@ def main() -> int:
         run_optional(NORTH_AMERICA, arguments, "una red adicional de Norteamérica no respondió")
         run_optional(SCT, [], "el fichero abierto del Servei Català de Trànsit no respondió")
         run_optional(KEYED, [], "una fuente configurada mediante clave gratuita no respondió")
+        run_optional(SPAIN, [], "una fuente autonómica española no respondió")
 
     run_optional(MANUAL, [], "no se pudieron leer las camaras anadidas a mano")
 
