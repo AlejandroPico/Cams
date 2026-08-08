@@ -1,0 +1,169 @@
+======================================================================
+1) Consulta general: 2 camaras, sin filtro
+======================================================================
+Claves de primer nivel: ['total', 'webcams']
+Total declarado: 71565
+
+ESTRUCTURA DE UNA CAMARA:
+{
+  title: str = 'Parma › North-west'
+  viewCount: int = 24883206
+  webcamId: int = 1203536559
+  status: str = 'active'
+  lastUpdatedOn: str = '2026-08-08T16:37:48.000Z'
+  categories: [1 elementos] primero -> {
+    id: str = 'meteo'
+    name: str = 'Weather'
+  }
+  images: {
+    current: {
+      icon: str = 'https://imgproxy.windy.com/_/icon/plain/current/1203536559/original.jpg'
+      thumbnail: str = 'https://imgproxy.windy.com/_/thumbnail/plain/current/1203536559/original.jpg'
+      preview: str = 'https://imgproxy.windy.com/_/preview/plain/current/1203536559/original.jpg'
+    }
+    sizes: {
+      icon: {
+        width: int = 48
+        height: int = 48
+      }
+      thumbnail: {
+        width: int = 200
+        height: int = 112
+      }
+      preview: {
+        width: int = 400
+        height: int = 224
+      }
+    }
+    daylight: {
+      icon: str = 'https://imgproxy.windy.com/_/icon/plain/daylight/1203536559/original.jpg'
+      thumbnail: str = 'https://imgproxy.windy.com/_/thumbnail/plain/daylight/1203536559/original.jpg'
+      preview: str = 'https://imgproxy.windy.com/_/preview/plain/daylight/1203536559/original.jpg'
+    }
+  }
+  location: {
+    city: str = 'Parma'
+    region: str = 'Emilia-Romagna'
+    region_code: str = 'IT.05'
+    country: str = 'Italy'
+    country_code: str = 'IT'
+    continent: str = 'Europe'
+    continent_code: str = 'EU'
+    latitude: float = 44.79987
+    longitude: float = 10.39531
+  }
+  player: {
+    day: str = 'https://webcams.windy.com/webcams/public/embed/player/1203536559/day'
+    month: str = 'https://webcams.windy.com/webcams/public/embed/player/1203536559/month'
+    year: str = 'https://webcams.windy.com/webcams/public/embed/player/1203536559/year'
+    lifetime: str = 'https://webcams.windy.com/webcams/public/embed/player/1203536559/lifetime'
+  }
+  urls: {
+    detail: str = 'https://windy.com/webcams/1203536559'
+    edit: str = 'https://webcams-admin.windy.com/webcams/1203536559'
+    provider: str = 'https://www.meteoparma.com/'
+  }
+}
+
+EJEMPLO COMPLETO (json):
+{
+  "title": "Parma › North-west",
+  "viewCount": 24883206,
+  "webcamId": 1203536559,
+  "status": "active",
+  "lastUpdatedOn": "2026-08-08T16:37:48.000Z",
+  "categories": [
+    {
+      "id": "meteo",
+      "name": "Weather"
+    }
+  ],
+  "images": {
+    "current": {
+      "icon": "https://imgproxy.windy.com/_/icon/plain/current/1203536559/original.jpg",
+      "thumbnail": "https://imgproxy.windy.com/_/thumbnail/plain/current/1203536559/original.jpg",
+      "preview": "https://imgproxy.windy.com/_/preview/plain/current/1203536559/original.jpg"
+    },
+    "sizes": {
+      "icon": {
+        "width": 48,
+        "height": 48
+      },
+      "thumbnail": {
+        "width": 200,
+        "height": 112
+      },
+      "preview": {
+        "width": 400,
+        "height": 224
+      }
+    },
+    "daylight": {
+      "icon": "https://imgproxy.windy.com/_/icon/plain/daylight/1203536559/original.jpg",
+      "thumbnail": "https://imgproxy.windy.com/_/thumbnail/plain/daylight/1203536559/original.jpg",
+      "preview": "https://imgproxy.windy.com/_/preview/plain/daylight/1203536559/original.jpg"
+    }
+  },
+  "location": {
+    "city": "Parma",
+    "region": "Emilia-Romagna",
+    "region_code": "IT.05",
+    "country": "Italy",
+    "country_code": "IT",
+    "continent": "Europe",
+    "continent_code": "EU",
+    "latitude": 44.79987,
+    "longitude": 10.39531
+  },
+  "player": {
+    "day": "https://webcams.windy.com/webcams/public/embed/player/1203536559/day",
+    "month": "https://webcams.windy.com/webcams/public/embed/player/1203536559/month",
+    "year": "https://webcams.windy.com/webcams/public/embed/player/1203536559/year",
+    "lifetime": "https://webcams.windy.com/webcams/public/embed/player/1203536559/lifetime"
+  },
+  "urls": {
+    "detail": "https://windy.com/webcams/1203536559",
+    "edit": "https://webcams-admin.windy.com/webcams/1203536559",
+    "provider": "https://www.meteoparma.com/"
+  }
+}
+
+======================================================================
+2) Filtro por pais y limite maximo por pagina
+======================================================================
+limit=50 -> devueltas 50, total ES=1430
+limit=100 -> HTTP 400
+
+======================================================================
+3) Tope real de offset en plan gratuito
+======================================================================
+offset=0 -> OK, 10 camaras
+offset=990 -> OK, 10 camaras
+offset=1000 -> OK, 10 camaras
+offset=1050 -> HTTP 400 (tope alcanzado)
+
+======================================================================
+4) Catalogo de categorias disponibles
+======================================================================
+[{"id": "airport", "name": "Airport"}, {"id": "beach", "name": "Beach"}, {"id": "building", "name": "Building"}, {"id": "city", "name": "City"}, {"id": "coast", "name": "Coast"}, {"id": "forest", "name": "Forest"}, {"id": "indoor", "name": "Indoor"}, {"id": "lake", "name": "Lake"}, {"id": "landscape", "name": "Landscape"}, {"id": "meteo", "name": "Weather"}, {"id": "mountain", "name": "Mountain"}, {"id": "observatory", "name": "Observatory"}, {"id": "port", "name": "Port"}, {"id": "river", "name": "River"}, {"id": "sportArea", "name": "Sports Area"}, {"id": "square", "name": "Square"}, {"id": "traffic", "name": "Traffic"}, {"id": "village", "name": "Village"}]
+
+======================================================================
+5) Cuanto se pierde con el troceado actual
+======================================================================
+US: total=33754  suma por categoria=39572  categorias que revientan el tope: ['city=4267', 'meteo=1196', 'traffic=31336']
+IT: total=3092  suma por categoria=5229  categorias que revientan el tope: ['landscape=1678']
+AT: total=2867  suma por categoria=4159  categorias que revientan el tope: ['landscape=1369']
+DE: total=2768  suma por categoria=4125  categorias que revientan el tope: ninguna
+FR: total=2142  suma por categoria=3329  categorias que revientan el tope: ninguna
+GB: total=1348  suma por categoria=2261  categorias que revientan el tope: ninguna
+ES: total=1430  suma por categoria=2420  categorias que revientan el tope: ninguna
+
+======================================================================
+6) Parametros de area admitidos
+======================================================================
+  nearby                 ACEPTADO  total=104
+  bbox                   HTTP 500
+  northEast,southWest    ACEPTADO  total=71565
+  region                 ACEPTADO  total=71565
+  regions                ACEPTADO  total=321
+  continents             ACEPTADO  total=26029
