@@ -22,6 +22,7 @@ enlazar cada imagen con su ficha o su reproductor.
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 import time
@@ -258,8 +259,43 @@ def region_codes(country: str, descubiertos: set[str]) -> list[str]:
     return reales + [c for c in numericos if c not in descubiertos]
 
 
+def subdividir(puntos: list[tuple[float, float]]) -> list[tuple[float, float, int]]:
+    """Circulos que cubren una nube de camaras, para trocearla geograficamente.
+
+    Ultimo recurso cuando ni pais, ni categoria, ni region caben en una consulta: el
+    caso de estados como California. La sonda confirmo que nearby (lat, lon, radio en
+    km) es el unico parametro de area que la API respeta; bbox responde 500.
+
+    Los circulos se solapan a proposito. Es preferible pedir dos veces una camara,
+    que el dedupe por identificador descarta, a dejar un hueco sin cubrir.
+    """
+    if not puntos:
+        return []
+    lats = [p[0] for p in puntos]
+    lons = [p[1] for p in puntos]
+    lat0, lat1 = min(lats), max(lats)
+    lon0, lon1 = min(lons), max(lons)
+
+    # Rejilla de 4x4 sobre el rectangulo observado, con radio que cubre cada celda.
+    filas = columnas = 4
+    alto = max((lat1 - lat0) / filas, 0.05)
+    ancho = max((lon1 - lon0) / columnas, 0.05)
+    circulos = []
+    for f in range(filas):
+        for c in range(columnas):
+            lat = lat0 + alto * (f + 0.5)
+            lon = lon0 + ancho * (c + 0.5)
+            # Media diagonal de la celda en kilometros, con margen.
+            km_lat = alto * 111.0 / 2
+            km_lon = ancho * 111.0 * math.cos(math.radians(lat)) / 2
+            radio = int(math.hypot(km_lat, km_lon) * 1.3) + 1
+            circulos.append((round(lat, 4), round(lon, 4), min(radio, 250)))
+    return circulos
+
+
 def harvest(key: str, params: dict[str, str], budget: Budget, seen: set[str],
-            truncated: list[str], regiones: set[str] | None = None) -> Iterable[dict[str, Any]]:
+            truncated: list[str], regiones: set[str] | None = None,
+            extent: list[tuple[float, float]] | None = None) -> Iterable[dict[str, Any]]:
     """Recorre una particion y entrega sus camaras nuevas.
 
     De paso apunta los codigos de region que aparecen. La API no publica la lista y
@@ -269,10 +305,16 @@ def harvest(key: str, params: dict[str, str], budget: Budget, seen: set[str],
     contadas = 0
     for webcam in page_through(key, params, budget):
         contadas += 1
+        location = webcam.get("location") or {}
         if regiones is not None:
-            codigo = ((webcam.get("location") or {}).get("region_code") or "").strip()
+            codigo = (location.get("region_code") or "").strip()
             if codigo:
                 regiones.add(codigo)
+        if extent is not None:
+            try:
+                extent.append((float(location["latitude"]), float(location["longitude"])))
+            except (KeyError, TypeError, ValueError):
+                pass
         record = normalise(webcam)
         if not record or record["external_id"] in seen:
             continue
@@ -309,10 +351,10 @@ def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
 
     regiones: set[str] = set()
 
-    def seguro(params: dict[str, str]):
+    def seguro(params: dict[str, str], extent: list | None = None):
         """Recorre una particion sin dejar que su fallo tumbe el proveedor entero."""
         try:
-            yield from harvest(key, params, budget, seen, truncated, regiones)
+            yield from harvest(key, params, budget, seen, truncated, regiones, extent)
         except Incompleta:
             raise
         except urllib.error.HTTPError as exc:
@@ -354,7 +396,18 @@ def windy_loader(key: str, estado: dict[str, Any]) -> Iterable[dict[str, Any]]:
                     if m <= 0:
                         continue
                     cubierto += m
-                    yield from seguro({"countries": country, "categories": cat, "regions": rc})
+                    base_params = {"countries": country, "categories": cat, "regions": rc}
+                    puntos: list[tuple[float, float]] = []
+                    yield from seguro(base_params, puntos)
+
+                    if m > CAP:
+                        # Ni la region cabe: se trocea por zonas sobre las camaras ya
+                        # vistas, que indican donde estan realmente concentradas.
+                        circulos = subdividir(puntos)
+                        print(f"Windy: {country}/{cat}/{rc} declara {m}, "
+                              f"subdividiendo en {len(circulos)} zonas", file=sys.stderr)
+                        for lat, lon, radio in circulos:
+                            yield from seguro({**base_params, "nearby": f"{lat},{lon},{radio}"})
                 if cubierto < n:
                     truncated.append(f"{country}/{cat}: {cubierto} de {n} localizadas por region")
 
