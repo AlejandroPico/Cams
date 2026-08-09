@@ -1,3 +1,0 @@
-Comprobando 1500 snapshots con 12 hilos
-{"comprobadas": 1500, "online": 1500, "offline": 0, "blocked": 0, "segundos": 43.0, "acumuladas": 1500, "pendientes": 13957}
-Imagenes que cargan: 100.0%
