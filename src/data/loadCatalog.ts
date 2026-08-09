@@ -53,7 +53,10 @@ const normalise = (raw: Record<string, unknown>, index: number): Camera | null =
     license: raw.license ? String(raw.license) : undefined,
     licenseUrl: raw.licenseUrl ? String(raw.licenseUrl) : undefined,
     termsUrl: raw.termsUrl ? String(raw.termsUrl) : undefined,
-    lastCheckedAt: raw.lastCheckedAt ? String(raw.lastCheckedAt) : undefined
+    lastCheckedAt: raw.lastCheckedAt ? String(raw.lastCheckedAt) : undefined,
+    imageStatus: raw.imageStatus === 'online' || raw.imageStatus === 'offline' || raw.imageStatus === 'blocked'
+      ? raw.imageStatus
+      : undefined
   };
 };
 

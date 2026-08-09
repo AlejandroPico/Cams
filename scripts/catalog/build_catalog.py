@@ -108,12 +108,38 @@ def fetch_json(url: str, timeout: int) -> Any:
         return json.load(response)
 
 
+# Columnas anadidas despues de la creacion original de la base. El esquema usa
+# CREATE TABLE IF NOT EXISTS, asi que sobre una base existente no se aplican solas.
+COLUMNAS_NUEVAS = (
+    ("image_status", "TEXT"),
+    ("image_reason", "TEXT"),
+    ("image_checked_at", "TEXT"),
+)
+
+
+def migrar(connection: sqlite3.Connection) -> None:
+    existentes = {fila[1] for fila in connection.execute("PRAGMA table_info(cameras)")}
+    anadidas = False
+    for columna, tipo in COLUMNAS_NUEVAS:
+        if columna not in existentes:
+            connection.execute(f"ALTER TABLE cameras ADD COLUMN {columna} {tipo}")
+            anadidas = True
+    if anadidas:
+        # La vista se creo con CREATE VIEW IF NOT EXISTS y no incluye las columnas
+        # nuevas, asi que hay que rehacerla para que el export las vea.
+        connection.execute("DROP VIEW IF EXISTS camera_catalog")
+        connection.commit()
+        connection.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+    connection.commit()
+
+
 def ensure_database() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys=ON")
     connection.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+    migrar(connection)
     for provider in PROVIDERS:
         columns = list(provider)
         placeholders = ",".join(f":{column}" for column in columns)
@@ -452,6 +478,9 @@ def export_catalog(connection: sqlite3.Connection, reports: list[dict[str, Any]]
             "viewDirection": row["view_direction"], "attribution": row["attribution"],
             "license": row["license_name"], "licenseUrl": row["license_url"],
             "termsUrl": row["terms_url"], "lastCheckedAt": row["last_checked_at"],
+            # Resultado de comprobar que la imagen carga de verdad, que no es lo mismo
+            # que el proveedor la liste. Lo escribe scripts/ingest/verify_images.py.
+            "imageStatus": row["image_status"] if "image_status" in row.keys() else None,
         })
     # Se omiten los campos vacios y se serializa sin sangrado. Con 51.000 camaras,
     # indent=2 y los nulos suponian 25 MB de espacios y de "campo": null repetidos,

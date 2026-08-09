@@ -74,6 +74,9 @@ CREATE TABLE IF NOT EXISTS cameras (
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     source_payload_json TEXT,
     checksum TEXT,
+    image_status TEXT,
+    image_reason TEXT,
+    image_checked_at TEXT,
     UNIQUE(provider_id, external_id)
 );
 
@@ -132,6 +135,9 @@ SELECT
     p.code AS provider_code,
     p.name AS provider_name,
     c.external_id,
+    c.image_status,
+    c.image_reason,
+    c.image_checked_at,
     c.title,
     c.description,
     c.country_code,

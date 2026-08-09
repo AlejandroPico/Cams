@@ -50,7 +50,16 @@ export function filterCameras(cameras: Camera[], filters: CameraFilters): Camera
     .filter((camera) => {
       if (filters.country !== 'all' && camera.country !== filters.country) return false;
       if (filters.category !== 'all' && camera.category !== filters.category) return false;
-      if (filters.status === 'available' && (camera.status === 'offline' || camera.status === 'blocked')) return false;
+      if (filters.status === 'available') {
+        // Si la imagen se ha comprobado de verdad, manda esa comprobacion: que el
+        // proveedor liste la camara no significa que sirva imagen. Cuando aun no se
+        // ha comprobado se conserva el criterio anterior.
+        if (camera.imageStatus) {
+          if (camera.imageStatus !== 'online') return false;
+        } else if (camera.status === 'offline' || camera.status === 'blocked') {
+          return false;
+        }
+      }
       if (filters.status !== 'all' && filters.status !== 'available' && camera.status !== filters.status) return false;
       if (filters.mode === 'live' && !isLiveCamera(camera)) return false;
       if (filters.mode === 'snapshot' && !isSnapshotCamera(camera)) return false;

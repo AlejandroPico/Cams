@@ -45,6 +45,7 @@ export interface Camera {
   capturedAt?: string;
   /** Instante en que el catálogo comprobó la cámara; no implica exposición fotográfica. */
   lastCheckedAt?: string;
+  imageStatus?: 'online' | 'offline' | 'blocked';
 }
 
 export interface CameraFilters {
