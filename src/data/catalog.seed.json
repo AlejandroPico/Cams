@@ -26,7 +26,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.378204+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.127314+00:00"
     },
     {
       "id": "cam:1a48ce28e5c4fdfda020",
@@ -54,7 +54,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.377015+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.123891+00:00"
     },
     {
       "id": "cam:37c3a8fac17b685fcdfc",
@@ -82,7 +82,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.380333+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.130896+00:00"
     },
     {
       "id": "cam:d80be94caf1aeb3815e3",
@@ -110,7 +110,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.379292+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.129236+00:00"
     },
     {
       "id": "cam:1d12997dddb966d67df3",
@@ -138,7 +138,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.379188+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.129060+00:00"
     },
     {
       "id": "cam:9760a162e9578423d721",
@@ -166,7 +166,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.376379+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.122448+00:00"
     },
     {
       "id": "cam:73b7ab6072d87382e1c8",
@@ -194,7 +194,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.380207+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.130668+00:00"
     },
     {
       "id": "cam:5ab7523472d403cb5769",
@@ -222,35 +222,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.377367+00:00"
-    },
-    {
-      "id": "cam:b9b56fa1859902c8c911",
-      "title": "Cangas",
-      "country": "España",
-      "countryCode": "ES",
-      "region": "Galicia",
-      "province": "Pontevedra",
-      "city": "Cangas",
-      "lat": 42.26044,
-      "lon": -8.782591,
-      "timezone": "Europe/Madrid",
-      "category": "landscape",
-      "type": "snapshot",
-      "provider": "MeteoGalicia",
-      "providerCode": "METEOGALICIA_ES",
-      "active": true,
-      "status": "online",
-      "snapshotUrl": "https://www.meteogalicia.gal/datosred/camaras/MeteoGalicia/Cangas/ultima.jpg",
-      "sourceUrl": "https://www.meteogalicia.gal/web/observacion/camaras",
-      "thumbnailUrl": "https://www.meteogalicia.gal/datosred/camaras/MeteoGalicia/Cangas/miniUltima.jpg",
-      "refreshSeconds": 600,
-      "isLive": false,
-      "isEmbeddable": true,
-      "attribution": "MeteoGalicia, Xunta de Galicia",
-      "license": "Datos abertos da Xunta de Galicia",
-      "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.379086+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.124931+00:00"
     },
     {
       "id": "cam:72939d3bcc37ba12b25a",
@@ -278,7 +250,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.376708+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.123167+00:00"
     },
     {
       "id": "cam:2b640f9b709bef5a1e4f",
@@ -306,7 +278,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.378969+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.128868+00:00"
     },
     {
       "id": "cam:7b50619c435b71a8c4a9",
@@ -334,7 +306,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.377721+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.125924+00:00"
     },
     {
       "id": "cam:dd1ebe607df6fd9149b4",
@@ -362,7 +334,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.377135+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.124223+00:00"
     },
     {
       "id": "cam:3c75410b358a5f61bf2d",
@@ -390,7 +362,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.377249+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.124557+00:00"
     },
     {
       "id": "cam:11dfbfdee2577cc229d3",
@@ -418,7 +390,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.377978+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.126606+00:00"
     },
     {
       "id": "cam:21f6969ef002b9d33be3",
@@ -446,7 +418,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.379863+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.130155+00:00"
     },
     {
       "id": "cam:1541da7539bd1e761511",
@@ -474,7 +446,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.380100+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.130506+00:00"
     },
     {
       "id": "cam:a82431ddc64132229dad",
@@ -502,7 +474,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.378869+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.128669+00:00"
     },
     {
       "id": "cam:96cefa30e97cfb91d2d2",
@@ -530,7 +502,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.378589+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.128291+00:00"
     },
     {
       "id": "cam:157604a07d91e9e5255a",
@@ -558,7 +530,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.379629+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.129773+00:00"
     },
     {
       "id": "cam:bddb26ac82a25a100e06",
@@ -586,7 +558,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.379991+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.130341+00:00"
     },
     {
       "id": "cam:cbee61ca016a8c13349b",
@@ -614,7 +586,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.377481+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.125243+00:00"
     },
     {
       "id": "cam:bb40705e61ebbc81ace3",
@@ -642,7 +614,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.379401+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.129427+00:00"
     },
     {
       "id": "cam:b95342d502271743385a",
@@ -670,7 +642,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.378489+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.128114+00:00"
     },
     {
       "id": "cam:ea5c878cfe63cd8cc086",
@@ -698,7 +670,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.376574+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.122846+00:00"
     },
     {
       "id": "cam:93bee7625fca5a6bea72",
@@ -726,7 +698,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.377595+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.125547+00:00"
     },
     {
       "id": "cam:56070ac6b32663da22aa",
@@ -754,7 +726,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.376881+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.123520+00:00"
     },
     {
       "id": "cam:995a8c5df02b131685be",
@@ -782,7 +754,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.375665+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.121386+00:00"
     },
     {
       "id": "cam:aede38ec7ec57dce0831",
@@ -810,7 +782,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.379732+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.129978+00:00"
     },
     {
       "id": "cam:208450f6f0f94dfc7861",
@@ -838,7 +810,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.379508+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.129599+00:00"
     },
     {
       "id": "cam:34b92e9553c2e58390bf",
@@ -866,7 +838,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.377858+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.126276+00:00"
     },
     {
       "id": "cam:26c8d5a07c5e3ceefd78",
@@ -894,7 +866,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-10T19:17:53.378088+00:00"
+      "lastCheckedAt": "2026-08-11T02:28:05.126954+00:00"
     },
     {
       "id": "cam:63b6e722ce1209358953",
@@ -78063,6 +78035,32 @@
       "licenseUrl": "https://api.windy.com/webcams/terms",
       "termsUrl": "https://api.windy.com/webcams/terms",
       "lastCheckedAt": "2026-08-10T05:19:38.158777+00:00"
+    },
+    {
+      "id": "cam:32cef2a4b530b91fe8c5",
+      "title": "Bad Aussee",
+      "country": "Austria",
+      "countryCode": "AT",
+      "region": "Styria",
+      "city": "Bad Aussee",
+      "lat": 47.56328,
+      "lon": 13.82152,
+      "category": "water",
+      "type": "iframe",
+      "provider": "Windy Webcams",
+      "providerCode": "WINDY_WEBCAMS",
+      "active": true,
+      "status": "online",
+      "embedUrl": "https://webcams.windy.com/webcams/public/embed/player/1661935808/day",
+      "sourceUrl": "https://windy.com/webcams/1661935808",
+      "refreshSeconds": 600,
+      "isLive": false,
+      "isEmbeddable": true,
+      "attribution": "Windy.com",
+      "license": "Windy Webcams API Terms of Use",
+      "licenseUrl": "https://api.windy.com/webcams/terms",
+      "termsUrl": "https://api.windy.com/webcams/terms",
+      "lastCheckedAt": "2026-08-10T05:19:36.041873+00:00"
     }
   ]
 }
