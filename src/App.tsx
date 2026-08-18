@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AboutModal } from './components/AboutModal';
 import { CameraPanel } from './components/CameraPanel';
 import { Mosaic } from './components/Mosaic';
@@ -140,6 +140,28 @@ export default function App() {
     setMosaicOffset(Math.floor(Math.random() * filtered.length));
   };
 
+  const discoverCamera = useCallback(() => {
+    const playable = filtered.filter((camera) => (
+      camera.status !== 'offline'
+      && camera.status !== 'blocked'
+      && camera.type !== 'link'
+      && Boolean(camera.snapshotUrl || camera.embedUrl || camera.url || camera.videoId)
+    ));
+    if (!playable.length) return;
+
+    const candidates = selected && playable.length > 1
+      ? playable.filter((camera) => camera.id !== selected.id)
+      : playable;
+    const entropy = new Uint32Array(1);
+    window.crypto.getRandomValues(entropy);
+    const camera = candidates[entropy[0] % candidates.length];
+
+    setView('map');
+    setDrawerOpen(false);
+    // Solo existe una selección: la ficha anterior se sustituye, nunca se acumula.
+    setSelected(camera);
+  }, [filtered, selected]);
+
   // Atajos de teclado del mosaico: la vista esta pensada para dejarla puesta y
   // manejarla de lejos, donde abrir el menu lateral resulta incomodo.
   useEffect(() => {
@@ -183,6 +205,11 @@ export default function App() {
           showDayNight={dayNight}
           mapMode={mapMode}
           terrain3d={terrain3d}
+          onDiscover={discoverCamera}
+          onMapMode={setMapMode}
+          onTerrain3d={setTerrain3d}
+          onDayNight={setDayNight}
+          onLabels={setMapLabels}
         />
       )}
 

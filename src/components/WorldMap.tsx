@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl, {
   type GeoJSONSource,
+  type IControl,
   type Map as MapLibreMap,
   type MapLayerMouseEvent
 } from 'maplibre-gl';
@@ -24,13 +25,20 @@ interface Props {
   showDayNight: boolean;
   mapMode: MapBaseMode;
   terrain3d: boolean;
+  onDiscover: () => void;
+  onMapMode: (mode: MapBaseMode) => void;
+  onTerrain3d: (enabled: boolean) => void;
+  onDayNight: (enabled: boolean) => void;
+  onLabels: (enabled: boolean) => void;
 }
 
-const MODE_LABELS: Record<MapBaseMode, string> = {
-  satellite: 'satélite',
-  political: 'geográfico',
-  relief: 'relieve'
-};
+const MAP_MODES: Array<{ value: MapBaseMode; label: string; hint: string }> = [
+  { value: 'satellite', label: 'Satélite', hint: 'Fotografía aérea' },
+  { value: 'political', label: 'Geográfico', hint: 'Mapa y localidades' },
+  { value: 'relief', label: 'Relieve', hint: 'Topografía y montaña' }
+];
+
+const worldZoom = () => window.matchMedia('(max-width: 760px)').matches ? 1 : 1.55;
 
 function toGeoJson(cameras: Camera[]): GeoJSON.FeatureCollection {
   return {
@@ -322,18 +330,26 @@ export function WorldMap({
   showLabels,
   showDayNight,
   mapMode,
-  terrain3d
+  terrain3d,
+  onDiscover,
+  onMapMode,
+  onTerrain3d,
+  onDayNight,
+  onLabels
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const cameraIndexRef = useRef(new Map<string, Camera>());
   const labelsRef = useRef(showLabels);
   const dayNightRef = useRef(showDayNight);
   const mapModeRef = useRef(mapMode);
   const terrainRef = useRef(terrain3d);
+  const discoverRef = useRef(onDiscover);
+  const homeZoomRef = useRef(worldZoom());
   const [ready, setReady] = useState(false);
-  const [zoom, setZoom] = useState(1.2);
-  const [status, setStatus] = useState('iniciando globo');
+  const [zoom, setZoom] = useState(homeZoomRef.current);
+  const [layersOpen, setLayersOpen] = useState(false);
   const [warning, setWarning] = useState('');
   const cameraData = useMemo(() => toGeoJson(cameras), [cameras]);
 
@@ -344,6 +360,23 @@ export function WorldMap({
   useEffect(() => { dayNightRef.current = showDayNight; }, [showDayNight]);
   useEffect(() => { mapModeRef.current = mapMode; }, [mapMode]);
   useEffect(() => { terrainRef.current = terrain3d; }, [terrain3d]);
+  useEffect(() => { discoverRef.current = onDiscover; }, [onDiscover]);
+
+  useEffect(() => {
+    if (!layersOpen) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!toolbarRef.current?.contains(event.target as Node)) setLayersOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setLayersOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutside);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [layersOpen]);
 
   useEffect(() => {
     if (!hostRef.current || mapRef.current) return;
@@ -357,7 +390,7 @@ export function WorldMap({
         container: hostRef.current,
         style: createBaseMapStyle(),
         center: [2, 30],
-        zoom: 1.2,
+        zoom: homeZoomRef.current,
         minZoom: 0.25,
         maxZoom: 22,
         maxPitch: 85,
@@ -369,7 +402,6 @@ export function WorldMap({
         fadeDuration: 100
       });
     } catch (error) {
-      setStatus('error del motor');
       setWarning(error instanceof Error ? error.message : 'No se pudo crear el mapa WebGL.');
       return;
     }
@@ -377,6 +409,22 @@ export function WorldMap({
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-right');
     map.addControl(new maplibregl.FullscreenControl(), 'bottom-right');
+    const discoverControl: IControl = {
+      onAdd() {
+        const container = document.createElement('div');
+        container.className = 'maplibregl-ctrl maplibregl-ctrl-group cams-discover-control';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.title = 'Descubrir una cámara';
+        button.setAttribute('aria-label', 'Descubrir una cámara aleatoria');
+        button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m15.8 8.2-2.2 5.4-5.4 2.2 2.2-5.4 5.4-2.2Z"/><circle cx="12" cy="12" r="1"/></svg>';
+        button.addEventListener('click', () => discoverRef.current());
+        container.append(button);
+        return container;
+      },
+      onRemove() {}
+    };
+    map.addControl(discoverControl, 'bottom-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
     map.scrollZoom.setWheelZoomRate(1 / 260);
     map.touchZoomRotate.enable();
@@ -444,7 +492,6 @@ export function WorldMap({
       try { addPlaces(map, labelsRef.current); } catch (error) { console.warn('Localidades no disponibles:', error); }
 
       setReady(true);
-      setStatus(`${MODE_LABELS[mapModeRef.current]} activo`);
       map.resize();
     };
 
@@ -498,7 +545,6 @@ export function WorldMap({
     const map = mapRef.current;
     if (!map || !ready || !map.isStyleLoaded()) return;
     applyMapMode(map, mapMode, terrain3d);
-    setStatus(`${MODE_LABELS[mapMode]} activo`);
   }, [mapMode, terrain3d, ready]);
 
   useEffect(() => {
@@ -542,19 +588,71 @@ export function WorldMap({
     const map = mapRef.current;
     if (!map) return;
     map.resize();
-    map.easeTo({ center: [2, 30], zoom: 1.2, pitch: terrain3d ? 40 : 0, bearing: 0, duration: 900 });
+    map.easeTo({ center: [2, 30], zoom: homeZoomRef.current, pitch: terrain3d ? 40 : 0, bearing: 0, duration: 900 });
   };
+
+  // El zoom cartográfico es logarítmico. Esta lectura mantiene 100 % como vista
+  // mundial y evita porcentajes de cientos de miles al acercarse a una calle.
+  const zoomPercent = Math.max(75, Math.round(100 + (zoom - homeZoomRef.current) * 25));
 
   return (
     <section className="map-stage" aria-label="Globo mundial de webcams">
       <div ref={hostRef} className="maplibre-host" />
-      <div className="map-status" data-ready={ready}>
-        <span>{cameras.length.toLocaleString('es-ES')} cámaras</span>
-        <span>zoom {zoom.toFixed(1)}</span>
-        <span>{status}</span>
-        {terrain3d && <span>3D</span>}
-        {warning && <span className="map-warning" title={warning}>aviso</span>}
-        <button type="button" onClick={reset}>restablecer</button>
+      <div ref={toolbarRef} className="map-toolbar" data-ready={ready}>
+        <button className="map-tool-button discover" type="button" onClick={onDiscover} aria-label="Descubrir una cámara aleatoria" title="Descubrir una cámara">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="m15.8 8.2-2.2 5.4-5.4 2.2 2.2-5.4 5.4-2.2Z" />
+            <circle cx="12" cy="12" r="1" />
+          </svg>
+        </button>
+        <div className="map-layers-wrap">
+          <button
+            className="map-tool-button"
+            type="button"
+            onClick={() => setLayersOpen((open) => !open)}
+            aria-label="Capas del mapa"
+            aria-expanded={layersOpen}
+            title="Capas"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m12 3 8 4.5-8 4.5-8-4.5L12 3Z" />
+              <path d="m4 12 8 4.5 8-4.5M4 16.5l8 4.5 8-4.5" />
+            </svg>
+          </button>
+          {layersOpen && (
+            <section className="map-layers-panel" aria-label="Capas de visualización">
+              <header><span>Visualización</span><strong>Capas del mundo</strong></header>
+              <div className="map-layer-modes" role="radiogroup" aria-label="Mapa base">
+                {MAP_MODES.map((mode) => (
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={mapMode === mode.value}
+                    className={mapMode === mode.value ? 'active' : ''}
+                    onClick={() => onMapMode(mode.value)}
+                    key={mode.value}
+                  >
+                    <span><strong>{mode.label}</strong><small>{mode.hint}</small></span><i />
+                  </button>
+                ))}
+              </div>
+              <button className="map-layer-toggle" type="button" data-on={terrain3d} onClick={() => onTerrain3d(!terrain3d)}>
+                <span><strong>Terreno 3D</strong><small>Elevación del relieve</small></span><i />
+              </button>
+              <button className="map-layer-toggle" type="button" data-on={showDayNight} onClick={() => onDayNight(!showDayNight)}>
+                <span><strong>Día y noche</strong><small>Sombra solar aproximada</small></span><i />
+              </button>
+              <button className="map-layer-toggle" type="button" data-on={showLabels} onClick={() => onLabels(!showLabels)}>
+                <span><strong>Localidades</strong><small>Nombres geográficos</small></span><i />
+              </button>
+            </section>
+          )}
+        </div>
+        {warning && <span className="map-toolbar-warning" title={warning}>!</span>}
+        <button className="map-zoom-reset" type="button" onClick={reset} aria-label={`Zoom ${zoomPercent} %. Volver a la vista mundial`} title="Volver al 100 %">
+          {zoomPercent}%
+        </button>
       </div>
       {warning && !ready && (
         <div className="map-error-panel" role="alert">

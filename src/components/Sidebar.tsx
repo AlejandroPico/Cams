@@ -171,9 +171,9 @@ export function Sidebar(props: Props) {
           <div className="sidebar-actions">
             <button className="sidebar-about" type="button" onClick={props.onAbout} aria-label="Acerca de Cams" title="Acerca de">
               <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="8" r="3.1" />
-                <path d="M5.7 19c.5-4 2.6-6 6.3-6s5.8 2 6.3 6" />
-                <path d="M4.5 19.5h15" />
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 10.5V17" />
+                <path d="M12 7.2v.1" />
               </svg>
             </button>
             <button className="sidebar-close" type="button" onClick={props.onClose} aria-label="Cerrar menú">×</button>
