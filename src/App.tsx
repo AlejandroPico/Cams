@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AboutModal } from './components/AboutModal';
 import { CameraPanel } from './components/CameraPanel';
 import { Mosaic } from './components/Mosaic';
 import { Sidebar } from './components/Sidebar';
@@ -43,6 +44,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [view, setView] = useState<ViewMode>('map');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [filters, setFilters] = useState<CameraFilters>(DEFAULT_FILTERS);
   const [selected, setSelected] = useState<Camera | null>(null);
   const [gridCount, setGridCount] = useState(() => readStored('gridCount', 12, GRID_COUNTS));
@@ -208,6 +210,7 @@ export default function App() {
         mapMode={mapMode}
         terrain3d={terrain3d}
         onClose={() => setDrawerOpen(false)}
+        onAbout={() => setAboutOpen(true)}
         onView={chooseView}
         onFilters={setFilters}
         onResetFilters={() => setFilters(DEFAULT_FILTERS)}
@@ -226,6 +229,7 @@ export default function App() {
         onRandom={random}
       />
 
+      <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <CameraPanel camera={selected} onClose={() => setSelected(null)} />
     </div>
   );

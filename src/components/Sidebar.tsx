@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { CameraFilters, MapBaseMode, ViewMode } from '../types';
 import { GRID_COUNTS, ROTATION_INTERVALS } from '../App';
 
@@ -22,6 +23,7 @@ interface Props {
   terrain3d: boolean;
   fullscreen: boolean;
   onClose: () => void;
+  onAbout: () => void;
   onView: (view: ViewMode) => void;
   onFilters: (filters: CameraFilters) => void;
   onResetFilters: () => void;
@@ -51,6 +53,82 @@ const MAP_MODES: Array<{ value: MapBaseMode; label: string; hint: string }> = [
 ];
 
 export function Sidebar(props: Props) {
+  const sidebarRef = useRef<HTMLElement>(null);
+  const swipeRef = useRef<{
+    startX: number;
+    startY: number;
+    currentX: number;
+    startedAt: number;
+    horizontal: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+
+    const onTouchStart = (event: TouchEvent) => {
+      if (!props.open || !window.matchMedia('(max-width: 760px)').matches || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      swipeRef.current = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        currentX: touch.clientX,
+        startedAt: performance.now(),
+        horizontal: false
+      };
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      const swipe = swipeRef.current;
+      if (!swipe || event.touches.length !== 1) return;
+
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - swipe.startX;
+      const deltaY = touch.clientY - swipe.startY;
+      swipe.currentX = touch.clientX;
+
+      if (!swipe.horizontal) {
+        if (Math.abs(deltaX) < 10) return;
+        if (Math.abs(deltaX) <= Math.abs(deltaY) * 1.15 || deltaX > 0) {
+          swipeRef.current = null;
+          return;
+        }
+        swipe.horizontal = true;
+        sidebar.classList.add('swiping');
+      }
+
+      event.preventDefault();
+      sidebar.style.transform = `translateX(${Math.min(0, deltaX)}px)`;
+    };
+
+    const finishSwipe = () => {
+      const swipe = swipeRef.current;
+      if (!swipe) return;
+
+      const distance = swipe.currentX - swipe.startX;
+      const elapsed = Math.max(1, performance.now() - swipe.startedAt);
+      const velocity = distance / elapsed;
+      const shouldClose = swipe.horizontal && (distance < -72 || velocity < -0.48);
+
+      sidebar.classList.remove('swiping');
+      sidebar.style.transform = '';
+      swipeRef.current = null;
+      if (shouldClose) props.onClose();
+    };
+
+    sidebar.addEventListener('touchstart', onTouchStart, { passive: true });
+    sidebar.addEventListener('touchmove', onTouchMove, { passive: false });
+    sidebar.addEventListener('touchend', finishSwipe, { passive: true });
+    sidebar.addEventListener('touchcancel', finishSwipe, { passive: true });
+
+    return () => {
+      sidebar.removeEventListener('touchstart', onTouchStart);
+      sidebar.removeEventListener('touchmove', onTouchMove);
+      sidebar.removeEventListener('touchend', finishSwipe);
+      sidebar.removeEventListener('touchcancel', finishSwipe);
+    };
+  }, [props.open, props.onClose]);
+
   const setFilter = <K extends keyof CameraFilters>(key: K, value: CameraFilters[K]) => {
     props.onFilters({ ...props.filters, [key]: value });
   };
@@ -67,7 +145,7 @@ export function Sidebar(props: Props) {
   return (
     <>
       <button className="drawer-shade" data-open={props.open} type="button" aria-label="Cerrar menú" onClick={props.onClose} />
-      <aside className="sidebar" data-open={props.open} aria-label="Panel de control">
+      <aside ref={sidebarRef} className="sidebar" data-open={props.open} aria-label="Panel de control">
         <header className="sidebar-head">
           <div className="sidebar-identity">
             <span className="sidebar-logo" aria-hidden="true">
@@ -90,7 +168,16 @@ export function Sidebar(props: Props) {
             </span>
             <div><strong>Cams</strong><span>World camera explorer</span></div>
           </div>
-          <button className="sidebar-close" type="button" onClick={props.onClose} aria-label="Cerrar menú">×</button>
+          <div className="sidebar-actions">
+            <button className="sidebar-about" type="button" onClick={props.onAbout} aria-label="Acerca de Cams" title="Acerca de">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="3.1" />
+                <path d="M5.7 19c.5-4 2.6-6 6.3-6s5.8 2 6.3 6" />
+                <path d="M4.5 19.5h15" />
+              </svg>
+            </button>
+            <button className="sidebar-close" type="button" onClick={props.onClose} aria-label="Cerrar menú">×</button>
+          </div>
         </header>
 
         <nav className="view-switch" aria-label="Vistas principales">
