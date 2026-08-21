@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T04:31:34.207567+00:00",
+  "generatedAt": "2026-08-21T05:54:24.205524+00:00",
   "count": 68616,
   "providers": {
     "ALBERTA511_CA": 368,
@@ -30,14 +30,7 @@
     "online": 68552,
     "unknown": 64
   },
-  "reports": [
-    {
-      "provider": "DEDUPE",
-      "status": "ok",
-      "hidden": 8340,
-      "restored": 0
-    }
-  ],
+  "reports": [],
   "database": "data/cams.sqlite3",
   "countries": {
     "United States": 23917,
@@ -631,5 +624,5 @@
     "unknown": 64,
     "archivedLegacyYouTube": 144
   },
-  "statisticsGeneratedAt": "2026-08-21T04:31:35.316433+00:00"
+  "statisticsGeneratedAt": "2026-08-21T05:54:25.079362+00:00"
 }
