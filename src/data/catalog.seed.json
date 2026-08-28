@@ -26,7 +26,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.839976+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.670105+00:00",
       "imageStatus": "online"
     },
     {
@@ -55,7 +55,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.838789+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.668154+00:00",
       "imageStatus": "online"
     },
     {
@@ -84,7 +84,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.842683+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.673244+00:00",
       "imageStatus": "online"
     },
     {
@@ -113,7 +113,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.841398+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.671610+00:00",
       "imageStatus": "online"
     },
     {
@@ -142,7 +142,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.841253+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.671449+00:00",
       "imageStatus": "online"
     },
     {
@@ -171,7 +171,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.837990+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.667282+00:00",
       "imageStatus": "online"
     },
     {
@@ -200,7 +200,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.842536+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.673076+00:00",
       "imageStatus": "online"
     },
     {
@@ -229,7 +229,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.839345+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.668738+00:00",
       "imageStatus": "online"
     },
     {
@@ -258,7 +258,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.841111+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.671275+00:00",
       "imageStatus": "online"
     },
     {
@@ -287,7 +287,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.838452+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.667780+00:00",
       "imageStatus": "online"
     },
     {
@@ -316,7 +316,36 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.840915+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.671115+00:00",
+      "imageStatus": "online"
+    },
+    {
+      "id": "cam:7b50619c435b71a8c4a9",
+      "title": "Corrubedo",
+      "country": "España",
+      "countryCode": "ES",
+      "region": "Galicia",
+      "province": "A Coruña",
+      "city": "Ribeira",
+      "lat": 42.5552,
+      "lon": -9.0286,
+      "timezone": "Europe/Madrid",
+      "category": "landscape",
+      "type": "snapshot",
+      "provider": "MeteoGalicia",
+      "providerCode": "METEOGALICIA_ES",
+      "active": true,
+      "status": "online",
+      "snapshotUrl": "https://www.meteogalicia.gal/datosred/camaras/MeteoGalicia/Corrubedo/ultima.jpg",
+      "sourceUrl": "https://www.meteogalicia.gal/web/observacion/camaras",
+      "thumbnailUrl": "https://www.meteogalicia.gal/datosred/camaras/MeteoGalicia/Corrubedo/miniUltima.jpg",
+      "refreshSeconds": 600,
+      "isLive": false,
+      "isEmbeddable": true,
+      "attribution": "MeteoGalicia, Xunta de Galicia",
+      "license": "Datos abertos da Xunta de Galicia",
+      "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
+      "lastCheckedAt": "2026-08-28T11:23:37.669314+00:00",
       "imageStatus": "online"
     },
     {
@@ -345,7 +374,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.838984+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.668331+00:00",
       "imageStatus": "online"
     },
     {
@@ -374,7 +403,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.839194+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.668535+00:00",
       "imageStatus": "online"
     },
     {
@@ -403,7 +432,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.839789+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.669671+00:00",
       "imageStatus": "online"
     },
     {
@@ -432,7 +461,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.842102+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.672485+00:00",
       "imageStatus": "online"
     },
     {
@@ -461,7 +490,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.842376+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.672868+00:00",
       "imageStatus": "online"
     },
     {
@@ -490,7 +519,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.840794+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.670962+00:00",
       "imageStatus": "online"
     },
     {
@@ -519,7 +548,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.840483+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.670582+00:00",
       "imageStatus": "online"
     },
     {
@@ -548,7 +577,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.841814+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.672160+00:00",
       "imageStatus": "online"
     },
     {
@@ -577,7 +606,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.842242+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.672650+00:00",
       "imageStatus": "online"
     },
     {
@@ -606,7 +635,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.839495+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.668932+00:00",
       "imageStatus": "online"
     },
     {
@@ -635,7 +664,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.841534+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.671800+00:00",
       "imageStatus": "online"
     },
     {
@@ -664,7 +693,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.840364+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.670441+00:00",
       "imageStatus": "online"
     },
     {
@@ -693,7 +722,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.838246+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.667540+00:00",
       "imageStatus": "online"
     },
     {
@@ -722,7 +751,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.839643+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.669129+00:00",
       "imageStatus": "online"
     },
     {
@@ -751,7 +780,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.838621+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.667972+00:00",
       "imageStatus": "online"
     },
     {
@@ -780,7 +809,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.837135+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.666383+00:00",
       "imageStatus": "online"
     },
     {
@@ -809,7 +838,7 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.841959+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.672325+00:00",
       "imageStatus": "online"
     },
     {
@@ -838,7 +867,65 @@
       "attribution": "MeteoGalicia, Xunta de Galicia",
       "license": "Datos abertos da Xunta de Galicia",
       "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
-      "lastCheckedAt": "2026-08-27T22:16:35.841672+00:00",
+      "lastCheckedAt": "2026-08-28T11:23:37.671981+00:00",
+      "imageStatus": "online"
+    },
+    {
+      "id": "cam:34b92e9553c2e58390bf",
+      "title": "Sálvora",
+      "country": "España",
+      "countryCode": "ES",
+      "region": "Galicia",
+      "province": "A Coruña",
+      "city": "Ribeira",
+      "lat": 42.47135,
+      "lon": -9.005851,
+      "timezone": "Europe/Madrid",
+      "category": "landscape",
+      "type": "snapshot",
+      "provider": "MeteoGalicia",
+      "providerCode": "METEOGALICIA_ES",
+      "active": true,
+      "status": "online",
+      "snapshotUrl": "https://www.meteogalicia.gal/datosred/camaras/MeteoGalicia/Salvora/ultima.jpg",
+      "sourceUrl": "https://www.meteogalicia.gal/web/observacion/camaras",
+      "thumbnailUrl": "https://www.meteogalicia.gal/datosred/camaras/MeteoGalicia/Salvora/miniUltima.jpg",
+      "refreshSeconds": 600,
+      "isLive": false,
+      "isEmbeddable": true,
+      "attribution": "MeteoGalicia, Xunta de Galicia",
+      "license": "Datos abertos da Xunta de Galicia",
+      "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
+      "lastCheckedAt": "2026-08-28T11:23:37.669503+00:00",
+      "imageStatus": "online"
+    },
+    {
+      "id": "cam:26c8d5a07c5e3ceefd78",
+      "title": "Xesteiras",
+      "country": "España",
+      "countryCode": "ES",
+      "region": "Galicia",
+      "province": "Pontevedra",
+      "city": "Cuntis",
+      "lat": 42.6756,
+      "lon": -8.58618,
+      "timezone": "Europe/Madrid",
+      "category": "landscape",
+      "type": "snapshot",
+      "provider": "MeteoGalicia",
+      "providerCode": "METEOGALICIA_ES",
+      "active": true,
+      "status": "online",
+      "snapshotUrl": "https://www.meteogalicia.gal/datosred/camaras/MeteoGalicia/Radar/ultima.jpg",
+      "sourceUrl": "https://www.meteogalicia.gal/web/observacion/camaras",
+      "thumbnailUrl": "https://www.meteogalicia.gal/datosred/camaras/MeteoGalicia/Radar/miniUltima.jpg",
+      "refreshSeconds": 600,
+      "isLive": false,
+      "isEmbeddable": true,
+      "attribution": "MeteoGalicia, Xunta de Galicia",
+      "license": "Datos abertos da Xunta de Galicia",
+      "licenseUrl": "https://abertos.xunta.gal/aviso-legal",
+      "lastCheckedAt": "2026-08-28T11:23:37.669929+00:00",
       "imageStatus": "online"
     },
     {
@@ -78008,84 +78095,6 @@
       "licenseUrl": "https://api.windy.com/webcams/terms",
       "termsUrl": "https://api.windy.com/webcams/terms",
       "lastCheckedAt": "2026-08-27T14:45:11.089959+00:00"
-    },
-    {
-      "id": "cam:b2526fa720a5d5c07615",
-      "title": "Aysen › North",
-      "country": "Chile",
-      "countryCode": "CL",
-      "region": "Aysén Region",
-      "city": "Aysen",
-      "lat": -45.1509,
-      "lon": -73.51196,
-      "category": "weather",
-      "type": "iframe",
-      "provider": "Windy Webcams",
-      "providerCode": "WINDY_WEBCAMS",
-      "active": true,
-      "status": "online",
-      "embedUrl": "https://webcams.windy.com/webcams/public/embed/player/1793898944/day",
-      "sourceUrl": "https://windy.com/webcams/1793898944",
-      "refreshSeconds": 600,
-      "isLive": false,
-      "isEmbeddable": true,
-      "attribution": "Windy.com",
-      "license": "Windy Webcams API Terms of Use",
-      "licenseUrl": "https://api.windy.com/webcams/terms",
-      "termsUrl": "https://api.windy.com/webcams/terms",
-      "lastCheckedAt": "2026-08-27T14:45:11.099478+00:00"
-    },
-    {
-      "id": "cam:ca9994bc7aabc5679903",
-      "title": "Aysen › South-east: Aeródromo Caleta Andrade",
-      "country": "Chile",
-      "countryCode": "CL",
-      "region": "Aysén Region",
-      "city": "Aysen",
-      "lat": -45.15089,
-      "lon": -73.51204,
-      "category": "airport",
-      "type": "iframe",
-      "provider": "Windy Webcams",
-      "providerCode": "WINDY_WEBCAMS",
-      "active": true,
-      "status": "online",
-      "embedUrl": "https://webcams.windy.com/webcams/public/embed/player/1793898945/day",
-      "sourceUrl": "https://windy.com/webcams/1793898945",
-      "refreshSeconds": 600,
-      "isLive": false,
-      "isEmbeddable": true,
-      "attribution": "Windy.com",
-      "license": "Windy Webcams API Terms of Use",
-      "licenseUrl": "https://api.windy.com/webcams/terms",
-      "termsUrl": "https://api.windy.com/webcams/terms",
-      "lastCheckedAt": "2026-08-27T14:45:11.099171+00:00"
-    },
-    {
-      "id": "cam:7c91b0203555783bfeff",
-      "title": "Aysen › West: Puerto",
-      "country": "Chile",
-      "countryCode": "CL",
-      "region": "Aysén Region",
-      "city": "Aysen",
-      "lat": -45.39819,
-      "lon": -72.65221,
-      "category": "landscape",
-      "type": "iframe",
-      "provider": "Windy Webcams",
-      "providerCode": "WINDY_WEBCAMS",
-      "active": true,
-      "status": "online",
-      "embedUrl": "https://webcams.windy.com/webcams/public/embed/player/1265649996/day",
-      "sourceUrl": "https://windy.com/webcams/1265649996",
-      "refreshSeconds": 600,
-      "isLive": false,
-      "isEmbeddable": true,
-      "attribution": "Windy.com",
-      "license": "Windy Webcams API Terms of Use",
-      "licenseUrl": "https://api.windy.com/webcams/terms",
-      "termsUrl": "https://api.windy.com/webcams/terms",
-      "lastCheckedAt": "2026-08-27T14:45:11.087248+00:00"
     }
   ]
 }
