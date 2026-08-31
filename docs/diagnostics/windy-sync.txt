@@ -1,164 +1,161 @@
 Windy: AD (92) | acumuladas 0 | peticiones 1
 Windy: AG (1) | acumuladas 92 | peticiones 6
 Windy: AI (1) | acumuladas 93 | peticiones 8
-Windy: AL (16) | acumuladas 94 | peticiones 10
-Windy: AQ (1) | acumuladas 108 | peticiones 14
-Windy: AR (96) | acumuladas 109 | peticiones 16
-Windy: AT (2855) | acumuladas 192 | peticiones 20
+Windy: AL (14) | acumuladas 94 | peticiones 10
+Windy: AR (65) | acumuladas 108 | peticiones 15
+Windy: AT (2842) | acumuladas 173 | peticiones 19
 Windy: AT no cabe en una consulta, troceando por categoria
-Windy: AT/landscape declara 1332, troceando por region
-Windy: AU (1625) | acumuladas 3019 | peticiones 219
+Windy: AT/landscape declara 1347, troceando por region
+Windy: AU (1609) | acumuladas 3007 | peticiones 219
 Windy: AU no cabe en una consulta, troceando por categoria
-Windy: AZ (6) | acumuladas 4606 | peticiones 317
-Windy: BA (102) | acumuladas 4612 | peticiones 319
-Windy: BE (109) | acumuladas 4713 | peticiones 325
-Windy: BG (101) | acumuladas 4821 | peticiones 330
-Windy: BM (1) | acumuladas 4922 | peticiones 338
-Windy: BR (150) | acumuladas 4923 | peticiones 343
-Windy: BS (3) | acumuladas 5068 | peticiones 348
-Windy: BW (2) | acumuladas 5071 | peticiones 352
-Windy: BY (5) | acumuladas 5073 | peticiones 354
-Windy: BZ (1) | acumuladas 5078 | peticiones 356
-Windy: CA (4157) | acumuladas 5078 | peticiones 358
+Windy: AZ (6) | acumuladas 4599 | peticiones 317
+Windy: BA (101) | acumuladas 4605 | peticiones 319
+Windy: BE (108) | acumuladas 4705 | peticiones 325
+Windy: BG (100) | acumuladas 4813 | peticiones 330
+Windy: BM (1) | acumuladas 4913 | peticiones 338
+Windy: BR (142) | acumuladas 4914 | peticiones 343
+Windy: BS (3) | acumuladas 5056 | peticiones 347
+Windy: BW (2) | acumuladas 5058 | peticiones 351
+Windy: BY (5) | acumuladas 5060 | peticiones 353
+Windy: CA (4073) | acumuladas 5065 | peticiones 356
 Windy: CA no cabe en una consulta, troceando por categoria
-Windy: CA/traffic declara 3547, troceando por region
-Windy: CA/traffic/CA.08 declara 1908, subdividiendo en 16 zonas
-Windy: CH (1444) | acumuladas 8521 | peticiones 581
+Windy: CA/traffic declara 3526, troceando por region
+Windy: CA/traffic/CA.08 declara 1902, subdividiendo en 16 zonas
+Windy: CH (1434) | acumuladas 8502 | peticiones 576
 Windy: CH no cabe en una consulta, troceando por categoria
-Windy: CK (4) | acumuladas 9944 | peticiones 681
-Windy: CL (108) | acumuladas 9948 | peticiones 683
-Windy: CN (187) | acumuladas 10052 | peticiones 688
-Windy: CO (19) | acumuladas 10236 | peticiones 693
-Windy: CR (9) | acumuladas 10255 | peticiones 695
-Windy: CV (3) | acumuladas 10264 | peticiones 698
-Windy: CY (12) | acumuladas 10267 | peticiones 702
-Windy: CZ (1472) | acumuladas 10279 | peticiones 704
+Windy: CK (4) | acumuladas 9932 | peticiones 676
+Windy: CL (104) | acumuladas 9936 | peticiones 678
+Windy: CN (187) | acumuladas 10040 | peticiones 683
+Windy: CO (19) | acumuladas 10226 | peticiones 688
+Windy: CR (9) | acumuladas 10245 | peticiones 690
+Windy: CV (3) | acumuladas 10254 | peticiones 693
+Windy: CY (12) | acumuladas 10257 | peticiones 697
+Windy: CZ (1445) | acumuladas 10269 | peticiones 699
 Windy: CZ no cabe en una consulta, troceando por categoria
-Windy: DE (2755) | acumuladas 11715 | peticiones 793
+Windy: DE (2687) | acumuladas 11696 | peticiones 789
 Windy: DE no cabe en una consulta, troceando por categoria
-Windy: DK (46) | acumuladas 14372 | peticiones 925
-Windy: DO (4) | acumuladas 14418 | peticiones 928
-Windy: EC (2) | acumuladas 14420 | peticiones 931
-Windy: EE (25) | acumuladas 14422 | peticiones 933
-Windy: EG (4) | acumuladas 14447 | peticiones 935
-Windy: ES (1429) | acumuladas 14451 | peticiones 939
+Windy: DK (45) | acumuladas 14359 | peticiones 919
+Windy: DO (2) | acumuladas 14404 | peticiones 922
+Windy: EC (2) | acumuladas 14406 | peticiones 925
+Windy: EE (25) | acumuladas 14408 | peticiones 927
+Windy: EG (4) | acumuladas 14433 | peticiones 929
+Windy: ES (1388) | acumuladas 14437 | peticiones 933
 Windy: ES no cabe en una consulta, troceando por categoria
-Windy: FI (1691) | acumuladas 15837 | peticiones 1040
+Windy: FI (1687) | acumuladas 15823 | peticiones 1033
 Windy: FI no cabe en una consulta, troceando por categoria
-Windy: FI/traffic declara 1522, troceando por region
-Windy: FK (1) | acumuladas 16918 | peticiones 1159
-Windy: FO (50) | acumuladas 16919 | peticiones 1162
-Windy: FR (2098) | acumuladas 16969 | peticiones 1165
+Windy: FI/traffic declara 1516, troceando por region
+Windy: FK (1) | acumuladas 16906 | peticiones 1152
+Windy: FO (50) | acumuladas 16907 | peticiones 1155
+Windy: FR (2075) | acumuladas 16957 | peticiones 1158
 Windy: FR no cabe en una consulta, troceando por categoria
-Windy: GB (1359) | acumuladas 19015 | peticiones 1280
+Windy: GB (1342) | acumuladas 19010 | peticiones 1271
 Windy: GB no cabe en una consulta, troceando por categoria
-Windy: GE (12) | acumuladas 20353 | peticiones 1379
-Windy: GG (5) | acumuladas 20365 | peticiones 1382
-Windy: GI (4) | acumuladas 20370 | peticiones 1385
-Windy: GL (5) | acumuladas 20374 | peticiones 1387
-Windy: GR (499) | acumuladas 20378 | peticiones 1393
-Windy: GS (4) | acumuladas 20859 | peticiones 1404
-Windy: GT (24) | acumuladas 20863 | peticiones 1406
-Windy: HN (1) | acumuladas 20885 | peticiones 1413
-Windy: HR (274) | acumuladas 20886 | peticiones 1415
-Windy: HU (745) | acumuladas 21118 | peticiones 1423
-Windy: ID (687) | acumuladas 21860 | peticiones 1439
-Windy: IE (31) | acumuladas 22544 | peticiones 1454
-Windy: IL (20) | acumuladas 22575 | peticiones 1456
-Windy: IM (12) | acumuladas 22594 | peticiones 1458
-Windy: IN (9) | acumuladas 22606 | peticiones 1460
-Windy: IS (164) | acumuladas 22615 | peticiones 1465
-Windy: IT (3037) | acumuladas 22775 | peticiones 1470
+Windy: GE (12) | acumuladas 20352 | peticiones 1368
+Windy: GG (5) | acumuladas 20364 | peticiones 1371
+Windy: GI (4) | acumuladas 20369 | peticiones 1374
+Windy: GL (5) | acumuladas 20373 | peticiones 1376
+Windy: GR (480) | acumuladas 20378 | peticiones 1382
+Windy: GS (2) | acumuladas 20858 | peticiones 1393
+Windy: GT (21) | acumuladas 20860 | peticiones 1395
+Windy: HN (1) | acumuladas 20881 | peticiones 1402
+Windy: HR (234) | acumuladas 20882 | peticiones 1404
+Windy: HU (742) | acumuladas 21116 | peticiones 1411
+Windy: ID (684) | acumuladas 21858 | peticiones 1427
+Windy: IE (30) | acumuladas 22542 | peticiones 1442
+Windy: IL (19) | acumuladas 22572 | peticiones 1444
+Windy: IM (13) | acumuladas 22591 | peticiones 1446
+Windy: IN (9) | acumuladas 22604 | peticiones 1448
+Windy: IS (160) | acumuladas 22613 | peticiones 1453
+Windy: IT (2954) | acumuladas 22773 | peticiones 1458
 Windy: IT no cabe en una consulta, troceando por categoria
-Windy: IT/landscape declara 1570, troceando por region
-Windy: JE (2) | acumuladas 25702 | peticiones 1694
-Windy: JM (3) | acumuladas 25704 | peticiones 1696
-Windy: JP (1101) | acumuladas 25707 | peticiones 1699
+Windy: IT/landscape declara 1552, troceando por region
+Windy: JE (2) | acumuladas 25705 | peticiones 1678
+Windy: JM (1) | acumuladas 25707 | peticiones 1680
+Windy: JP (1097) | acumuladas 25708 | peticiones 1683
 Windy: JP no cabe en una consulta, troceando por categoria
-Windy: KE (69) | acumuladas 26799 | peticiones 1777
-Windy: KG (38) | acumuladas 26865 | peticiones 1780
-Windy: KR (163) | acumuladas 26903 | peticiones 1787
-Windy: KY (5) | acumuladas 27066 | peticiones 1793
-Windy: KZ (15) | acumuladas 27071 | peticiones 1795
-Windy: LA (1) | acumuladas 27086 | peticiones 1797
-Windy: LB (1) | acumuladas 27086 | peticiones 1799
-Windy: LI (8) | acumuladas 27087 | peticiones 1802
-Windy: LS (2) | acumuladas 27094 | peticiones 1806
-Windy: LT (23) | acumuladas 27096 | peticiones 1808
-Windy: LU (45) | acumuladas 27119 | peticiones 1810
-Windy: LV (36) | acumuladas 27164 | peticiones 1812
-Windy: MA (6) | acumuladas 27195 | peticiones 1815
-Windy: MD (8) | acumuladas 27201 | peticiones 1818
-Windy: ME (14) | acumuladas 27208 | peticiones 1820
-Windy: MK (16) | acumuladas 27222 | peticiones 1825
-Windy: MT (2) | acumuladas 27237 | peticiones 1835
-Windy: MU (1) | acumuladas 27239 | peticiones 1837
-Windy: MV (7) | acumuladas 27240 | peticiones 1839
-Windy: MX (37) | acumuladas 27247 | peticiones 1842
-Windy: MY (139) | acumuladas 27283 | peticiones 1844
-Windy: MZ (5) | acumuladas 27421 | peticiones 1848
-Windy: NA (7) | acumuladas 27426 | peticiones 1850
-Windy: NI (8) | acumuladas 27432 | peticiones 1856
-Windy: NL (148) | acumuladas 27439 | peticiones 1858
-Windy: NO (1467) | acumuladas 27578 | peticiones 1862
+Windy: KE (66) | acumuladas 26805 | peticiones 1760
+Windy: KG (40) | acumuladas 26871 | peticiones 1763
+Windy: KR (162) | acumuladas 26911 | peticiones 1770
+Windy: KY (5) | acumuladas 27072 | peticiones 1776
+Windy: KZ (15) | acumuladas 27077 | peticiones 1778
+Windy: LB (1) | acumuladas 27092 | peticiones 1781
+Windy: LI (7) | acumuladas 27093 | peticiones 1784
+Windy: LS (2) | acumuladas 27100 | peticiones 1788
+Windy: LT (22) | acumuladas 27102 | peticiones 1790
+Windy: LU (45) | acumuladas 27124 | peticiones 1792
+Windy: LV (36) | acumuladas 27169 | peticiones 1794
+Windy: MA (6) | acumuladas 27205 | peticiones 1797
+Windy: MD (7) | acumuladas 27211 | peticiones 1800
+Windy: ME (13) | acumuladas 27218 | peticiones 1802
+Windy: MK (14) | acumuladas 27231 | peticiones 1807
+Windy: MT (2) | acumuladas 27245 | peticiones 1817
+Windy: MU (1) | acumuladas 27247 | peticiones 1819
+Windy: MV (6) | acumuladas 27248 | peticiones 1821
+Windy: MX (35) | acumuladas 27254 | peticiones 1824
+Windy: MY (139) | acumuladas 27289 | peticiones 1826
+Windy: MZ (5) | acumuladas 27428 | peticiones 1830
+Windy: NA (6) | acumuladas 27433 | peticiones 1832
+Windy: NI (7) | acumuladas 27439 | peticiones 1838
+Windy: NL (147) | acumuladas 27446 | peticiones 1840
+Windy: NO (1456) | acumuladas 27593 | peticiones 1844
 Windy: NO no cabe en una consulta, troceando por categoria
-Windy: NP (3) | acumuladas 29036 | peticiones 1951
-Windy: NZ (488) | acumuladas 29039 | peticiones 1955
-Windy: PA (6) | acumuladas 29523 | peticiones 1967
-Windy: PE (1) | acumuladas 29529 | peticiones 1969
-Windy: PG (29) | acumuladas 29530 | peticiones 1972
-Windy: PH (8) | acumuladas 29555 | peticiones 1974
-Windy: PL (743) | acumuladas 29563 | peticiones 1977
-Windy: PT (174) | acumuladas 30294 | peticiones 1997
-Windy: PY (5) | acumuladas 30465 | peticiones 2003
-Windy: RO (140) | acumuladas 30470 | peticiones 2007
-Windy: RS (62) | acumuladas 30607 | peticiones 2011
-Windy: RU (526) | acumuladas 30665 | peticiones 2014
-Windy: SA (1) | acumuladas 31181 | peticiones 2027
-Windy: SC (2) | acumuladas 31182 | peticiones 2030
-Windy: SE (963) | acumuladas 31184 | peticiones 2033
-Windy: SG (1) | acumuladas 32140 | peticiones 2054
-Windy: SI (723) | acumuladas 32141 | peticiones 2057
-Windy: SK (305) | acumuladas 32828 | peticiones 2074
-Windy: SM (8) | acumuladas 33120 | peticiones 2083
-Windy: SO (2) | acumuladas 33128 | peticiones 2086
-Windy: TC (2) | acumuladas 33130 | peticiones 2095
-Windy: TH (470) | acumuladas 33132 | peticiones 2100
-Windy: TN (1) | acumuladas 33596 | peticiones 2115
-Windy: TR (134) | acumuladas 33597 | peticiones 2118
-Windy: TT (2) | acumuladas 33720 | peticiones 2122
-Windy: TW (93) | acumuladas 33722 | peticiones 2125
-Windy: TZ (3) | acumuladas 33815 | peticiones 2128
-Windy: UG (1) | acumuladas 33818 | peticiones 2131
-Windy: US (33977) | acumuladas 33819 | peticiones 2134
+Windy: NP (4) | acumuladas 29046 | peticiones 1934
+Windy: NZ (483) | acumuladas 29050 | peticiones 1938
+Windy: PA (6) | acumuladas 29530 | peticiones 1950
+Windy: PE (1) | acumuladas 29536 | peticiones 1952
+Windy: PG (32) | acumuladas 29537 | peticiones 1955
+Windy: PH (8) | acumuladas 29569 | peticiones 1957
+Windy: PL (740) | acumuladas 29577 | peticiones 1960
+Windy: PT (172) | acumuladas 30316 | peticiones 1980
+Windy: PY (5) | acumuladas 30488 | peticiones 1986
+Windy: RO (139) | acumuladas 30493 | peticiones 1990
+Windy: RS (63) | acumuladas 30632 | peticiones 1994
+Windy: RU (514) | acumuladas 30695 | peticiones 1997
+Windy: SA (1) | acumuladas 31209 | peticiones 2010
+Windy: SC (2) | acumuladas 31210 | peticiones 2013
+Windy: SE (961) | acumuladas 31212 | peticiones 2016
+Windy: SG (1) | acumuladas 32172 | peticiones 2037
+Windy: SI (693) | acumuladas 32173 | peticiones 2040
+Windy: SK (296) | acumuladas 32866 | peticiones 2056
+Windy: SM (8) | acumuladas 33162 | peticiones 2064
+Windy: SO (2) | acumuladas 33170 | peticiones 2067
+Windy: TC (2) | acumuladas 33172 | peticiones 2076
+Windy: TH (458) | acumuladas 33174 | peticiones 2081
+Windy: TN (1) | acumuladas 33632 | peticiones 2096
+Windy: TR (120) | acumuladas 33633 | peticiones 2099
+Windy: TT (2) | acumuladas 33753 | peticiones 2103
+Windy: TW (93) | acumuladas 33755 | peticiones 2106
+Windy: TZ (3) | acumuladas 33848 | peticiones 2109
+Windy: UG (1) | acumuladas 33851 | peticiones 2112
+Windy: US (33647) | acumuladas 33852 | peticiones 2115
 Windy: US no cabe en una consulta, troceando por categoria
-Windy: US/meteo declara 1156, troceando por region
-Windy: US/city declara 4332, troceando por region
-Windy: US/traffic declara 31650, troceando por region
-Windy: US/traffic/US.AZ declara 1155, subdividiendo en 16 zonas
-Windy: US/traffic/US.CA declara 2459, subdividiendo en 16 zonas
-Windy: US/traffic/US.FL declara 3953, subdividiendo en 16 zonas
-Windy: US/traffic/US.GA declara 2736, subdividiendo en 16 zonas
-Windy: US/traffic/US.IA declara 1059, subdividiendo en 16 zonas
-Windy: US/traffic/US.MN declara 1474, subdividiendo en 16 zonas
-Windy: US/traffic/US.NY declara 1478, subdividiendo en 16 zonas
-Windy: US/traffic/US.OH declara 1129, subdividiendo en 16 zonas
-Windy: US/traffic/US.PA declara 1311, subdividiendo en 16 zonas
-Windy: US/traffic/US.TX declara 3735, subdividiendo en 16 zonas
-Windy: US/traffic/US.VA declara 1615, subdividiendo en 16 zonas
-Windy: US/traffic/US.WA declara 1287, subdividiendo en 16 zonas
-Windy: UY (3) | acumuladas 61909 | peticiones 3684
-Windy: UZ (1) | acumuladas 61912 | peticiones 3686
-Windy: VC (1) | acumuladas 61913 | peticiones 3689
-Windy: VE (5) | acumuladas 61914 | peticiones 3691
-Windy: VG (2) | acumuladas 61919 | peticiones 3693
-Windy: VN (708) | acumuladas 61921 | peticiones 3696
-Windy: VU (3) | acumuladas 62629 | peticiones 3712
-Windy: ZA (62) | acumuladas 62632 | peticiones 3718
-Windy: ZM (3) | acumuladas 62689 | peticiones 3721
-Windy: ZW (17) | acumuladas 62692 | peticiones 3723
+Windy: US/meteo declara 1125, troceando por region
+Windy: US/city declara 4286, troceando por region
+Windy: US/traffic declara 31427, troceando por region
+Windy: US/traffic/US.AZ declara 1145, subdividiendo en 16 zonas
+Windy: US/traffic/US.CA declara 2442, subdividiendo en 16 zonas
+Windy: US/traffic/US.FL declara 3913, subdividiendo en 16 zonas
+Windy: US/traffic/US.GA declara 2677, subdividiendo en 16 zonas
+Windy: US/traffic/US.IA declara 1066, subdividiendo en 16 zonas
+Windy: US/traffic/US.MN declara 1469, subdividiendo en 16 zonas
+Windy: US/traffic/US.NY declara 1474, subdividiendo en 16 zonas
+Windy: US/traffic/US.OH declara 1126, subdividiendo en 16 zonas
+Windy: US/traffic/US.PA declara 1304, subdividiendo en 16 zonas
+Windy: US/traffic/US.TX declara 3731, subdividiendo en 16 zonas
+Windy: US/traffic/US.VA declara 1605, subdividiendo en 16 zonas
+Windy: US/traffic/US.WA declara 1278, subdividiendo en 16 zonas
+Windy: UY (3) | acumuladas 61960 | peticiones 3660
+Windy: UZ (1) | acumuladas 61963 | peticiones 3662
+Windy: VC (1) | acumuladas 61964 | peticiones 3665
+Windy: VE (5) | acumuladas 61965 | peticiones 3667
+Windy: VG (2) | acumuladas 61970 | peticiones 3669
+Windy: VN (701) | acumuladas 61971 | peticiones 3672
+Windy: VU (3) | acumuladas 62672 | peticiones 3688
+Windy: ZA (60) | acumuladas 62675 | peticiones 3694
+Windy: ZM (3) | acumuladas 62735 | peticiones 3697
+Windy: ZW (17) | acumuladas 62738 | peticiones 3699
 Windy: recorrido completo
-Windy: 62709 camaras unicas con 3724 peticiones
+Windy: 62755 camaras unicas con 3700 peticiones
 Windy: particion incompleta -> {'countries': 'AT'}
 Windy: particion incompleta -> {'countries': 'AU'}
 Windy: particion incompleta -> {'countries': 'CA', 'categories': 'traffic', 'regions': 'CA.08'}
@@ -167,15 +164,15 @@ Windy: particion incompleta -> {'countries': 'CH'}
 Windy: particion incompleta -> {'countries': 'CZ'}
 Windy: particion incompleta -> {'countries': 'DE'}
 Windy: particion incompleta -> {'countries': 'ES'}
-Windy: particion incompleta -> FI/traffic: 3 de 1522 localizadas por region
+Windy: particion incompleta -> FI/traffic: 3 de 1516 localizadas por region
 Windy: particion incompleta -> {'countries': 'FI'}
 Windy: particion incompleta -> {'countries': 'FR'}
 Windy: particion incompleta -> {'countries': 'GB'}
 Windy: particion incompleta -> {'countries': 'IT'}
 Windy: particion incompleta -> {'countries': 'JP'}
 Windy: particion incompleta -> {'countries': 'NO'}
-Windy: particion incompleta -> US/meteo: 1154 de 1156 localizadas por region
-Windy: particion incompleta -> US/city: 4331 de 4332 localizadas por region
+Windy: particion incompleta -> US/meteo: 1123 de 1125 localizadas por region
+Windy: particion incompleta -> US/city: 4285 de 4286 localizadas por region
 Windy: particion incompleta -> {'countries': 'US', 'categories': 'traffic', 'regions': 'US.AZ'}
 Windy: particion incompleta -> {'countries': 'US', 'categories': 'traffic', 'regions': 'US.AZ', 'nearby': '33.3884,-110.7767,250'}
 Windy: particion incompleta -> {'countries': 'US', 'categories': 'traffic', 'regions': 'US.CA'}
@@ -195,7 +192,7 @@ Windy: particion incompleta -> {'countries': 'US', 'categories': 'traffic', 'reg
 Windy: particion incompleta -> {'countries': 'US', 'categories': 'traffic', 'regions': 'US.TX', 'nearby': '34.0618,-97.4851,250'}
 Windy: particion incompleta -> {'countries': 'US', 'categories': 'traffic', 'regions': 'US.VA'}
 Windy: particion incompleta -> {'countries': 'US', 'categories': 'traffic', 'regions': 'US.WA'}
-Windy: particion incompleta -> US/traffic: 31649 de 31650 localizadas por region
+Windy: particion incompleta -> US/traffic: 31426 de 31427 localizadas por region
 Windy: particion incompleta -> {'countries': 'US'}
-{"provider": "WINDY_WEBCAMS", "status": "ok", "count": 62709, "pruned": 717, "peticiones": 3724, "recorridoCompleto": true}
-Windy catalog ready: 79811 public records
+{"provider": "WINDY_WEBCAMS", "status": "ok", "count": 62755, "pruned": 596, "peticiones": 3700, "recorridoCompleto": true}
+Windy catalog ready: 79854 public records
