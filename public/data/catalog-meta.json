@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-09-04T16:21:58.078787+00:00",
-  "count": 71111,
+  "generatedAt": "2026-09-04T20:46:38.693638+00:00",
+  "count": 71113,
   "providers": {
     "ALBERTA511_CA": 368,
     "BARCELONA_CITY": 27,
     "CALTRANS": 863,
     "DGT_ES": 1948,
     "DRIVEBC_CA": 1034,
-    "FINTRAFFIC_FI": 2279,
+    "FINTRAFFIC_FI": 2277,
     "GEONET": 11,
     "MADRID_CITY": 357,
     "MADRID_M30": 37,
     "METEOGALICIA_ES": 32,
     "NATIONAL_HIGHWAYS_GB": 2823,
-    "NY511_US": 1871,
+    "NY511_US": 1874,
     "ONTARIO511_CA": 944,
     "OREGON_US": 1148,
     "RWS_NL": 26,
@@ -23,11 +23,11 @@
     "TII_IE": 244,
     "TORONTO_CA": 336,
     "VEGAGERDIN_IS": 165,
-    "WINDY_WEBCAMS": 54008,
+    "WINDY_WEBCAMS": 54009,
     "WSDOT_US": 1533
   },
   "statuses": {
-    "online": 71047,
+    "online": 71049,
     "unknown": 64
   },
   "reports": [
@@ -40,13 +40,13 @@
   ],
   "database": "data/cams.sqlite3",
   "countries": {
-    "Estados Unidos": 29584,
+    "Estados Unidos": 29587,
     "Reino Unido": 4211,
     "Canadá": 3612,
     "España": 3607,
     "Italia": 2913,
     "Austria": 2818,
-    "Finlandia": 2599,
+    "Finlandia": 2598,
     "Alemania": 2556,
     "Francia": 2095,
     "Australia": 1595,
@@ -166,13 +166,13 @@
     "Uzbekistan": 1
   },
   "countryCodes": {
-    "US": 29584,
+    "US": 29587,
     "GB": 4211,
     "CA": 3612,
     "ES": 3607,
     "IT": 2913,
     "AT": 2818,
-    "FI": 2599,
+    "FI": 2598,
     "DE": 2556,
     "FR": 2095,
     "AU": 1595,
@@ -292,18 +292,18 @@
     "VG": 1
   },
   "mediaTypes": {
-    "iframe": 54008,
-    "snapshot": 15473,
-    "hls": 1566,
+    "iframe": 54009,
+    "snapshot": 15471,
+    "hls": 1569,
     "link": 64
   },
   "categories": {
-    "traffic": 37276,
+    "traffic": 37280,
     "city": 9963,
     "weather": 5091,
     "landscape": 4166,
     "mountain": 3919,
-    "weather-road": 3846,
+    "weather-road": 3844,
     "water": 2589,
     "coast": 2209,
     "port": 1043,
@@ -319,8 +319,8 @@
       "provider": "ALBERTA511_CA",
       "name": "Alberta 511 Cameras",
       "status": "error",
-      "startedAt": "2026-09-04T16:21:39.794694+00:00",
-      "finishedAt": "2026-09-04T16:21:40.004689+00:00",
+      "startedAt": "2026-09-04T20:46:19.571823+00:00",
+      "finishedAt": "2026-09-04T20:46:19.801588+00:00",
       "fetched": 0,
       "inserted": 0,
       "skipped": 0,
@@ -331,116 +331,116 @@
       "provider": "BARCELONA_CITY",
       "name": "Barcelona Municipal Traffic Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:20:50.571273+00:00",
-      "finishedAt": "2026-09-04T16:21:04.776631+00:00",
+      "startedAt": "2026-09-04T20:45:20.673642+00:00",
+      "finishedAt": "2026-09-04T20:45:41.937832+00:00",
       "fetched": 27,
       "inserted": 27,
       "skipped": 0,
       "errors": 0,
-      "message": "14.20s"
+      "message": "21.26s"
     },
     {
       "provider": "CALTRANS",
       "name": "Caltrans CWWP2",
       "status": "ok",
-      "startedAt": "2026-09-04T16:20:28.762149+00:00",
-      "finishedAt": "2026-09-04T16:20:34.079123+00:00",
+      "startedAt": "2026-09-04T20:44:58.254924+00:00",
+      "finishedAt": "2026-09-04T20:45:03.033270+00:00",
       "fetched": 863,
       "inserted": 863,
       "skipped": 0,
       "errors": 0,
-      "message": "5.32s"
+      "message": "4.78s"
     },
     {
       "provider": "DGT_ES",
       "name": "DGT National Traffic Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:20:47.713596+00:00",
-      "finishedAt": "2026-09-04T16:20:48.671209+00:00",
+      "startedAt": "2026-09-04T20:45:16.468803+00:00",
+      "finishedAt": "2026-09-04T20:45:17.486898+00:00",
       "fetched": 1948,
       "inserted": 1948,
       "skipped": 0,
       "errors": 0,
-      "message": "0.96s"
+      "message": "1.02s"
     },
     {
       "provider": "DRIVEBC_CA",
       "name": "DriveBC Highway Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:18.912909+00:00",
-      "finishedAt": "2026-09-04T16:21:19.764865+00:00",
+      "startedAt": "2026-09-04T20:45:53.031423+00:00",
+      "finishedAt": "2026-09-04T20:45:53.438133+00:00",
       "fetched": 1034,
       "inserted": 1034,
       "skipped": 0,
       "errors": 0,
-      "message": "0.85s"
+      "message": "0.41s"
     },
     {
       "provider": "FINTRAFFIC_FI",
       "name": "Fintraffic Digitraffic Weather Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:08.407689+00:00",
-      "finishedAt": "2026-09-04T16:21:09.283684+00:00",
-      "fetched": 2279,
-      "inserted": 2279,
+      "startedAt": "2026-09-04T20:45:45.493324+00:00",
+      "finishedAt": "2026-09-04T20:45:46.383722+00:00",
+      "fetched": 2277,
+      "inserted": 2277,
       "skipped": 0,
       "errors": 0,
-      "message": "0.88s"
+      "message": "0.89s"
     },
     {
       "provider": "GEONET",
       "name": "GeoNet New Zealand volcano cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:20:35.440214+00:00",
-      "finishedAt": "2026-09-04T16:20:36.232179+00:00",
+      "startedAt": "2026-09-04T20:45:04.991308+00:00",
+      "finishedAt": "2026-09-04T20:45:05.271245+00:00",
       "fetched": 12,
       "inserted": 12,
       "skipped": 0,
       "errors": 0,
-      "message": "0.70s"
+      "message": "0.28s"
     },
     {
       "provider": "LEGACY_YOUTUBE",
       "name": "Cams legacy YouTube candidates",
       "status": "ok",
-      "startedAt": "2026-09-04T16:20:28.732939+00:00",
-      "finishedAt": "2026-09-04T16:20:28.759273+00:00",
+      "startedAt": "2026-09-04T20:44:58.228071+00:00",
+      "finishedAt": "2026-09-04T20:44:58.252447+00:00",
       "fetched": 144,
       "inserted": 144,
       "skipped": 0,
       "errors": 0,
-      "message": "0.03s"
+      "message": "0.02s"
     },
     {
       "provider": "MADRID_CITY",
       "name": "Ayuntamiento de Madrid Traffic Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:20:48.679204+00:00",
-      "finishedAt": "2026-09-04T16:20:49.579007+00:00",
+      "startedAt": "2026-09-04T20:45:17.494480+00:00",
+      "finishedAt": "2026-09-04T20:45:18.676928+00:00",
       "fetched": 357,
       "inserted": 357,
       "skipped": 0,
       "errors": 0,
-      "message": "0.90s"
+      "message": "1.18s"
     },
     {
       "provider": "MADRID_M30",
       "name": "Madrid Calle 30 Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:20:49.581395+00:00",
-      "finishedAt": "2026-09-04T16:20:50.570018+00:00",
+      "startedAt": "2026-09-04T20:45:18.679495+00:00",
+      "finishedAt": "2026-09-04T20:45:20.672287+00:00",
       "fetched": 37,
       "inserted": 37,
       "skipped": 0,
       "errors": 0,
-      "message": "0.99s"
+      "message": "1.99s"
     },
     {
       "provider": "MANUAL",
       "name": "Contribuciones manuales",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:51.350366+00:00",
-      "finishedAt": "2026-09-04T16:21:51.351541+00:00",
+      "startedAt": "2026-09-04T20:46:31.980074+00:00",
+      "finishedAt": "2026-09-04T20:46:31.981095+00:00",
       "fetched": 0,
       "inserted": 0,
       "skipped": 0,
@@ -451,145 +451,145 @@
       "provider": "METEOGALICIA_ES",
       "name": "MeteoGalicia",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:47.567823+00:00",
-      "finishedAt": "2026-09-04T16:21:48.096618+00:00",
+      "startedAt": "2026-09-04T20:46:27.967268+00:00",
+      "finishedAt": "2026-09-04T20:46:28.803244+00:00",
       "fetched": 34,
       "inserted": 34,
       "skipped": 0,
       "errors": 0,
-      "message": "0.53s"
+      "message": "0.84s"
     },
     {
       "provider": "NATIONAL_HIGHWAYS_GB",
       "name": "National Highways Traffic England",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:29.920449+00:00",
-      "finishedAt": "2026-09-04T16:21:35.236217+00:00",
+      "startedAt": "2026-09-04T20:46:06.674723+00:00",
+      "finishedAt": "2026-09-04T20:46:15.714423+00:00",
       "fetched": 2823,
       "inserted": 2823,
       "skipped": 0,
       "errors": 0,
-      "message": "5.32s"
+      "message": "9.04s"
     },
     {
       "provider": "NY511_US",
       "name": "511 New York Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:12.580153+00:00",
-      "finishedAt": "2026-09-04T16:21:13.333744+00:00",
-      "fetched": 1871,
-      "inserted": 1871,
+      "startedAt": "2026-09-04T20:45:49.613982+00:00",
+      "finishedAt": "2026-09-04T20:45:50.611763+00:00",
+      "fetched": 1874,
+      "inserted": 1874,
       "skipped": 0,
       "errors": 0,
-      "message": "0.75s"
+      "message": "1.00s"
     },
     {
       "provider": "ONTARIO511_CA",
       "name": "Ontario 511 Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:19.771355+00:00",
-      "finishedAt": "2026-09-04T16:21:20.071048+00:00",
+      "startedAt": "2026-09-04T20:45:53.444486+00:00",
+      "finishedAt": "2026-09-04T20:45:56.208859+00:00",
       "fetched": 944,
       "inserted": 944,
       "skipped": 0,
       "errors": 0,
-      "message": "0.30s"
+      "message": "2.76s"
     },
     {
       "provider": "OREGON_US",
       "name": "Oregon TripCheck Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:13.342531+00:00",
-      "finishedAt": "2026-09-04T16:21:18.905102+00:00",
+      "startedAt": "2026-09-04T20:45:50.620190+00:00",
+      "finishedAt": "2026-09-04T20:45:53.023537+00:00",
       "fetched": 1149,
       "inserted": 1149,
       "skipped": 0,
       "errors": 0,
-      "message": "5.56s"
+      "message": "2.40s"
     },
     {
       "provider": "RWS_NL",
       "name": "Rijkswaterstaat Traffic Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:25.535248+00:00",
-      "finishedAt": "2026-09-04T16:21:26.556391+00:00",
+      "startedAt": "2026-09-04T20:46:02.123215+00:00",
+      "finishedAt": "2026-09-04T20:46:03.405789+00:00",
       "fetched": 26,
       "inserted": 26,
       "skipped": 0,
       "errors": 0,
-      "message": "1.02s"
+      "message": "1.28s"
     },
     {
       "provider": "SCT_CAT",
       "name": "Servei Català de Trànsit",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:43.634311+00:00",
-      "finishedAt": "2026-09-04T16:21:44.253555+00:00",
+      "startedAt": "2026-09-04T20:46:23.500183+00:00",
+      "finishedAt": "2026-09-04T20:46:24.693182+00:00",
       "fetched": 164,
       "inserted": 164,
       "skipped": 0,
       "errors": 0,
-      "message": "0.62s"
+      "message": "1.19s"
     },
     {
       "provider": "SG_LTA",
       "name": "Singapore LTA traffic images",
       "status": "ok",
-      "startedAt": "2026-09-04T16:20:34.608390+00:00",
-      "finishedAt": "2026-09-04T16:20:35.400329+00:00",
+      "startedAt": "2026-09-04T20:45:04.329245+00:00",
+      "finishedAt": "2026-09-04T20:45:04.990205+00:00",
       "fetched": 8,
       "inserted": 8,
       "skipped": 0,
       "errors": 0,
-      "message": "0.79s"
+      "message": "0.66s"
     },
     {
       "provider": "TFL",
       "name": "Transport for London JamCams",
       "status": "ok",
-      "startedAt": "2026-09-04T16:20:34.089222+00:00",
-      "finishedAt": "2026-09-04T16:20:34.599479+00:00",
+      "startedAt": "2026-09-04T20:45:03.045332+00:00",
+      "finishedAt": "2026-09-04T20:45:03.780853+00:00",
       "fetched": 890,
       "inserted": 890,
       "skipped": 0,
       "errors": 0,
-      "message": "0.51s"
+      "message": "0.73s"
     },
     {
       "provider": "TII_IE",
       "name": "Transport Infrastructure Ireland Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:23.392016+00:00",
-      "finishedAt": "2026-09-04T16:21:24.295319+00:00",
+      "startedAt": "2026-09-04T20:45:59.500121+00:00",
+      "finishedAt": "2026-09-04T20:46:00.692396+00:00",
       "fetched": 244,
       "inserted": 244,
       "skipped": 0,
       "errors": 0,
-      "message": "0.90s"
+      "message": "1.19s"
     },
     {
       "provider": "TORONTO_CA",
       "name": "City of Toronto Traffic Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:40.005837+00:00",
-      "finishedAt": "2026-09-04T16:21:40.334820+00:00",
+      "startedAt": "2026-09-04T20:46:19.802893+00:00",
+      "finishedAt": "2026-09-04T20:46:20.231889+00:00",
       "fetched": 336,
       "inserted": 336,
       "skipped": 0,
       "errors": 0,
-      "message": "0.33s"
+      "message": "0.43s"
     },
     {
       "provider": "VEGAGERDIN_IS",
       "name": "Vegagerðin Iceland Road Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:24.298747+00:00",
-      "finishedAt": "2026-09-04T16:21:25.533231+00:00",
+      "startedAt": "2026-09-04T20:46:00.694911+00:00",
+      "finishedAt": "2026-09-04T20:46:02.120864+00:00",
       "fetched": 165,
       "inserted": 165,
       "skipped": 0,
       "errors": 0,
-      "message": "1.23s"
+      "message": "1.43s"
     },
     {
       "provider": "WINDY_WEBCAMS",
@@ -607,19 +607,19 @@
       "provider": "WSDOT_US",
       "name": "Washington State DOT Cameras",
       "status": "ok",
-      "startedAt": "2026-09-04T16:21:38.658911+00:00",
-      "finishedAt": "2026-09-04T16:21:39.786694+00:00",
+      "startedAt": "2026-09-04T20:46:19.021919+00:00",
+      "finishedAt": "2026-09-04T20:46:19.563440+00:00",
       "fetched": 1533,
       "inserted": 1533,
       "skipped": 0,
       "errors": 0,
-      "message": "1.13s"
+      "message": "0.54s"
     }
   ],
   "quality": {
-    "verifiedOnline": 71047,
+    "verifiedOnline": 71049,
     "unknown": 64,
     "archivedLegacyYouTube": 144
   },
-  "statisticsGeneratedAt": "2026-09-04T16:21:59.175830+00:00"
+  "statisticsGeneratedAt": "2026-09-04T20:46:39.777035+00:00"
 }
