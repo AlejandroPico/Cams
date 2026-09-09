@@ -3,24 +3,20 @@ name: Deploy Cams
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   workflow_dispatch:
+  workflow_run:
+    workflows: [Refresh public camera database, Sincronizar Windy Webcams, Verificar imagenes]
+    types: [completed]
+    branches: [main]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-  TRAFIKVERKET_KEY: ${{ secrets.TRAFIKVERKET_KEY }}
-  ITS_KR_KEY: ${{ secrets.ITS_KR_KEY }}
-  DOT_GA_API_KEY: ${{ secrets.DOT_GA_API_KEY }}
-  DOT_FL_API_KEY: ${{ secrets.DOT_FL_API_KEY }}
-  DOT_AZ_API_KEY: ${{ secrets.DOT_AZ_API_KEY }}
-  DOT_ID_API_KEY: ${{ secrets.DOT_ID_API_KEY }}
-  DOT_UT_API_KEY: ${{ secrets.DOT_UT_API_KEY }}
-  DOT_LA_API_KEY: ${{ secrets.DOT_LA_API_KEY }}
-  DOT_PA_API_KEY: ${{ secrets.DOT_PA_API_KEY }}
-  DOT_SC_API_KEY: ${{ secrets.DOT_SC_API_KEY }}
-  DOT_MA_API_KEY: ${{ secrets.DOT_MA_API_KEY }}
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -30,9 +26,13 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -40,9 +40,7 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install frontend dependencies
-        run: npm install --no-audit --no-fund
-      - name: Rebuild SQLite and camera exports
-        run: python scripts/catalog/run_catalog.py
+        run: npm ci --no-audit --no-fund
       - name: Validate SQLite and exported catalog
         run: |
           python - <<'PY'
@@ -89,29 +87,11 @@ jobs:
           PY
       - name: Build production site
         run: npm run build
-      - name: Persist SQLite and generated catalog
-        run: |
-          if [ -z "$(git status --porcelain -- data/cams.sqlite3 public/data src/data/catalog.seed.json)" ]; then
-            echo "Catalog already current"
-          else
-            git config user.name "cams-catalog-bot"
-            git config user.email "actions@users.noreply.github.com"
-            git add data/cams.sqlite3 public/data src/data/catalog.seed.json
-            git commit -m "Actualizar SQLite y catálogo desplegado [skip ci]"
-            # Reintento sin rebase: los ficheros generados no se pueden fusionar.
-            for intento in 1 2 3 4 5; do
-              git push origin HEAD:main && break
-              git fetch origin main
-              git reset --soft origin/main
-              git add data/cams.sqlite3 public/data src/data/catalog.seed.json
-              git commit -m "Actualizar SQLite y catálogo desplegado [skip ci]" || true
-              sleep 8
-            done
-          fi
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+          retention-days: 1
 
   deploy:
     environment:
@@ -119,7 +99,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+

@@ -2,7 +2,7 @@ name: Refresh public camera database
 
 on:
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "17 1 * * 1" # Lunes, UTC
   workflow_dispatch:
 
 env:
@@ -24,11 +24,12 @@ permissions:
 
 concurrency:
   group: camera-catalog
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6

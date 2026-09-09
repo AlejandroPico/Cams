@@ -4,20 +4,19 @@ name: Verificar imagenes
 # del catalogo porque descarga miles de imagenes de terceros y conviene espaciarlo.
 on:
   schedule:
-    - cron: "25 5 * * *"
+    - cron: "25 5 * * 1" # Lunes, UTC
   workflow_dispatch:
   push:
     branches: [main]
     paths:
       - "scripts/ingest/verify_images.py"
-      - ".github/workflows/verify-images.yml"
 
 permissions:
   contents: write
 
 concurrency:
-  group: verify-images
-  cancel-in-progress: true
+  group: camera-catalog
+  cancel-in-progress: false
 
 jobs:
   verify:

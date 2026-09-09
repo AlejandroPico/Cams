@@ -226,12 +226,23 @@ npm run catalog:offline
 
 ## GitHub Actions
 
-`deploy.yml` valida SQLite, ejecuta los proveedores, archiva YouTube no verificado, genera estadísticas y fechas verificadas, compila, persiste el catálogo y publica GitHub Pages.
+Las tareas de mantenimiento se ejecutan una vez por semana, los lunes (horario UTC):
 
-`refresh-catalog.yml` actualiza la base cada seis horas.
+| Workflow | Horario | Función |
+|---|---|---|
+| `refresh-catalog.yml` | 01:17 | Actualizar el catálogo público y SQLite |
+| `windy-sync.yml` | 03:40 | Sincronizar Windy, con su presupuesto de tiempo limitado |
+| `verify-images.yml` | 05:25 | Comprobar imágenes y actualizar sus estados |
+
+Se pasa de 42 a 3 ejecuciones programadas por semana, una reducción del 92,9 %. GitHub puede retrasar las ejecuciones programadas. Las tres tareas siguen disponibles manualmente desde Actions; Windy y la verificación también se ejecutan al cambiar su adaptador.
+
+`deploy.yml` valida el catálogo ya guardado y compila/publica la web sin consultar de nuevo a todos los proveedores ni escribir en el repositorio. Se ejecuta al publicar código en `main`, manualmente y tras una actualización de datos correcta. Este último disparador es explícito porque los commits realizados con `GITHUB_TOKEN` no disparan otro workflow de tipo `push`. Los cambios únicamente documentales no despliegan la web.
+
+El archivo temporal de Pages se conserva **un día**. Las tareas de catálogo no suben artefactos de Actions: guardan SQLite/JSON en Git. El almacenamiento del repositorio y los minutos de ejecución son métricas distintas de la cuota de artefactos.
 
 En **Settings → Pages** debe estar seleccionada la fuente **GitHub Actions**.
 
 ## Política
 
 Solo se integran cámaras públicas y fuentes cuya visualización o reutilización esté permitida. Cams no intenta acceder a cámaras privadas, eludir autenticación, sortear cuotas comerciales ni copiar catálogos protegidos.
+
