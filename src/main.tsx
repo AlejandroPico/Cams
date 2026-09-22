@@ -4,6 +4,7 @@ import App from './App';
 import './styles.css';
 import './map.css';
 import './media-player.css';
+import './pwa';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

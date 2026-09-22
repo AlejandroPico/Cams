@@ -1,6 +1,12 @@
 # Cams
 
+**Versión estable 4.0.2**
+
 Cams es un visor mundial de webcams públicas, directos y snapshots. La aplicación abre en un globo interactivo, permite localizar cámaras y ofrece una segunda vista de mosaico minimalista.
+
+## Instalación
+
+Cams puede instalarse como aplicación web progresiva desde un navegador compatible en Android y escritorio. La aplicación instalada se abre en modo independiente; la interfaz queda disponible en caché, mientras que el catálogo y las imágenes de las cámaras continúan cargándose desde sus fuentes actuales para conservar datos recientes y evitar una descarga local de más de 50 MB.
 
 ## Estado actual
 
@@ -245,4 +251,3 @@ En **Settings → Pages** debe estar seleccionada la fuente **GitHub Actions**.
 ## Política
 
 Solo se integran cámaras públicas y fuentes cuya visualización o reutilización esté permitida. Cams no intenta acceder a cámaras privadas, eludir autenticación, sortear cuotas comerciales ni copiar catálogos protegidos.
-
